@@ -38,6 +38,14 @@ app.whenReady().then(() => {
     ipcManager.setupIpcHandlers();
     windowManager.createMainWindow();
 
+    // Security: Block webview creation attempts from renderer content
+    app.on('web-contents-created', (_, contents) => {
+        contents.on('will-attach-webview', (event) => {
+            event.preventDefault();
+            console.warn('[Security] Blocked webview creation attempt');
+        });
+    });
+
     app.on('activate', () => {
         // On macOS, recreate window when dock icon is clicked
         if (BrowserWindow.getAllWindows().length === 0) {

@@ -90,6 +90,7 @@ export function isOAuthDomain(hostname: string): boolean {
 export const BASE_WEB_PREFERENCES: BrowserWindowConstructorOptions['webPreferences'] = {
     contextIsolation: true,
     nodeIntegration: false,
+    sandbox: true,
 } as const;
 
 /**

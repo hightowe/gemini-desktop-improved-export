@@ -67,8 +67,7 @@ export function useMenuDefinitions(): MenuDefinition[] {
                 {
                     label: 'About Gemini Desktop',
                     action: () => {
-                        // Simple alert for now - can be enhanced later
-                        alert('Gemini Desktop v0.1.0\nAn unofficial desktop client for Gemini.');
+                        window.electronAPI?.openOptions('about');
                     },
                 },
             ],

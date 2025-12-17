@@ -124,7 +124,10 @@ describe('WindowManager', () => {
 
         it('loads options.html in prod mode', () => {
             const win = windowManager.createOptionsWindow();
-            expect(win.loadFile).toHaveBeenCalledWith(expect.stringContaining('options.html'));
+            expect(win.loadFile).toHaveBeenCalledWith(
+                expect.stringContaining('options.html'),
+                expect.objectContaining({ hash: undefined })
+            );
         });
 
         it('shows window when ready-to-show is emitted', () => {

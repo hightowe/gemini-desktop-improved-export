@@ -12,6 +12,7 @@ import { setupHeaderStripping } from './utils/security';
 import { getDistHtmlPath } from './utils/paths';
 import WindowManager from './managers/windowManager';
 import IpcManager from './managers/ipcManager';
+import MenuManager from './managers/menuManager';
 
 // Path to the production build
 const distIndexPath = getDistHtmlPath('index.html');
@@ -36,6 +37,11 @@ const ipcManager = new IpcManager(windowManager);
 app.whenReady().then(() => {
     setupHeaderStripping(session.defaultSession);
     ipcManager.setupIpcHandlers();
+
+    // Setup native application menu (critical for macOS)
+    const menuManager = new MenuManager(windowManager);
+    menuManager.buildMenu();
+
     windowManager.createMainWindow();
 
     // Security: Block webview creation attempts from renderer content

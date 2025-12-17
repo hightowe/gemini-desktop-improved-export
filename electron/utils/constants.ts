@@ -164,3 +164,13 @@ export const DEV_SERVER_PORT = 1420;
 export function getDevUrl(page: string = ''): string {
     return page ? `${DEV_SERVER_URL}/${page}` : DEV_SERVER_URL;
 }
+
+// =============================================================================
+// Platform Constants
+// =============================================================================
+
+export const isMacOS = process.platform === 'darwin';
+export const isWindows = process.platform === 'win32';
+export const isLinux = process.platform === 'linux';
+export const isDev = process.env.NODE_ENV === 'development';
+

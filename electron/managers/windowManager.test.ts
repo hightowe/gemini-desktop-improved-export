@@ -229,6 +229,47 @@ describe('WindowManager', () => {
         });
     });
 
+    describe('navigation handler', () => {
+        let navigateHandler: any;
+
+        beforeEach(() => {
+            windowManager.createMainWindow();
+            const instances = (BrowserWindow as any).getAllWindows();
+            const win = instances[0];
+            // Find the 'will-navigate' listener
+            const call = win.webContents.on.mock.calls.find((c: any) => c[0] === 'will-navigate');
+            navigateHandler = call ? call[1] : null;
+        });
+
+        it('sets up will-navigate listener', () => {
+            expect(navigateHandler).toBeDefined();
+        });
+
+        it('allows navigation to internal domains', () => {
+            const event = { preventDefault: vi.fn() };
+            navigateHandler(event, 'https://gemini.google.com/app');
+            expect(event.preventDefault).not.toHaveBeenCalled();
+        });
+
+        it('allows navigation to OAuth domains', () => {
+            const event = { preventDefault: vi.fn() };
+            navigateHandler(event, 'https://accounts.google.com/signin');
+            expect(event.preventDefault).not.toHaveBeenCalled();
+        });
+
+        it('blocks navigation to external domains', () => {
+            const event = { preventDefault: vi.fn() };
+            navigateHandler(event, 'https://malicious-site.com');
+            expect(event.preventDefault).toHaveBeenCalled();
+        });
+
+        it('blocks navigation to invalid URLs', () => {
+            const event = { preventDefault: vi.fn() };
+            navigateHandler(event, 'not-a-valid-url');
+            expect(event.preventDefault).toHaveBeenCalled();
+        });
+    });
+
     describe('getMainWindow', () => {
         it('returns null when no window exists', () => {
             expect(windowManager.getMainWindow()).toBeNull();

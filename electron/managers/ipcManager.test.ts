@@ -316,4 +316,56 @@ describe('IpcManager', () => {
             expect(mockLogger.error).toHaveBeenCalledWith('Error opening Google sign-in:', expect.anything());
         });
     });
+
+    describe('Quick Chat Handlers', () => {
+        beforeEach(() => {
+            mockWindowManager.hideQuickChat = vi.fn();
+            mockWindowManager.focusMainWindow = vi.fn();
+            ipcManager.setupIpcHandlers();
+        });
+
+        it('handles quick-chat:submit', () => {
+            const handler = (ipcMain as any)._listeners.get('quick-chat:submit');
+            handler({}, 'Hello, this is my prompt text');
+
+            expect(mockWindowManager.hideQuickChat).toHaveBeenCalled();
+            expect(mockWindowManager.focusMainWindow).toHaveBeenCalled();
+        });
+
+        it('handles quick-chat:hide', () => {
+            const handler = (ipcMain as any)._listeners.get('quick-chat:hide');
+            handler();
+
+            expect(mockWindowManager.hideQuickChat).toHaveBeenCalled();
+        });
+
+        it('handles quick-chat:cancel', () => {
+            const handler = (ipcMain as any)._listeners.get('quick-chat:cancel');
+            handler();
+
+            expect(mockWindowManager.hideQuickChat).toHaveBeenCalled();
+            expect(mockLogger.log).toHaveBeenCalledWith('Quick Chat cancelled');
+        });
+
+        it('logs error when quick-chat:submit fails', () => {
+            const handler = (ipcMain as any)._listeners.get('quick-chat:submit');
+            mockWindowManager.hideQuickChat.mockImplementationOnce(() => { throw new Error('Hide Failed'); });
+            handler({}, 'test');
+            expect(mockLogger.error).toHaveBeenCalledWith('Error handling quick chat submit:', expect.anything());
+        });
+
+        it('logs error when quick-chat:hide fails', () => {
+            const handler = (ipcMain as any)._listeners.get('quick-chat:hide');
+            mockWindowManager.hideQuickChat.mockImplementationOnce(() => { throw new Error('Hide Failed'); });
+            handler();
+            expect(mockLogger.error).toHaveBeenCalledWith('Error hiding quick chat:', expect.anything());
+        });
+
+        it('logs error when quick-chat:cancel fails', () => {
+            const handler = (ipcMain as any)._listeners.get('quick-chat:cancel');
+            mockWindowManager.hideQuickChat.mockImplementationOnce(() => { throw new Error('Cancel Failed'); });
+            handler();
+            expect(mockLogger.error).toHaveBeenCalledWith('Error cancelling quick chat:', expect.anything());
+        });
+    });
 });

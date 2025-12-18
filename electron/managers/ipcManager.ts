@@ -82,6 +82,7 @@ export default class IpcManager {
         this._setupWindowHandlers();
         this._setupThemeHandlers();
         this._setupAppHandlers();
+        this._setupQuickChatHandlers();
 
         this.logger.log('All IPC handlers registered');
     }
@@ -269,6 +270,51 @@ export default class IpcManager {
             } catch (error) {
                 this.logger.error('Error opening Google sign-in:', error);
                 throw error;
+            }
+        });
+    }
+
+    /**
+     * Set up Quick Chat IPC handlers.
+     * Handles communication between Quick Chat window and main window.
+     * @private
+     */
+    private _setupQuickChatHandlers(): void {
+        // Submit quick chat text - for now, just hide window and focus main
+        // TODO: Implement text injection into Gemini in a future PR
+        ipcMain.on('quick-chat:submit', (_event, text: string) => {
+            try {
+                this.logger.log('Quick Chat submit received:', text.substring(0, 50));
+
+                // Hide the Quick Chat window
+                this.windowManager.hideQuickChat();
+
+                // Focus the main window
+                this.windowManager.focusMainWindow();
+
+                // TODO: Inject text into Gemini chat (requires DOM access or keyboard events)
+                this.logger.log('Quick Chat text injection not yet implemented');
+            } catch (error) {
+                this.logger.error('Error handling quick chat submit:', error);
+            }
+        });
+
+        // Hide Quick Chat window
+        ipcMain.on('quick-chat:hide', () => {
+            try {
+                this.windowManager.hideQuickChat();
+            } catch (error) {
+                this.logger.error('Error hiding quick chat:', error);
+            }
+        });
+
+        // Cancel Quick Chat (hide without action)
+        ipcMain.on('quick-chat:cancel', () => {
+            try {
+                this.windowManager.hideQuickChat();
+                this.logger.log('Quick Chat cancelled');
+            } catch (error) {
+                this.logger.error('Error cancelling quick chat:', error);
             }
         });
     }

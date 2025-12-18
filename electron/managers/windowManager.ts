@@ -5,13 +5,16 @@
  * @module WindowManager
  */
 
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, shell, screen } from 'electron';
 import {
     isInternalDomain,
     isOAuthDomain,
     AUTH_WINDOW_CONFIG,
     MAIN_WINDOW_CONFIG,
     OPTIONS_WINDOW_CONFIG,
+    QUICK_CHAT_WINDOW_CONFIG,
+    QUICK_CHAT_WIDTH,
+    QUICK_CHAT_HEIGHT,
     getTitleBarStyle,
     getDevUrl
 } from '../utils/constants';
@@ -24,6 +27,7 @@ export default class WindowManager {
     readonly isDev: boolean;
     private mainWindow: BrowserWindow | null = null;
     private optionsWindow: BrowserWindow | null = null;
+    private quickChatWindow: BrowserWindow | null = null;
 
     /**
      * Creates a new WindowManager instance.
@@ -234,6 +238,129 @@ export default class WindowManager {
     minimizeMainWindow() {
         if (this.mainWindow) {
             this.mainWindow.minimize();
+        }
+    }
+
+    /**
+     * Create the Quick Chat floating window.
+     * Centers on the active display, transparent and always-on-top.
+     * @returns The Quick Chat window
+     */
+    createQuickChatWindow(): BrowserWindow {
+        if (this.quickChatWindow) {
+            return this.quickChatWindow;
+        }
+
+        // Get the display where the cursor is located
+        const cursorPoint = screen.getCursorScreenPoint();
+        const display = screen.getDisplayNearestPoint(cursorPoint);
+        const { width: displayWidth, height: displayHeight } = display.workAreaSize;
+        const { x: displayX, y: displayY } = display.workArea;
+
+        // Center the window horizontally, position it in upper third vertically
+        const windowWidth = QUICK_CHAT_WINDOW_CONFIG.width ?? QUICK_CHAT_WIDTH;
+        const windowHeight = QUICK_CHAT_WINDOW_CONFIG.height ?? QUICK_CHAT_HEIGHT;
+        const x = displayX + Math.round((displayWidth - windowWidth) / 2);
+        const y = displayY + Math.round(displayHeight / 4);
+
+        this.quickChatWindow = new BrowserWindow({
+            ...QUICK_CHAT_WINDOW_CONFIG,
+            x,
+            y,
+            webPreferences: {
+                ...QUICK_CHAT_WINDOW_CONFIG.webPreferences,
+                preload: getPreloadPath(),
+            },
+        });
+
+        const distQuickChatPath = getDistHtmlPath('quickchat.html');
+
+        if (this.isDev) {
+            this.quickChatWindow.loadURL(getDevUrl('quickchat.html'));
+        } else {
+            this.quickChatWindow.loadFile(distQuickChatPath);
+        }
+
+        this.quickChatWindow.once('ready-to-show', () => {
+            this.quickChatWindow?.show();
+            this.quickChatWindow?.focus();
+        });
+
+        // Auto-hide when window loses focus (Spotlight behavior)
+        this.quickChatWindow.on('blur', () => {
+            this.hideQuickChat();
+        });
+
+        this.quickChatWindow.on('closed', () => {
+            this.quickChatWindow = null;
+        });
+
+        logger.log('Quick Chat window created');
+        return this.quickChatWindow;
+    }
+
+    /**
+     * Show and focus the Quick Chat window.
+     * Creates the window if it doesn't exist.
+     */
+    showQuickChat(): void {
+        if (!this.quickChatWindow) {
+            this.createQuickChatWindow();
+        } else {
+            // Reposition to current cursor display
+            const cursorPoint = screen.getCursorScreenPoint();
+            const display = screen.getDisplayNearestPoint(cursorPoint);
+            const { width: displayWidth, height: displayHeight } = display.workAreaSize;
+            const { x: displayX, y: displayY } = display.workArea;
+
+            const windowWidth = QUICK_CHAT_WINDOW_CONFIG.width ?? QUICK_CHAT_WIDTH;
+            const x = displayX + Math.round((displayWidth - windowWidth) / 2);
+            const y = displayY + Math.round(displayHeight / 4);
+
+            this.quickChatWindow.setPosition(x, y);
+            this.quickChatWindow.show();
+            this.quickChatWindow.focus();
+        }
+        logger.log('Quick Chat window shown');
+    }
+
+    /**
+     * Hide the Quick Chat window.
+     */
+    hideQuickChat(): void {
+        if (this.quickChatWindow && !this.quickChatWindow.isDestroyed()) {
+            this.quickChatWindow.hide();
+            logger.log('Quick Chat window hidden');
+        }
+    }
+
+    /**
+     * Toggle Quick Chat window visibility.
+     */
+    toggleQuickChat(): void {
+        if (this.quickChatWindow && this.quickChatWindow.isVisible()) {
+            this.hideQuickChat();
+        } else {
+            this.showQuickChat();
+        }
+    }
+
+    /**
+     * Get the Quick Chat window instance.
+     * @returns The Quick Chat window or null
+     */
+    getQuickChatWindow(): BrowserWindow | null {
+        return this.quickChatWindow;
+    }
+
+    /**
+     * Focus the main window and bring to front.
+     */
+    focusMainWindow(): void {
+        if (this.mainWindow) {
+            this.mainWindow.show();
+            this.mainWindow.focus();
+            logger.log('Main window focused');
         }
     }
 }

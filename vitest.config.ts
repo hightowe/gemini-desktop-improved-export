@@ -15,6 +15,7 @@ export default defineConfig({
             exclude: [
                 'src/main.tsx',
                 'src/options-main.tsx', // Entry point bootstrap, not testable
+                'src/quickchat-main.tsx', // Entry point bootstrap, not testable
                 'src/vite-env.d.ts',
                 'src/test/**',
                 'src/**/*.test.{ts,tsx}',

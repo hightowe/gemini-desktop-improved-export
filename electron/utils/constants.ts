@@ -182,6 +182,28 @@ export const OPTIONS_WINDOW_CONFIG: BrowserWindowConstructorOptions = {
     show: true, // Options window shows immediately
 };
 
+/**
+ * Configuration for the Quick Chat floating window.
+ * Spotlight-like appearance: frameless, transparent, always-on-top.
+ */
+export const QUICK_CHAT_WIDTH = 600;
+export const QUICK_CHAT_HEIGHT = 80;
+
+export const QUICK_CHAT_WINDOW_CONFIG: BrowserWindowConstructorOptions = {
+    width: QUICK_CHAT_WIDTH,
+    height: QUICK_CHAT_HEIGHT,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    ...BASE_WINDOW_CONFIG,
+    backgroundColor: undefined, // Override for transparency
+    show: false, // Show when ready
+};
+
 // =============================================================================
 // Development Server Configuration
 // =============================================================================

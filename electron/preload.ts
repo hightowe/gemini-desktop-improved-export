@@ -107,6 +107,42 @@ const electronAPI: ElectronAPI = {
         return () => {
             ipcRenderer.removeListener('theme:changed', subscription);
         };
+    },
+
+    // =========================================================================
+    // Quick Chat API
+    // Floating prompt window for quick Gemini interactions
+    // =========================================================================
+
+    /**
+     * Submit quick chat text to main window.
+     * @param text - The prompt text to send
+     */
+    submitQuickChat: (text) => ipcRenderer.send('quick-chat:submit', text),
+
+    /**
+     * Hide the quick chat window.
+     */
+    hideQuickChat: () => ipcRenderer.send('quick-chat:hide'),
+
+    /**
+     * Cancel quick chat (hide without action).
+     */
+    cancelQuickChat: () => ipcRenderer.send('quick-chat:cancel'),
+
+    /**
+     * Subscribe to quick chat execute events (main window receives this).
+     * @param callback - Function to call with the prompt text
+     * @returns Cleanup function to unsubscribe
+     */
+    onQuickChatExecute: (callback) => {
+        const subscription = (_event: Electron.IpcRendererEvent, text: string) =>
+            callback(text);
+        ipcRenderer.on('quick-chat:execute', subscription);
+
+        return () => {
+            ipcRenderer.removeListener('quick-chat:execute', subscription);
+        };
     }
 };
 

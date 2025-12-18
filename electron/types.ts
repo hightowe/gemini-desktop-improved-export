@@ -60,6 +60,12 @@ export interface ElectronAPI {
     getTheme: () => Promise<ThemeData>;
     setTheme: (theme: ThemePreference) => void;
     onThemeChanged: (callback: (themeData: ThemeData) => void) => () => void;
+
+    // Quick Chat API
+    submitQuickChat: (text: string) => void;
+    hideQuickChat: () => void;
+    cancelQuickChat: () => void;
+    onQuickChatExecute: (callback: (text: string) => void) => () => void;
 }
 
 /**

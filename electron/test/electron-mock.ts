@@ -114,12 +114,35 @@ export const nativeTheme = {
     }
 };
 
+export const screen = {
+    getCursorScreenPoint: vi.fn().mockReturnValue({ x: 500, y: 500 }),
+    getDisplayNearestPoint: vi.fn().mockReturnValue({
+        workArea: { x: 0, y: 0 },
+        workAreaSize: { width: 1920, height: 1080 }
+    }),
+    _reset: () => {
+        screen.getCursorScreenPoint.mockClear();
+        screen.getDisplayNearestPoint.mockClear();
+    }
+};
+
 export const shell = {
     openExternal: vi.fn().mockResolvedValue(undefined),
 };
 
 export const contextBridge = {
     exposeInMainWorld: vi.fn(),
+};
+
+export const globalShortcut = {
+    register: vi.fn().mockReturnValue(true),
+    unregisterAll: vi.fn(),
+    isRegistered: vi.fn().mockReturnValue(false),
+    _reset: () => {
+        globalShortcut.register.mockClear();
+        globalShortcut.unregisterAll.mockClear();
+        globalShortcut.isRegistered.mockClear();
+    }
 };
 
 // Default export for CJS compatibility
@@ -130,6 +153,8 @@ export default {
     ipcRenderer,
     session,
     nativeTheme,
+    screen,
     shell,
     contextBridge,
+    globalShortcut,
 };

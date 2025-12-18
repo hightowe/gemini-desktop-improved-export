@@ -40,6 +40,14 @@ export default class HotkeyManager {
                     logger.log('Hotkey pressed: CommandOrControl+Alt+E (Minimize)');
                     this.windowManager.minimizeMainWindow();
                 }
+            },
+            {
+                // Quick Chat - toggle floating prompt window
+                accelerator: 'CommandOrControl+Shift+Space',
+                action: () => {
+                    logger.log('Hotkey pressed: CommandOrControl+Shift+Space (Quick Chat)');
+                    this.windowManager.toggleQuickChat();
+                }
             }
         ];
     }

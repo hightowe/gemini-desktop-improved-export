@@ -31,6 +31,7 @@ export interface HotkeyDefinition {
  * Add new hotkeys here as they are implemented.
  */
 export const REGISTERED_HOTKEYS: Record<string, HotkeyDefinition> = {
+    // TODO: Refactor this to use configurable hotkeys
     MINIMIZE_WINDOW: {
         accelerator: 'CommandOrControl+Alt+E',
         description: 'Minimize the main window',
@@ -38,6 +39,16 @@ export const REGISTERED_HOTKEYS: Record<string, HotkeyDefinition> = {
             windows: 'Ctrl+Alt+E',
             macos: 'Cmd+Alt+E',
             linux: 'Ctrl+Alt+E',
+        },
+    },
+    // TODO: Refactor this to use configurable hotkeys
+    QUICK_CHAT: {
+        accelerator: 'CommandOrControl+Shift+Space',
+        description: 'Toggle Quick Chat floating window',
+        displayFormat: {
+            windows: 'Ctrl+Shift+Space',
+            macos: 'Cmd+Shift+Space',
+            linux: 'Ctrl+Shift+Space',
         },
     },
 };

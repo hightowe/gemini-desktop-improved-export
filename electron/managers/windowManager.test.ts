@@ -280,4 +280,195 @@ describe('WindowManager', () => {
             expect(windowManager.getMainWindow()).toBe(win);
         });
     });
+
+    describe('minimizeMainWindow', () => {
+        it('minimizes main window when it exists', () => {
+            const win = windowManager.createMainWindow();
+            windowManager.minimizeMainWindow();
+            expect(win.minimize).toHaveBeenCalled();
+        });
+
+        it('does nothing when main window does not exist', () => {
+            // Should not throw
+            expect(() => windowManager.minimizeMainWindow()).not.toThrow();
+        });
+    });
+
+    describe('focusMainWindow', () => {
+        it('focuses main window when it exists', () => {
+            const win = windowManager.createMainWindow();
+            windowManager.focusMainWindow();
+            expect(win.show).toHaveBeenCalled();
+            expect(win.focus).toHaveBeenCalled();
+        });
+
+        it('does nothing when main window does not exist', () => {
+            expect(() => windowManager.focusMainWindow()).not.toThrow();
+        });
+    });
+
+    describe('createOptionsWindow with tab', () => {
+        it('passes settings tab hash in dev mode', () => {
+            const wm = new WindowManager(true);
+            const win = wm.createOptionsWindow('settings');
+            expect(win.loadURL).toHaveBeenCalledWith('http://localhost:1420/options.html#settings');
+        });
+
+        it('passes about tab hash in prod mode', () => {
+            const win = windowManager.createOptionsWindow('about');
+            expect(win.loadFile).toHaveBeenCalledWith(
+                expect.stringContaining('options.html'),
+                expect.objectContaining({ hash: 'about' })
+            );
+        });
+
+        it('navigates existing window to new tab', () => {
+            // Create first window
+            const win1 = windowManager.createOptionsWindow();
+            win1.webContents.getURL = vi.fn().mockReturnValue('http://localhost:1420/options.html');
+
+            // Request same window with tab
+            const win2 = windowManager.createOptionsWindow('settings');
+
+            expect(win1).toBe(win2);
+            expect(win1.loadURL).toHaveBeenCalledWith('http://localhost:1420/options.html#settings');
+        });
+    });
+
+    describe('Quick Chat Window', () => {
+        it('creates Quick Chat window with correct positioning', () => {
+            const win = windowManager.createQuickChatWindow();
+            expect((BrowserWindow as any)._instances.length).toBe(1);
+            expect(win).toBeDefined();
+            expect(win.options).toMatchObject({
+                frame: false,
+                transparent: true,
+                alwaysOnTop: true,
+                skipTaskbar: true
+            });
+        });
+
+        it('returns existing Quick Chat window if already created', () => {
+            const win1 = windowManager.createQuickChatWindow();
+            const win2 = windowManager.createQuickChatWindow();
+            expect((BrowserWindow as any)._instances.length).toBe(1);
+            expect(win1).toBe(win2);
+        });
+
+        it('loads quickchat.html in dev mode', () => {
+            const wm = new WindowManager(true);
+            const win = wm.createQuickChatWindow();
+            expect(win.loadURL).toHaveBeenCalledWith('http://localhost:1420/quickchat.html');
+        });
+
+        it('loads quickchat.html in prod mode', () => {
+            const win = windowManager.createQuickChatWindow();
+            expect(win.loadFile).toHaveBeenCalledWith(expect.stringContaining('quickchat.html'));
+        });
+
+        it('shows and focuses window on ready-to-show', () => {
+            const win = windowManager.createQuickChatWindow();
+            const readyHandler = win.once.mock.calls.find((call: any) => call[0] === 'ready-to-show')[1];
+            readyHandler();
+            expect(win.show).toHaveBeenCalled();
+            expect(win.focus).toHaveBeenCalled();
+        });
+
+        it('hides window on blur event', () => {
+            const win = windowManager.createQuickChatWindow();
+            win.isDestroyed = vi.fn().mockReturnValue(false);
+
+            const blurHandler = win.on.mock.calls.find((call: any) => call[0] === 'blur')[1];
+            blurHandler();
+            expect(win.hide).toHaveBeenCalled();
+        });
+
+        it('clears reference when window is closed', () => {
+            windowManager.createQuickChatWindow();
+            const instances = (BrowserWindow as any).getAllWindows();
+            const win = instances[0];
+
+            const closeHandler = win.on.mock.calls.find((call: any) => call[0] === 'closed')[1];
+            closeHandler();
+
+            expect(windowManager.getQuickChatWindow()).toBeNull();
+        });
+    });
+
+    describe('showQuickChat', () => {
+        it('creates Quick Chat window if it does not exist', () => {
+            windowManager.showQuickChat();
+            expect((BrowserWindow as any)._instances.length).toBe(1);
+        });
+
+        it('repositions and shows existing window', () => {
+            const win = windowManager.createQuickChatWindow();
+            win.setPosition = vi.fn();
+
+            windowManager.showQuickChat();
+
+            expect(win.setPosition).toHaveBeenCalled();
+            expect(win.show).toHaveBeenCalled();
+            expect(win.focus).toHaveBeenCalled();
+        });
+    });
+
+    describe('hideQuickChat', () => {
+        it('hides Quick Chat window when it exists and is not destroyed', () => {
+            const win = windowManager.createQuickChatWindow();
+            win.isDestroyed = vi.fn().mockReturnValue(false);
+
+            windowManager.hideQuickChat();
+            expect(win.hide).toHaveBeenCalled();
+        });
+
+        it('does nothing when Quick Chat window does not exist', () => {
+            expect(() => windowManager.hideQuickChat()).not.toThrow();
+        });
+
+        it('does nothing when Quick Chat window is destroyed', () => {
+            const win = windowManager.createQuickChatWindow();
+            win.isDestroyed = vi.fn().mockReturnValue(true);
+
+            // Should not throw
+            windowManager.hideQuickChat();
+            expect(win.hide).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('toggleQuickChat', () => {
+        it('shows Quick Chat when window does not exist', () => {
+            windowManager.toggleQuickChat();
+            expect((BrowserWindow as any)._instances.length).toBe(1);
+        });
+
+        it('hides Quick Chat when window is visible', () => {
+            const win = windowManager.createQuickChatWindow();
+            win.isVisible = vi.fn().mockReturnValue(true);
+            win.isDestroyed = vi.fn().mockReturnValue(false);
+
+            windowManager.toggleQuickChat();
+            expect(win.hide).toHaveBeenCalled();
+        });
+
+        it('shows Quick Chat when window exists but is hidden', () => {
+            const win = windowManager.createQuickChatWindow();
+            win.isVisible = vi.fn().mockReturnValue(false);
+            win.setPosition = vi.fn();
+
+            windowManager.toggleQuickChat();
+            expect(win.show).toHaveBeenCalled();
+        });
+    });
+
+    describe('getQuickChatWindow', () => {
+        it('returns null when no Quick Chat window exists', () => {
+            expect(windowManager.getQuickChatWindow()).toBeNull();
+        });
+
+        it('returns the Quick Chat window when it exists', () => {
+            const win = windowManager.createQuickChatWindow();
+            expect(windowManager.getQuickChatWindow()).toBe(win);
+        });
+    });
 });

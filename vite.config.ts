@@ -20,12 +20,13 @@ export default defineConfig(async () => ({
   // Use relative paths for Electron file:// protocol compatibility
   base: './',
 
-  // Multi-page app configuration for options window
+  // Multi-page app configuration for options and quick chat windows
   build: {
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
         options: resolve(__dirname, 'options.html'),
+        quickchat: resolve(__dirname, 'quickchat.html'),
       },
     },
   },

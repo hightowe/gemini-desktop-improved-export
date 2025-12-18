@@ -14,6 +14,12 @@ interface Window {
         setTheme: (theme: 'light' | 'dark' | 'system') => void;
         onThemeChanged: (callback: (data: { preference: 'light' | 'dark' | 'system'; effectiveTheme: 'light' | 'dark' }) => void) => () => void;
 
+        // Quick Chat API
+        submitQuickChat: (text: string) => void;
+        hideQuickChat: () => void;
+        cancelQuickChat: () => void;
+        onQuickChatExecute: (callback: (text: string) => void) => () => void;
+
         platform: string;
         isElectron: boolean;
     };

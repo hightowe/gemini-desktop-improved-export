@@ -40,13 +40,17 @@ describe('MenuManager', () => {
 
     afterEach(() => {
         Object.defineProperty(process, 'platform', {
-            value: originalPlatform
+            value: originalPlatform,
+            configurable: true,
+            writable: true
         });
     });
 
     const setPlatform = (platform: string) => {
         Object.defineProperty(process, 'platform', {
-            value: platform
+            value: platform,
+            configurable: true,
+            writable: true
         });
     };
 

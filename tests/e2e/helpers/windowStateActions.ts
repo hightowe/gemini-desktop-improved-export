@@ -1,0 +1,181 @@
+/**
+ * Window state actions for E2E testing.
+ * 
+ * Provides access to Electron window state via IPC calls.
+ * Works on all platforms (Windows, macOS, Linux).
+ * 
+ * ## Architecture
+ * - Uses browser.execute() to call window.electronAPI methods
+ * - Uses browser.electron.execute() for direct BrowserWindow access
+ * - Graceful fallbacks when APIs are unavailable
+ * 
+ * @module windowStateActions
+ */
+import { browser } from '@wdio/globals';
+import { E2ELogger } from './logger';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface WindowState {
+    isMaximized: boolean;
+    isMinimized: boolean;
+    isFullScreen: boolean;
+}
+
+// ============================================================================
+// State Query Functions
+// ============================================================================
+
+/**
+ * Gets the complete window state.
+ * 
+ * @returns Object with isMaximized, isMinimized, isFullScreen
+ */
+export async function getWindowState(): Promise<WindowState> {
+    const state = await browser.electron.execute((electron) => {
+        const win = electron.BrowserWindow.getFocusedWindow();
+        if (!win) {
+            return {
+                isMaximized: false,
+                isMinimized: false,
+                isFullScreen: false,
+            };
+        }
+        return {
+            isMaximized: win.isMaximized(),
+            isMinimized: win.isMinimized(),
+            isFullScreen: win.isFullScreen(),
+        };
+    });
+
+    E2ELogger.info('windowStateActions', `Window state: ${JSON.stringify(state)}`);
+    return state;
+}
+
+/**
+ * Checks if the current window is maximized.
+ */
+export async function isWindowMaximized(): Promise<boolean> {
+    const result = await browser.execute(() => {
+        return (window as any).electronAPI?.isMaximized?.() ?? false;
+    });
+
+    // If electronAPI method doesn't exist, fall back to Electron direct access
+    if (result === false) {
+        const state = await getWindowState();
+        return state.isMaximized;
+    }
+
+    return result;
+}
+
+/**
+ * Checks if the current window is minimized.
+ */
+export async function isWindowMinimized(): Promise<boolean> {
+    const state = await getWindowState();
+    return state.isMinimized;
+}
+
+/**
+ * Checks if the current window is in fullscreen mode.
+ */
+export async function isWindowFullScreen(): Promise<boolean> {
+    const state = await getWindowState();
+    return state.isFullScreen;
+}
+
+// ============================================================================
+// Action Functions (via IPC)
+// ============================================================================
+
+/**
+ * Maximizes the current window via Electron API.
+ */
+export async function maximizeWindow(): Promise<void> {
+    E2ELogger.info('windowStateActions', 'Maximizing window via API');
+
+    await browser.execute(() => {
+        (window as any).electronAPI?.maximizeWindow?.();
+    });
+
+    // Give the window time to transition
+    await browser.pause(300);
+}
+
+/**
+ * Minimizes the current window via Electron API.
+ */
+export async function minimizeWindow(): Promise<void> {
+    E2ELogger.info('windowStateActions', 'Minimizing window via API');
+
+    await browser.execute(() => {
+        (window as any).electronAPI?.minimizeWindow?.();
+    });
+
+    await browser.pause(300);
+}
+
+/**
+ * Restores the window from maximized/minimized state.
+ */
+export async function restoreWindow(): Promise<void> {
+    E2ELogger.info('windowStateActions', 'Restoring window via API');
+
+    // Use direct Electron API for restore (not exposed via electronAPI)
+    await browser.electron.execute((electron) => {
+        const win = electron.BrowserWindow.getFocusedWindow();
+        if (win) {
+            if (win.isMaximized()) {
+                win.unmaximize();
+            }
+            if (win.isMinimized()) {
+                win.restore();
+            }
+        }
+    });
+
+    await browser.pause(300);
+}
+
+/**
+ * Closes the current window via Electron API.
+ */
+export async function closeWindow(): Promise<void> {
+    E2ELogger.info('windowStateActions', 'Closing window via API');
+
+    await browser.execute(() => {
+        (window as any).electronAPI?.closeWindow?.();
+    });
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Waits for window to reach a specific state.
+ * 
+ * @param predicate - Function that returns true when desired state is reached
+ * @param timeoutMs - Maximum wait time
+ * @param pollIntervalMs - How often to check state
+ */
+export async function waitForWindowState(
+    predicate: (state: WindowState) => boolean,
+    timeoutMs = 5000,
+    pollIntervalMs = 100
+): Promise<void> {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < timeoutMs) {
+        const state = await getWindowState();
+        if (predicate(state)) {
+            return;
+        }
+        await browser.pause(pollIntervalMs);
+    }
+
+    throw new Error(`Window did not reach expected state within ${timeoutMs}ms`);
+}

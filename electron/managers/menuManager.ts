@@ -1,6 +1,9 @@
 import { Menu, MenuItemConstructorOptions, app, shell, MenuItem } from 'electron';
 import WindowManager from './windowManager';
-import { isMacOS, GOOGLE_SIGNIN_URL, GITHUB_ISSUES_URL } from '../utils/constants';
+import { GOOGLE_SIGNIN_URL, GITHUB_ISSUES_URL } from '../utils/constants';
+
+// Runtime platform check (evaluated on each call for testability)
+const isMac = () => process.platform === 'darwin';
 
 /**
  * Manages the application native menu.
@@ -21,7 +24,7 @@ export default class MenuManager {
             this.buildHelpMenu()
         ];
 
-        if (isMacOS) {
+        if (isMac()) {
             template.unshift(this.buildAppMenu());
         }
 
@@ -77,13 +80,13 @@ export default class MenuManager {
                     }
                 },
                 {
-                    label: isMacOS ? 'Settings...' : 'Options',
+                    label: isMac() ? 'Settings...' : 'Options',
                     id: 'menu-file-options',
                     accelerator: 'CmdOrCtrl+,',
                     click: () => this.windowManager.createOptionsWindow()
                 },
                 { type: 'separator' },
-                { role: isMacOS ? 'close' : 'quit' }
+                { role: isMac() ? 'close' : 'quit' }
             ]
         };
 

@@ -1,5 +1,6 @@
 import { Menu, MenuItemConstructorOptions, app, shell, MenuItem } from 'electron';
 import WindowManager from './windowManager';
+import { isMacOS, GOOGLE_SIGNIN_URL, GITHUB_ISSUES_URL } from '../utils/constants';
 
 /**
  * Manages the application native menu.
@@ -20,7 +21,7 @@ export default class MenuManager {
             this.buildHelpMenu()
         ];
 
-        if (process.platform === 'darwin') {
+        if (isMacOS) {
             template.unshift(this.buildAppMenu());
         }
 
@@ -70,19 +71,19 @@ export default class MenuManager {
                     label: 'Sign in to Google',
                     id: 'menu-file-signin',
                     click: async () => {
-                        await this.windowManager.createAuthWindow('https://accounts.google.com/signin');
+                        await this.windowManager.createAuthWindow(GOOGLE_SIGNIN_URL);
                         // Reload main window to capture new auth state
                         this.windowManager.getMainWindow()?.reload();
                     }
                 },
                 {
-                    label: process.platform === 'darwin' ? 'Settings...' : 'Options',
+                    label: isMacOS ? 'Settings...' : 'Options',
                     id: 'menu-file-options',
                     accelerator: 'CmdOrCtrl+,',
                     click: () => this.windowManager.createOptionsWindow()
                 },
                 { type: 'separator' },
-                { role: process.platform === 'darwin' ? 'close' : 'quit' }
+                { role: isMacOS ? 'close' : 'quit' }
             ]
         };
 
@@ -113,7 +114,7 @@ export default class MenuManager {
                 },
                 {
                     label: 'Report an Issue',
-                    click: () => shell.openExternal('https://github.com/bwendell/gemini-desktop/issues')
+                    click: () => shell.openExternal(GITHUB_ISSUES_URL)
                 }
             ]
         };

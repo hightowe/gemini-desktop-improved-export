@@ -1,14 +1,8 @@
 import { useState, useCallback } from 'react';
 import { MainLayout } from './components/layout';
 import { ThemeProvider } from './context/ThemeContext';
+import { GEMINI_APP_URL } from './utils/constants';
 import './App.css';
-
-/**
- * The URL for Gemini.
- * Electron's main process strips X-Frame-Options headers,
- * allowing this to be embedded in an iframe.
- */
-const GEMINI_URL = 'https://gemini.google.com/app';
 
 /**
  * Root application component.
@@ -60,7 +54,7 @@ function App() {
             </div>
           )}
           <iframe
-            src={GEMINI_URL}
+            src={GEMINI_APP_URL}
             className="gemini-iframe"
             title="Gemini"
             onLoad={handleIframeLoad}

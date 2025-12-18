@@ -9,6 +9,12 @@
 
 import { memo } from 'react';
 import './about-section.css';
+import {
+    GITHUB_LICENSE_URL,
+    GITHUB_DISCLAIMER_URL,
+    GOOGLE_TOS_URL,
+    GOOGLE_GENAI_TERMS_URL
+} from '../../utils/constants';
 
 /**
  * Application version - pulled from package.json at build time.
@@ -55,7 +61,7 @@ export const AboutSection = memo(function AboutSection() {
             {/* Links Section */}
             <div className="about-links">
                 <a
-                    href="https://github.com/bwendell/gemini-desktop/blob/main/LICENSE"
+                    href={GITHUB_LICENSE_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="about-link"
@@ -64,7 +70,7 @@ export const AboutSection = memo(function AboutSection() {
                     View License (MIT)
                 </a>
                 <a
-                    href="https://github.com/bwendell/gemini-desktop/blob/main/DISCLAIMER.md"
+                    href={GITHUB_DISCLAIMER_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="about-link"
@@ -74,7 +80,7 @@ export const AboutSection = memo(function AboutSection() {
                 </a>
                 <span className="about-link-separator">|</span>
                 <a
-                    href="https://policies.google.com/terms"
+                    href={GOOGLE_TOS_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="about-link"
@@ -83,7 +89,7 @@ export const AboutSection = memo(function AboutSection() {
                     Google Terms of Service
                 </a>
                 <a
-                    href="https://policies.google.com/terms/generative-ai"
+                    href={GOOGLE_GENAI_TERMS_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="about-link"

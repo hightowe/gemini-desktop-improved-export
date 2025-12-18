@@ -9,3 +9,4 @@ export * from './windowActions';
 export * from './selectors';
 export * from './logger';
 export * from './hotkeyHelpers';
+export * from './quickChatActions';

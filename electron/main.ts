@@ -33,8 +33,8 @@ const isDev = !useProductionBuild;
 
 // Initialize Managers
 const windowManager = new WindowManager(isDev);
-const ipcManager = new IpcManager(windowManager);
 const hotkeyManager = new HotkeyManager(windowManager);
+const ipcManager = new IpcManager(windowManager, hotkeyManager);
 
 // App lifecycle
 app.whenReady().then(() => {

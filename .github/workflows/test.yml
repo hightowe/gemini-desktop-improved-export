@@ -1,0 +1,136 @@
+# =============================================================================
+# GitHub Actions Test Workflow
+# =============================================================================
+#
+# This workflow runs automated tests for the Gemini Desktop application.
+# It triggers on pushes to main and pull requests, running:
+#   - Build (via _build.yml)
+#   - Unit tests with coverage
+#   - E2E/Integration tests (Windows, Linux, macOS)
+#   - Build verification
+#
+# =============================================================================
+
+name: Test
+
+# =============================================================================
+# Trigger Configuration
+# =============================================================================
+on:
+  push:
+    # Run on all branches
+  pull_request:
+    branches: [main]
+  # Allow manual triggering from Actions tab
+  workflow_dispatch:
+
+# =============================================================================
+# Concurrency Control
+# =============================================================================
+# Cancel in-progress runs when a new commit is pushed to the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# =============================================================================
+# Jobs
+# =============================================================================
+jobs:
+  # Build application
+  build:
+    uses: ./.github/workflows/_build.yml
+  
+  # Run tests with coverage uploads enabled
+  test:
+    needs: build
+    uses: ./.github/workflows/_test.yml
+    with:
+      upload-coverage: true
+      e2e-fail-fast: false
+      artifact-suffix: ''
+  
+  # Verify build output on all platforms
+  build-verification:
+    name: Build Verification (${{ matrix.os }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+
+      - name: Download Electron Build
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-dist
+          path: dist-electron/
+
+      - name: Verify Build Output
+        run: |
+          echo "Verifying build output exists..."
+          ls -la dist/ || dir dist/
+          ls -la dist-electron/ || dir dist-electron/
+        shell: bash
+  
+  # Aggregate results
+  test-complete:
+    name: Test Complete
+    needs: [build, test, build-verification]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Check Job Results
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check build
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "✅ Build: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check tests
+          if [ "${{ needs.test.result }}" == "success" ]; then
+            echo "✅ Tests: Passed (all platforms)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Tests: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check build verification
+          if [ "${{ needs.build-verification.result }}" == "success" ]; then
+            echo "✅ Build Verification: Passed (all platforms)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Build Verification: ${{ needs.build-verification.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Fail if Any Job Failed
+        if: |
+          needs.build.result != 'success' ||
+          needs.test.result != 'success' ||
+          needs.build-verification.result != 'success'
+        run: |
+          echo "One or more jobs failed. See summary above for details."
+          exit 1

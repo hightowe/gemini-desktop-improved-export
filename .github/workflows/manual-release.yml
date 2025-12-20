@@ -1,0 +1,35 @@
+# =============================================================================
+# GitHub Actions Manual Release Workflow
+# =============================================================================
+#
+# This workflow allows manual triggering of the release process.
+# It is useful for testing packaging or creating ad-hoc releases, executing:
+#   - Build (via _build.yml)
+#   - Release Packaging & Publishing (via _release.yml)
+#   - SKIPS tests for faster execution
+#
+# =============================================================================
+
+name: Manual Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write # Required for creating releases
+
+# Prevent concurrent releases
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Build application
+  build:
+    uses: ./.github/workflows/_build.yml
+  
+  # Build and publish release (skip tests)
+  release:
+    needs: build
+    uses: ./.github/workflows/_release.yml
+    secrets: inherit

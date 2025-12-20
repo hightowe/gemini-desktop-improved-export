@@ -1,3 +1,15 @@
+# =============================================================================
+# GitHub Actions Release Workflow
+# =============================================================================
+#
+# This workflow handles the automated release process for Gemini Desktop.
+# It triggers on version tags (v*), executing:
+#   - Build (via _build.yml)
+#   - Quality Gate Tests (via _test.yml, fail-fast enabled)
+#   - Release Packaging & Publishing (via _release.yml)
+#
+# =============================================================================
+
 name: Release
 
 on:
@@ -23,204 +35,21 @@ env:
   ELECTRON_ENABLE_LOGGING: true
 
 jobs:
-  # ===========================================================================
-  # Quality Gate: Unit Tests
-  # ===========================================================================
-  unit-tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install Dependencies
-        run: npm ci
-      
-      - name: Build Electron Backend
-        run: npm run build:electron
-      
-      - name: Run All Tests
-        run: npm run test:all
-        env:
-          FORCE_COLOR: 1
-
-  # ===========================================================================
-  # Quality Gate: E2E Tests
-  # ===========================================================================
-  e2e-tests:
-    name: E2E Verification (${{ matrix.os }})
-    needs: unit-tests
-    runs-on: ${{ matrix.os }}
-    
-    strategy:
-      fail-fast: true # If any platform fails, abort the release
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          # Platform-specific configurations
-          - os: ubuntu-latest
-            display: ':99.0'
-          - os: windows-latest
-            display: ''
-          - os: macos-latest
-            display: ''
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      # Linux-specific: Setup virtual display for headless Electron
-      - name: Setup Virtual Display (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb
-          # Start Xvfb virtual framebuffer
-          Xvfb :99 -screen 0 1920x1080x24 &
-          echo "DISPLAY=:99.0" >> $GITHUB_ENV
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Build Frontend
-        run: npm run build
-        env:
-          NODE_ENV: production
-
-      - name: Build Electron Backend
-        run: npm run build:electron
-
-      - name: Run E2E Tests
-        run: npm run test:e2e
-        env:
-          ELECTRON_USE_DIST: 'true'
-          DISPLAY: ${{ matrix.display }}
-          DEBUG: 'wdio:*'
-
-      # Upload artifacts on failure for debugging
-      - name: Upload E2E Screenshots (on failure)
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: e2e-screenshots-release-${{ matrix.os }}
-          path: |
-            tests/e2e/screenshots/
-            tests/e2e/logs/
-          retention-days: 7
-          if-no-files-found: ignore
-
-  # ===========================================================================
-  # Build & Release
-  # ===========================================================================
+  # Build application
+  build:
+    uses: ./.github/workflows/_build.yml
+  
+  # Run tests (no coverage uploads, fail-fast enabled for release quality gate)
+  test:
+    needs: build
+    uses: ./.github/workflows/_test.yml
+    with:
+      upload-coverage: false
+      e2e-fail-fast: true
+      artifact-suffix: '-release'
+  
+  # Build and publish release after tests pass
   release:
-    name: Build & Release (${{ matrix.os }})
-    needs: [unit-tests, e2e-tests]
-    runs-on: ${{ matrix.os }}
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      # Build the Frontend & Backend
-      - name: Build Project
-        run: |
-          npm run build
-          npm run build:electron
-        env:
-          NODE_ENV: production
-
-      # Delete existing assets for this platform before uploading (handles re-runs)
-      - name: Delete Existing Release Assets
-        run: |
-          # Get release info
-          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} --jq '.id' 2>/dev/null || echo "")
-          if [ -z "$RELEASE_ID" ]; then
-            echo "No existing release found, skipping asset deletion"
-            exit 0
-          fi
-          
-          # Define platform-specific patterns
-          case "${{ runner.os }}" in
-            "macOS")
-              PATTERNS="\.dmg$|\.zip$|\.zip\.blockmap$|latest-mac\.yml$"
-              ;;
-            "Windows")
-              PATTERNS="\.exe$|\.exe\.blockmap$|latest\.yml$"
-              ;;
-            "Linux")
-              PATTERNS="\.AppImage$|\.deb$|\.rpm$|\.tar\.gz$|latest-linux\.yml$"
-              ;;
-          esac
-          
-          echo "Listing assets for Release ID: $RELEASE_ID"
-          
-          # List all assets with names and IDs, handling pagination
-          # Output format: ID <tab> Name
-          gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --paginate --jq '.[] | "\(.id)\t\(.name)"' | while read -r line; do
-            ASSET_ID=$(echo "$line" | cut -f1)
-            ASSET_NAME=$(echo "$line" | cut -f2)
-            
-            if echo "$ASSET_NAME" | grep -qE "$PATTERNS"; then
-              echo "Deleting existing asset: $ASSET_NAME ($ASSET_ID)"
-              gh api -X DELETE repos/${{ github.repository }}/releases/assets/$ASSET_ID
-            fi
-          done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        continue-on-error: true
-
-      # Run Electron Builder
-      # This step builds the artifacts and uploads them to the GitHub Release
-      - name: Build & Publish via Electron Builder
-        run: npx --yes electron-builder --publish always
-        env:
-          # GitHub token for publishing releases
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-          # macOS Signing & Notarization Secrets (Optional - Empty = Unsigned)
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          
-          # Windows Signing Secrets (Optional - Empty = Unsigned)
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-
-      # Upload build artifacts for debugging if needed
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: release-artifacts-${{ matrix.os }}
-          path: release/
-          retention-days: 7
-          if-no-files-found: ignore
+    needs: [build, test]
+    uses: ./.github/workflows/_release.yml
+    secrets: inherit

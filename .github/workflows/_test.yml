@@ -1,0 +1,164 @@
+# =============================================================================
+# Atomic Test Workflow (Reusable)
+# =============================================================================
+#
+# This reusable workflow handles test execution.
+# It supports both CI and Release configurations via inputs:
+#   - Unit Tests (with optional coverage)
+#   - E2E Tests (with optional fail-fast)
+#   - Artifact Download/Management
+#
+# =============================================================================
+
+name: Test (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      upload-coverage:
+        description: 'Whether to upload coverage reports'
+        type: boolean
+        default: true
+      e2e-fail-fast:
+        description: 'Stop E2E tests on first failure'
+        type: boolean
+        default: false
+      artifact-suffix:
+        description: 'Suffix for artifact names (e.g., "-release")'
+        type: string
+        default: ''
+
+env:
+  NODE_VERSION: '20'
+  CI: true
+  ELECTRON_ENABLE_LOGGING: true
+
+jobs:
+  # ===========================================================================
+  # Unit Tests
+  # ===========================================================================
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: npm ci
+      
+      # Download build artifacts from _build.yml
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+      
+      - name: Download Electron Build
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-dist
+          path: dist-electron/
+      
+      - name: Run All Tests
+        run: npm run test:all
+        env:
+          FORCE_COLOR: 1
+      
+      # Optionally upload coverage (CI workflow only)
+      - name: Upload Frontend Coverage Report
+        uses: actions/upload-artifact@v4
+        if: inputs.upload-coverage
+        with:
+          name: coverage-frontend
+          path: coverage/
+          retention-days: 7
+      
+      - name: Upload Electron Coverage Report
+        uses: actions/upload-artifact@v4
+        if: inputs.upload-coverage
+        with:
+          name: coverage-electron
+          path: coverage-electron/
+          retention-days: 7
+
+  # ===========================================================================
+  # E2E Tests
+  # ===========================================================================
+  e2e-tests:
+    name: E2E Tests (${{ matrix.os }})
+    needs: unit-tests
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: ${{ inputs.e2e-fail-fast }}
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            display: ':99.0'
+          - os: windows-latest
+            display: ''
+          - os: macos-latest
+            display: ''
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # Linux-specific: Setup virtual display for headless Electron
+      - name: Setup Virtual Display (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1920x1080x24 &
+          echo "DISPLAY=:99.0" >> $GITHUB_ENV
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # Download build artifacts from _build.yml
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+      
+      - name: Download Electron Build
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-dist
+          path: dist-electron/
+
+      - name: Run E2E Tests
+        run: npm run test:e2e
+        env:
+          ELECTRON_USE_DIST: 'true'
+          DISPLAY: ${{ matrix.display }}
+          DEBUG: 'wdio:*'
+
+      # Upload artifacts on failure for debugging
+      - name: Upload E2E Screenshots (on failure)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-screenshots${{ inputs.artifact-suffix }}-${{ matrix.os }}
+          path: |
+            tests/e2e/screenshots/
+            tests/e2e/logs/
+          retention-days: 7
+          if-no-files-found: ignore

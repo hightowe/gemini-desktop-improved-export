@@ -6,6 +6,19 @@ import { BrowserWindow, shell } from 'electron';
 import WindowManager from './windowManager';
 import path from 'path';
 
+const mocks = vi.hoisted(() => ({
+    isMacOS: false
+}));
+
+vi.mock('../utils/constants', async (importOriginal) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const actual = await importOriginal<any>();
+    return {
+        ...actual,
+        get isMacOS() { return mocks.isMacOS },
+    };
+});
+
 describe('WindowManager', () => {
     let windowManager: any;
 
@@ -469,6 +482,160 @@ describe('WindowManager', () => {
         it('returns the Quick Chat window when it exists', () => {
             const win = windowManager.createQuickChatWindow();
             expect(windowManager.getQuickChatWindow()).toBe(win);
+        });
+    });
+
+    describe('hideToTray', () => {
+        beforeEach(() => {
+            mocks.isMacOS = false;
+        });
+
+        it('hides window and sets skipTaskbar on Windows', () => {
+            mocks.isMacOS = false;
+            const win = windowManager.createMainWindow();
+
+            windowManager.hideToTray();
+
+            expect(win.hide).toHaveBeenCalled();
+            expect(win.setSkipTaskbar).toHaveBeenCalledWith(true);
+        });
+
+        it('hides window and sets skipTaskbar on Linux', () => {
+            mocks.isMacOS = false;
+            const win = windowManager.createMainWindow();
+
+            windowManager.hideToTray();
+
+            expect(win.hide).toHaveBeenCalled();
+            expect(win.setSkipTaskbar).toHaveBeenCalledWith(true);
+        });
+
+        it('only hides window on macOS (no skipTaskbar call)', () => {
+            mocks.isMacOS = true;
+            const win = windowManager.createMainWindow();
+
+            windowManager.hideToTray();
+
+            expect(win.hide).toHaveBeenCalled();
+            expect(win.setSkipTaskbar).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when no main window exists', () => {
+            // Should not throw
+            expect(() => windowManager.hideToTray()).not.toThrow();
+        });
+
+        it('catches and logs errors gracefully', () => {
+            const win = windowManager.createMainWindow();
+            win.hide = vi.fn(() => { throw new Error('Test error'); });
+
+            // Should not throw
+            expect(() => windowManager.hideToTray()).not.toThrow();
+        });
+    });
+
+    describe('restoreFromTray', () => {
+        beforeEach(() => {
+            mocks.isMacOS = false;
+        });
+
+        it('shows, focuses window and clears skipTaskbar on Windows', () => {
+            mocks.isMacOS = false;
+            const win = windowManager.createMainWindow();
+
+            windowManager.restoreFromTray();
+
+            expect(win.show).toHaveBeenCalled();
+            expect(win.focus).toHaveBeenCalled();
+            expect(win.setSkipTaskbar).toHaveBeenCalledWith(false);
+        });
+
+        it('shows, focuses window and clears skipTaskbar on Linux', () => {
+            mocks.isMacOS = false;
+            const win = windowManager.createMainWindow();
+
+            windowManager.restoreFromTray();
+
+            expect(win.show).toHaveBeenCalled();
+            expect(win.focus).toHaveBeenCalled();
+            expect(win.setSkipTaskbar).toHaveBeenCalledWith(false);
+        });
+
+        it('only shows and focuses window on macOS (no skipTaskbar call)', () => {
+            mocks.isMacOS = true;
+            const win = windowManager.createMainWindow();
+
+            windowManager.restoreFromTray();
+
+            expect(win.show).toHaveBeenCalled();
+            expect(win.focus).toHaveBeenCalled();
+            expect(win.setSkipTaskbar).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when no main window exists', () => {
+            // Should not throw
+            expect(() => windowManager.restoreFromTray()).not.toThrow();
+        });
+
+        it('catches and logs errors gracefully', () => {
+            const win = windowManager.createMainWindow();
+            win.show = vi.fn(() => { throw new Error('Test error'); });
+
+            // Should not throw
+            expect(() => windowManager.restoreFromTray()).not.toThrow();
+        });
+    });
+
+    describe('close event handler', () => {
+        it('registers close event handler on main window', () => {
+            const win = windowManager.createMainWindow();
+
+            // Find the close event handler
+            const closeCall = win.on.mock.calls.find((call: any) => call[0] === 'close');
+            expect(closeCall).toBeDefined();
+        });
+
+        it('calls hideToTray and triggers preventDefault when not quitting', () => {
+            const win = windowManager.createMainWindow();
+
+            // Spy on hideToTray
+            const hideToTraySpy = vi.spyOn(windowManager, 'hideToTray');
+
+            // Find and trigger the close event handler
+            const closeCall = win.on.mock.calls.find((call: any) => call[0] === 'close');
+            const event = { preventDefault: vi.fn() };
+            closeCall[1](event);
+
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(hideToTraySpy).toHaveBeenCalled();
+        });
+
+        it('does NOT call preventDefault when quitting', () => {
+            const win = windowManager.createMainWindow();
+            windowManager.setQuitting(true);
+
+            // Spy on hideToTray
+            const hideToTraySpy = vi.spyOn(windowManager, 'hideToTray');
+
+            // Find and trigger the close event handler
+            const closeCall = win.on.mock.calls.find((call: any) => call[0] === 'close');
+            const event = { preventDefault: vi.fn() };
+            closeCall[1](event);
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(hideToTraySpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('setQuitting', () => {
+        it('updates the isQuitting state', () => {
+            // Access private property for testing if needed, or rely on behavior above
+            // Since isQuitting is private, we verify via public behavior (close handler)
+            windowManager.setQuitting(true);
+            expect(windowManager['isQuitting']).toBe(true);
+
+            windowManager.setQuitting(false);
+            expect(windowManager['isQuitting']).toBe(false);
         });
     });
 });

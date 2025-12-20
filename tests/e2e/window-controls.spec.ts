@@ -15,10 +15,13 @@ import { browser, $, expect } from '@wdio/globals';
 import { usesCustomControls, isMacOS } from './helpers/platform';
 import { Selectors } from './helpers/selectors';
 import { E2ELogger } from './helpers/logger';
+import { E2E_TIMING } from './helpers/e2eConstants';
 import { sendKeyboardShortcut, KeyboardShortcuts } from './helpers/keyboardActions';
 import {
     isWindowMaximized,
     isWindowMinimized,
+    isWindowVisible,
+    isWindowDestroyed,
     getWindowState,
     maximizeWindow,
     restoreWindow
@@ -46,14 +49,14 @@ describe('Window Controls Functionality', () => {
             const initialState = await isWindowMaximized();
             if (initialState) {
                 await restoreWindow();
-                await browser.pause(300);
+                await browser.pause(E2E_TIMING.QUICK_RESTORE);
             }
 
             // 2. Click maximize button
             const maximizeBtn = await $(Selectors.maximizeButton);
             await maximizeBtn.waitForClickable({ timeout: 5000 });
             await maximizeBtn.click();
-            await browser.pause(500);
+            await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
 
             // 3. Verify window is now maximized
             const isMaximized = await isWindowMaximized();
@@ -71,13 +74,13 @@ describe('Window Controls Functionality', () => {
             const initialState = await isWindowMaximized();
             if (!initialState) {
                 await maximizeWindow();
-                await browser.pause(300);
+                await browser.pause(E2E_TIMING.QUICK_RESTORE);
             }
 
             // 2. Click maximize button again to restore
             const maximizeBtn = await $(Selectors.maximizeButton);
             await maximizeBtn.click();
-            await browser.pause(500);
+            await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
 
             // 3. Verify window is restored (not maximized)
             const isMaximized = await isWindowMaximized();
@@ -86,7 +89,7 @@ describe('Window Controls Functionality', () => {
             E2ELogger.info('window-controls', 'Restore via maximize button verified');
         });
 
-        it('should minimize window when minimize button is clicked', async () => {
+        it('should minimize window to taskbar when minimize button is clicked', async () => {
             if (!(await usesCustomControls())) {
                 return;
             }
@@ -95,9 +98,9 @@ describe('Window Controls Functionality', () => {
             const minimizeBtn = await $(Selectors.minimizeButton);
             await minimizeBtn.waitForClickable({ timeout: 5000 });
             await minimizeBtn.click();
-            await browser.pause(500);
+            await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
 
-            // 2. Verify window is minimized
+            // 2. Verify window is minimized (Standard behavior)
             const isMinimized = await isWindowMinimized();
             expect(isMinimized).toBe(true);
 
@@ -105,6 +108,35 @@ describe('Window Controls Functionality', () => {
             await restoreWindow();
 
             E2ELogger.info('window-controls', 'Minimize button click verified');
+        });
+
+        it('should hide window to tray when close button is clicked', async () => {
+            if (!(await usesCustomControls())) {
+                return;
+            }
+
+            // 1. Click close button
+            const closeBtn = await $(Selectors.closeButton);
+            await closeBtn.waitForClickable({ timeout: 5000 });
+            await closeBtn.click();
+            await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
+
+            // 2. Verify window behavior:
+            // - Not destroyed (app still running)
+            // - Not visible (hidden to tray)
+            // - Not minimized (just hidden)
+
+            // Use helpers that use browser.electron.execute (Main Process)
+            await expect(isWindowDestroyed()).resolves.toBe(false);
+            await expect(isWindowVisible()).resolves.toBe(false);
+            await expect(isWindowMinimized()).resolves.toBe(false);
+
+            // 3. Restore window via windowManager (simulating tray click)
+            await restoreWindow();
+            await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
+            await expect(isWindowVisible()).resolves.toBe(true);
+
+            E2ELogger.info('window-controls', 'Close-to-tray verified');
         });
     });
 

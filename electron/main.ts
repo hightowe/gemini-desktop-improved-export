@@ -14,6 +14,7 @@ import WindowManager from './managers/windowManager';
 import IpcManager from './managers/ipcManager';
 import MenuManager from './managers/menuManager';
 import HotkeyManager from './managers/hotkeyManager';
+import TrayManager from './managers/trayManager';
 
 
 // Path to the production build
@@ -35,39 +36,57 @@ const isDev = !useProductionBuild;
 const windowManager = new WindowManager(isDev);
 const hotkeyManager = new HotkeyManager(windowManager);
 const ipcManager = new IpcManager(windowManager, hotkeyManager);
+const trayManager = new TrayManager(windowManager);
 
 // Expose managers globally for E2E testing
 // Using global instead of app to avoid side effects (extra window creation)
 (global as any).windowManager = windowManager;
 (global as any).ipcManager = ipcManager;
 
-// App lifecycle
-app.whenReady().then(() => {
-    setupHeaderStripping(session.defaultSession);
-    ipcManager.setupIpcHandlers();
+// Single Instance Lock
+const gotTheLock = app.requestSingleInstanceLock();
 
-    // Setup native application menu (critical for macOS)
-    const menuManager = new MenuManager(windowManager);
-    menuManager.buildMenu();
-
-    windowManager.createMainWindow();
-
-    // Security: Block webview creation attempts from renderer content
-    app.on('web-contents-created', (_, contents) => {
-        contents.on('will-attach-webview', (event) => {
-            event.preventDefault();
-            console.warn('[Security] Blocked webview creation attempt');
-        });
-    });
-    hotkeyManager.registerShortcuts();
-
-    app.on('activate', () => {
-        // On macOS, recreate window when dock icon is clicked
-        if (BrowserWindow.getAllWindows().length === 0) {
-            windowManager.createMainWindow();
+if (!gotTheLock) {
+    app.quit();
+} else {
+    app.on('second-instance', () => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (windowManager) {
+            windowManager.restoreFromTray();
         }
     });
-});
+
+    // App lifecycle
+    app.whenReady().then(() => {
+        setupHeaderStripping(session.defaultSession);
+        ipcManager.setupIpcHandlers();
+
+        // Setup native application menu (critical for macOS)
+        const menuManager = new MenuManager(windowManager);
+        menuManager.buildMenu();
+
+        windowManager.createMainWindow();
+
+        // Create system tray icon
+        trayManager.createTray();
+
+        // Security: Block webview creation attempts from renderer content
+        app.on('web-contents-created', (_, contents) => {
+            contents.on('will-attach-webview', (event) => {
+                event.preventDefault();
+                console.warn('[Security] Blocked webview creation attempt');
+            });
+        });
+        hotkeyManager.registerShortcuts();
+
+        app.on('activate', () => {
+            // On macOS, recreate window when dock icon is clicked
+            if (BrowserWindow.getAllWindows().length === 0) {
+                windowManager.createMainWindow();
+            }
+        });
+    });
+}
 
 // Quit when all windows are closed (except on macOS)
 app.on('window-all-closed', () => {
@@ -76,6 +95,11 @@ app.on('window-all-closed', () => {
     }
 });
 
+app.on('before-quit', () => {
+    windowManager.setQuitting(true);
+});
+
 app.on('will-quit', () => {
     hotkeyManager.unregisterAll();
+    trayManager.destroyTray();
 });

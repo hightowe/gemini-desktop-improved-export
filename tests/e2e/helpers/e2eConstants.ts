@@ -71,6 +71,12 @@ export const E2E_TIMING = {
 
     /** Initial wait time for iframe to load */
     IFRAME_LOAD_WAIT_MS: 2000,
+
+    /** Time to wait for window animations/transitions (e.g. minimize/maximize) */
+    WINDOW_TRANSITION: 500,
+
+    /** Short pause for quick restore operations or state updates */
+    QUICK_RESTORE: 300,
 } as const;
 
 // =============================================================================

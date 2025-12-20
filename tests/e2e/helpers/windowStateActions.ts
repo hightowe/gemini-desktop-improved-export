@@ -22,6 +22,8 @@ export interface WindowState {
     isMaximized: boolean;
     isMinimized: boolean;
     isFullScreen: boolean;
+    isVisible: boolean;
+    isDestroyed: boolean;
 }
 
 // ============================================================================
@@ -35,18 +37,25 @@ export interface WindowState {
  */
 export async function getWindowState(): Promise<WindowState> {
     const state = await browser.electron.execute((electron) => {
-        const win = electron.BrowserWindow.getFocusedWindow();
+        // use getAllWindows() because getFocusedWindow() returns null if window is minimized
+        const wins = electron.BrowserWindow.getAllWindows();
+        const win = wins[0];
+
         if (!win) {
             return {
                 isMaximized: false,
                 isMinimized: false,
                 isFullScreen: false,
+                isVisible: false,
+                isDestroyed: false,
             };
         }
         return {
             isMaximized: win.isMaximized(),
             isMinimized: win.isMinimized(),
             isFullScreen: win.isFullScreen(),
+            isVisible: win.isVisible(),
+            isDestroyed: win.isDestroyed(),
         };
     });
 
@@ -85,6 +94,22 @@ export async function isWindowMinimized(): Promise<boolean> {
 export async function isWindowFullScreen(): Promise<boolean> {
     const state = await getWindowState();
     return state.isFullScreen;
+}
+
+/**
+ * Checks if the current window is visible.
+ */
+export async function isWindowVisible(): Promise<boolean> {
+    const state = await getWindowState();
+    return state.isVisible;
+}
+
+/**
+ * Checks if the current window is destroyed.
+ */
+export async function isWindowDestroyed(): Promise<boolean> {
+    const state = await getWindowState();
+    return state.isDestroyed;
 }
 
 // ============================================================================
@@ -126,13 +151,16 @@ export async function restoreWindow(): Promise<void> {
 
     // Use direct Electron API for restore (not exposed via electronAPI)
     await browser.electron.execute((electron) => {
-        const win = electron.BrowserWindow.getFocusedWindow();
+        const win = electron.BrowserWindow.getAllWindows()[0];
         if (win) {
             if (win.isMaximized()) {
                 win.unmaximize();
             }
             if (win.isMinimized()) {
                 win.restore();
+            }
+            if (!win.isVisible()) {
+                win.show();
             }
         }
     });

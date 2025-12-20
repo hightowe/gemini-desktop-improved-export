@@ -184,6 +184,7 @@ export const BASE_WEB_PREFERENCES: BrowserWindowConstructorOptions['webPreferenc
     contextIsolation: true,
     nodeIntegration: false,
     sandbox: true,
+    webSecurity: true, // Explicit is better than implicit
 } as const;
 
 /**
@@ -290,3 +291,44 @@ export const isWindows = process.platform === 'win32';
 export const isLinux = process.platform === 'linux';
 export const isDev = process.env.NODE_ENV === 'development';
 
+// =============================================================================
+// Tray Configuration
+// =============================================================================
+
+/**
+ * Menu item configuration for system tray context menu.
+ * Designed for extensibility - add new items here and TrayManager will pick them up.
+ * 
+ * @example Adding a new menu item:
+ * ```typescript
+ * export const TRAY_MENU_ITEMS = {
+ *     ...TRAY_MENU_ITEMS,
+ *     SETTINGS: { label: 'Settings', id: 'settings' },
+ * };
+ * ```
+ */
+export interface TrayMenuItem {
+    /** Display label for the menu item */
+    label: string;
+    /** Unique identifier for the menu item (used in handlers) */
+    id: string;
+    /** Optional keyboard accelerator */
+    accelerator?: string;
+    /** Whether this is a separator (label ignored if true) */
+    isSeparator?: boolean;
+}
+
+/**
+ * Predefined tray menu items.
+ * TrayManager iterates over these to build the context menu.
+ */
+export const TRAY_MENU_ITEMS: Record<string, TrayMenuItem> = {
+    SHOW: { label: 'Show Gemini Desktop', id: 'show' },
+    SEPARATOR: { label: '', id: 'separator', isSeparator: true },
+    QUIT: { label: 'Quit', id: 'quit' },
+};
+
+/**
+ * Tooltip for the tray icon.
+ */
+export const TRAY_TOOLTIP = 'Gemini Desktop' as const;

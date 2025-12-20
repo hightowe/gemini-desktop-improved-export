@@ -10,6 +10,7 @@ export const app = {
     whenReady: vi.fn().mockResolvedValue(undefined),
     on: vi.fn(),
     quit: vi.fn(),
+    requestSingleInstanceLock: vi.fn().mockReturnValue(true),
 };
 
 const createMockWebContents = () => ({
@@ -40,6 +41,8 @@ export class BrowserWindow {
             unmaximize: vi.fn(),
             isMaximized: vi.fn().mockReturnValue(false),
             isDestroyed: vi.fn().mockReturnValue(false),
+            isVisible: vi.fn().mockReturnValue(true),
+            setSkipTaskbar: vi.fn(),
             on: vi.fn(),
             once: vi.fn(),
             id: Math.random(),
@@ -145,6 +148,66 @@ export const globalShortcut = {
     }
 };
 
+// ============================================================================
+// Tray Mock
+// ============================================================================
+export class Tray {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static _instances: any[] = [];
+    iconPath: string;
+    private _tooltip: string = '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private _contextMenu: any = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private _clickHandler: ((event: any) => void) | null = null;
+
+    constructor(iconPath: string) {
+        this.iconPath = iconPath;
+        Tray._instances.push(this);
+    }
+
+    setToolTip = vi.fn((tip: string) => { this._tooltip = tip; });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setContextMenu = vi.fn((menu: any) => { this._contextMenu = menu; });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    on = vi.fn((event: string, handler: (event: any) => void) => {
+        if (event === 'click') {
+            this._clickHandler = handler;
+        }
+    });
+    destroy = vi.fn();
+    isDestroyed = vi.fn().mockReturnValue(false);
+
+    // Test helpers
+    getTooltip() { return this._tooltip; }
+    getContextMenu() { return this._contextMenu; }
+    simulateClick() {
+        if (this._clickHandler) {
+            this._clickHandler({});
+        }
+    }
+
+    static _reset() {
+        Tray._instances = [];
+    }
+}
+
+// ============================================================================
+// Menu Mock
+// ============================================================================
+export const Menu = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    buildFromTemplate: vi.fn((template: any[]) => ({
+        items: template,
+        popup: vi.fn(),
+    })),
+    setApplicationMenu: vi.fn(),
+    _reset: () => {
+        Menu.buildFromTemplate.mockClear();
+        Menu.setApplicationMenu.mockClear();
+    }
+};
+
 // Default export for CJS compatibility
 export default {
     app,
@@ -157,4 +220,6 @@ export default {
     shell,
     contextBridge,
     globalShortcut,
+    Tray,
+    Menu,
 };

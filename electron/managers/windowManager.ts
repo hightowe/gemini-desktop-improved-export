@@ -16,7 +16,8 @@ import {
     QUICK_CHAT_WIDTH,
     QUICK_CHAT_HEIGHT,
     getTitleBarStyle,
-    getDevUrl
+    getDevUrl,
+    isMacOS,
 } from '../utils/constants';
 import { getPreloadPath, getDistHtmlPath, getIconPath } from '../utils/paths';
 import { createLogger } from '../utils/logger';
@@ -28,6 +29,7 @@ export default class WindowManager {
     private mainWindow: BrowserWindow | null = null;
     private optionsWindow: BrowserWindow | null = null;
     private quickChatWindow: BrowserWindow | null = null;
+    private isQuitting: boolean = false;
 
     /**
      * Creates a new WindowManager instance.
@@ -100,6 +102,16 @@ export default class WindowManager {
             if (this.optionsWindow) {
                 this.optionsWindow.close();
             }
+        });
+
+        // Close to tray behavior
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (this.mainWindow as any).on('close', (event: Electron.Event) => {
+            if (!this.isQuitting) {
+                event.preventDefault();
+                this.hideToTray();
+            }
+            return false;
         });
 
         return this.mainWindow;
@@ -251,6 +263,50 @@ export default class WindowManager {
     }
 
     /**
+     * Hide the main window to tray (minimize to tray behavior).
+     * Hides window and sets skipTaskbar to remove from taskbar.
+     */
+    hideToTray(): void {
+        try {
+            if (!this.mainWindow) {
+                logger.warn('Cannot hide to tray: no main window');
+                return;
+            }
+
+            this.mainWindow.hide();
+            // On Windows/Linux, also remove from taskbar
+            if (!isMacOS) {
+                this.mainWindow.setSkipTaskbar(true);
+            }
+            logger.log('Main window hidden to tray');
+        } catch (error) {
+            logger.error('Failed to hide window to tray:', error);
+        }
+    }
+
+    /**
+     * Restore the main window from tray.
+     */
+    restoreFromTray(): void {
+        try {
+            if (!this.mainWindow) {
+                logger.warn('Cannot restore from tray: no main window');
+                return;
+            }
+
+            this.mainWindow.show();
+            this.mainWindow.focus();
+            // Restore taskbar visibility on Windows/Linux
+            if (!isMacOS) {
+                this.mainWindow.setSkipTaskbar(false);
+            }
+            logger.log('Main window restored from tray');
+        } catch (error) {
+            logger.error('Failed to restore window from tray:', error);
+        }
+    }
+
+    /**
      * Create the Quick Chat floating window.
      * Centers on the active display, transparent and always-on-top.
      * @returns The Quick Chat window
@@ -260,18 +316,9 @@ export default class WindowManager {
             return this.quickChatWindow;
         }
 
-        // Get the display where the cursor is located
-        const cursorPoint = screen.getCursorScreenPoint();
-        const display = screen.getDisplayNearestPoint(cursorPoint);
-        const { width: displayWidth, height: displayHeight } = display.workAreaSize;
-        const { x: displayX, y: displayY } = display.workArea;
-
         // Center the window horizontally, position it in upper third vertically
         /* v8 ignore next 2 -- fallback for undefined constants, always defined */
-        const windowWidth = QUICK_CHAT_WINDOW_CONFIG.width ?? QUICK_CHAT_WIDTH;
-        const windowHeight = QUICK_CHAT_WINDOW_CONFIG.height ?? QUICK_CHAT_HEIGHT;
-        const x = displayX + Math.round((displayWidth - windowWidth) / 2);
-        const y = displayY + Math.round(displayHeight / 4);
+        const { x, y } = this._calculateQuickChatPosition();
 
         this.quickChatWindow = new BrowserWindow({
             ...QUICK_CHAT_WINDOW_CONFIG,
@@ -318,21 +365,34 @@ export default class WindowManager {
             this.createQuickChatWindow();
         } else {
             // Reposition to current cursor display
-            const cursorPoint = screen.getCursorScreenPoint();
-            const display = screen.getDisplayNearestPoint(cursorPoint);
-            const { width: displayWidth, height: displayHeight } = display.workAreaSize;
-            const { x: displayX, y: displayY } = display.workArea;
+            const { x, y } = this._calculateQuickChatPosition();
 
-            /* v8 ignore next -- fallback for undefined constant, always defined */
-            const windowWidth = QUICK_CHAT_WINDOW_CONFIG.width ?? QUICK_CHAT_WIDTH;
-            const x = displayX + Math.round((displayWidth - windowWidth) / 2);
-            const y = displayY + Math.round(displayHeight / 4);
-
-            this.quickChatWindow.setPosition(x, y);
-            this.quickChatWindow.show();
-            this.quickChatWindow.focus();
+            if (this.quickChatWindow && !this.quickChatWindow.isDestroyed()) {
+                this.quickChatWindow.setPosition(x, y);
+                this.quickChatWindow.show();
+                this.quickChatWindow.focus();
+            }
         }
         logger.log('Quick Chat window shown');
+    }
+
+    /**
+     * Calculate position for Quick Chat window based on cursor location.
+     * Centers horizontally on the active display, upper third vertically.
+     * @private
+     */
+    private _calculateQuickChatPosition(): { x: number; y: number } {
+        const cursorPoint = screen.getCursorScreenPoint();
+        const display = screen.getDisplayNearestPoint(cursorPoint);
+        const { width: displayWidth, height: displayHeight } = display.workAreaSize;
+        const { x: displayX, y: displayY } = display.workArea;
+
+        /* v8 ignore next -- fallback for undefined constant, always defined */
+        const windowWidth = QUICK_CHAT_WINDOW_CONFIG.width ?? QUICK_CHAT_WIDTH;
+        const x = displayX + Math.round((displayWidth - windowWidth) / 2);
+        const y = displayY + Math.round(displayHeight / 4);
+
+        return { x, y };
     }
 
     /**
@@ -373,5 +433,14 @@ export default class WindowManager {
             this.mainWindow.focus();
             logger.log('Main window focused');
         }
+    }
+
+    /**
+     * Set the quitting state.
+     * Used to distinguish between closing to tray (user X) and quitting app (Cmd+Q/Menu).
+     * @param state - Whether the app is quitting
+     */
+    setQuitting(state: boolean): void {
+        this.isQuitting = state;
     }
 }

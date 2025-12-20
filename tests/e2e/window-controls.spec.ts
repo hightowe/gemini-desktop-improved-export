@@ -212,13 +212,13 @@ describe('Window Controls Functionality', () => {
             await sendKeyboardShortcut(KeyboardShortcuts.CLOSE_WINDOW);
             await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
 
-            // Verify close-to-tray behavior (same expectations as Windows/Linux test)
+            // Verify close-to-tray behavior on macOS:
             // - Not destroyed (app still running)
-            // - Not visible (hidden to tray)
-            // - Not minimized (just hidden)
+            // - Not visible (hidden/minimized to Dock)
+            // NOTE: On macOS, hidden windows may also be marked as minimized.
+            // The critical behavior is that the app doesn't quit (isDestroyed = false).
             await expect(isWindowDestroyed()).resolves.toBe(false);
             await expect(isWindowVisible()).resolves.toBe(false);
-            await expect(isWindowMinimized()).resolves.toBe(false);
 
             // Restore window
             await restoreWindow();

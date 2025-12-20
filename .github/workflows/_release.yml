@@ -21,8 +21,43 @@ env:
   ELECTRON_ENABLE_LOGGING: true
 
 jobs:
+  # Pre-cleanup: Delete ALL existing assets before any platform uploads
+  # This prevents race conditions when platforms run in parallel
+  cleanup:
+    name: Clean Existing Assets
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Delete All Existing Release Assets
+        run: |
+          # Get release info
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} --jq '.id' 2>/dev/null || echo "")
+          if [ -z "$RELEASE_ID" ]; then
+            echo "No existing release found, skipping asset deletion"
+            exit 0
+          fi
+
+          echo "Deleting ALL existing assets for Release ID: $RELEASE_ID"
+
+          # Delete ALL assets (will be rebuilt by the platform jobs)
+          gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --paginate --jq '.[] | "\(.id)\t\(.name)"' | while read -r line; do
+            ASSET_ID=$(echo "$line" | cut -f1)
+            ASSET_NAME=$(echo "$line" | cut -f2)
+
+            echo "Deleting asset: $ASSET_NAME ($ASSET_ID)"
+            gh api -X DELETE repos/${{ github.repository }}/releases/assets/$ASSET_ID || echo "Failed to delete $ASSET_NAME (might be already deleted)"
+          done
+
+          echo "Waiting for GitHub API propagation..."
+          sleep 5
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        continue-on-error: true
+
   release:
     name: Release (${{ matrix.os }})
+    needs: cleanup  # Wait for cleanup to finish
     runs-on: ${{ matrix.os }}
     
     strategy:
@@ -55,54 +90,6 @@ jobs:
         with:
           name: electron-dist
           path: dist-electron/
-
-      # Delete existing assets for this platform before uploading (handles re-runs)
-      - name: Delete Existing Release Assets
-        run: |
-          # Get release info
-          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} --jq '.id' 2>/dev/null || echo "")
-          if [ -z "$RELEASE_ID" ]; then
-            echo "No existing release found, skipping asset deletion"
-            exit 0
-          fi
-
-          # Define platform-specific patterns
-          # IMPORTANT: These patterns must handle spaces in filenames correctly
-          case "${{ runner.os }}" in
-            "macOS")
-              # Matches: .dmg, .zip, .zip.blockmap, latest-mac.yml
-              PATTERNS="\.dmg$|\.zip$|\.zip\.blockmap$|latest-mac\.yml$"
-              ;;
-            "Windows")
-              # Matches: .exe, .exe.blockmap, latest.yml
-              PATTERNS="\.exe$|\.exe\.blockmap$|latest\.yml$"
-              ;;
-            "Linux")
-              # Matches: .AppImage, .deb, .rpm, .tar.gz, latest-linux.yml
-              PATTERNS="\.AppImage$|\.deb$|\.rpm$|\.tar\.gz$|latest-linux\.yml$"
-              ;;
-          esac
-
-          echo "Listing assets for Release ID: $RELEASE_ID"
-
-          # List all assets and filter/delete in one go
-          # We use a loop to handle items one by one to avoid argument list too long
-          gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --paginate --jq '.[] | "\(.id)\t\(.name)"' | while read -r line; do
-            ASSET_ID=$(echo "$line" | cut -f1)
-            ASSET_NAME=$(echo "$line" | cut -f2)
-
-            if echo "$ASSET_NAME" | grep -qE "$PATTERNS"; then
-              echo "Deleting existing asset: $ASSET_NAME ($ASSET_ID)"
-              gh api -X DELETE repos/${{ github.repository }}/releases/assets/$ASSET_ID || echo "Failed to delete $ASSET_NAME (might be already deleted)"
-            fi
-          done
-
-          echo "Waiting for GitHub API propagation..."
-          sleep 10
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        continue-on-error: true
 
       # Run Electron Builder
       # This step builds the artifacts and uploads them to the GitHub Release

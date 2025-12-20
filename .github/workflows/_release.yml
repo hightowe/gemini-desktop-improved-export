@@ -37,19 +37,33 @@ jobs:
             exit 0
           fi
 
+          echo "================================================="
           echo "Deleting ALL existing assets for Release ID: $RELEASE_ID"
+          echo "================================================="
+
+          # Count assets before deletion
+          ASSET_COUNT=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --paginate --jq '. | length')
+          echo "Total assets to delete: $ASSET_COUNT"
+          echo ""
 
           # Delete ALL assets (will be rebuilt by the platform jobs)
           gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --paginate --jq '.[] | "\(.id)\t\(.name)"' | while read -r line; do
             ASSET_ID=$(echo "$line" | cut -f1)
             ASSET_NAME=$(echo "$line" | cut -f2)
 
-            echo "Deleting asset: $ASSET_NAME ($ASSET_ID)"
-            gh api -X DELETE repos/${{ github.repository }}/releases/assets/$ASSET_ID || echo "Failed to delete $ASSET_NAME (might be already deleted)"
+            echo "[DELETE] Asset: '$ASSET_NAME' (ID: $ASSET_ID)"
+            if gh api -X DELETE repos/${{ github.repository }}/releases/assets/$ASSET_ID 2>&1; then
+              echo "  ✓ Successfully deleted"
+            else
+              echo "  ⚠ Failed to delete (might be already deleted)"
+            fi
           done
 
-          echo "Waiting for GitHub API propagation..."
-          sleep 5
+          echo ""
+          echo "================================================="
+          echo "Waiting 15 seconds for GitHub API propagation..."
+          echo "================================================="
+          sleep 15
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -93,8 +107,10 @@ jobs:
 
       # Run Electron Builder
       # This step builds the artifacts and uploads them to the GitHub Release
+      # Force overwrite in case cleanup didn't fully propagate
       - name: Build & Publish via Electron Builder
         run: npx --yes electron-builder --publish always
+        # Note: electron-builder automatically handles overwrites when publishing to GitHub
         env:
           # GitHub token for publishing releases
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

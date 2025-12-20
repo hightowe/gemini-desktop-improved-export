@@ -24,7 +24,8 @@ import {
     isWindowDestroyed,
     getWindowState,
     maximizeWindow,
-    restoreWindow
+    restoreWindow,
+    closeWindow
 } from './helpers/windowStateActions';
 
 /**
@@ -203,20 +204,24 @@ describe('Window Controls Functionality', () => {
             // and applies to all OS-level global keyboard shortcuts.
         });
 
-        it('should hide window to tray when Cmd+W is pressed on macOS', async () => {
+        it('should hide window to tray when close is triggered on macOS', async () => {
             if (!(await isMacOS())) {
                 return;
             }
 
-            // Send Cmd+W to close window
-            await sendKeyboardShortcut(KeyboardShortcuts.CLOSE_WINDOW);
+            // Use the close API instead of Cmd+W keyboard shortcut
+            // WebDriver sends keyboard events to web content, NOT to the OS,
+            // so Cmd+W won't actually trigger the window close on macOS.
+            await closeWindow();
             await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
+
+            // Log state for debugging
+            const stateAfterClose = await getWindowState();
+            E2ELogger.info('window-controls', `macOS state after close: ${JSON.stringify(stateAfterClose)}`);
 
             // Verify close-to-tray behavior on macOS:
             // - Not destroyed (app still running)
             // - Not visible (hidden/minimized to Dock)
-            // NOTE: On macOS, hidden windows may also be marked as minimized.
-            // The critical behavior is that the app doesn't quit (isDestroyed = false).
             await expect(isWindowDestroyed()).resolves.toBe(false);
             await expect(isWindowVisible()).resolves.toBe(false);
 
@@ -225,7 +230,7 @@ describe('Window Controls Functionality', () => {
             await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
             await expect(isWindowVisible()).resolves.toBe(true);
 
-            E2ELogger.info('window-controls', 'macOS Cmd+W close-to-tray verified');
+            E2ELogger.info('window-controls', 'macOS close-to-tray verified');
         });
     });
 

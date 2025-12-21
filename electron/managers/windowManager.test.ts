@@ -169,6 +169,11 @@ describe('WindowManager', () => {
             const win = windowManager.createAuthWindow(url);
 
             expect((BrowserWindow as any)._instances.length).toBe(1);
+
+            // Verify icon is set
+            const createdWindow = (BrowserWindow as any)._instances[0];
+            expect(createdWindow.options.icon).toBeDefined();
+
             expect(win.loadURL).toHaveBeenCalledWith(url);
         });
 

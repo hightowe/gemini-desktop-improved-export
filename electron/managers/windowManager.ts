@@ -62,7 +62,10 @@ export default class WindowManager {
             this.authWindow.close();
         }
 
-        this.authWindow = new BrowserWindow(AUTH_WINDOW_CONFIG);
+        this.authWindow = new BrowserWindow({
+            ...AUTH_WINDOW_CONFIG,
+            icon: getIconPath(),
+        });
         const authWindow = this.authWindow;
 
         // Load the URL and handle initial load errors

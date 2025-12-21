@@ -41,6 +41,12 @@ describe('Options Window Features', () => {
         const titlebar = await $(Selectors.optionsTitlebar);
         await expect(titlebar).toExist();
 
+        // 3a. Verify Titlebar Icon is present
+        const icon = await titlebar.$('img[src*="icon.png"]');
+        await expect(icon).toExist();
+        const width = await icon.getProperty('naturalWidth');
+        expect(width).toBeGreaterThan(0);
+
         // 4. Verify window controls - now always present on all platforms
         const controlsContainer = await $('.options-window-controls');
         await expect(controlsContainer).toBeDisplayed();
@@ -75,5 +81,44 @@ describe('Options Window Features', () => {
         await browser.switchToWindow(finalHandles[0]);
         const title = await browser.getTitle();
         expect(title).toBeDefined();
+    });
+
+    it('should NOT open multiple Options windows - clicking again focuses existing', async () => {
+        // 1. Open Options via menu first time
+        await clickMenuItemById('menu-file-options');
+        await waitForWindowCount(2, 5000);
+
+        const handlesAfterFirst = await browser.getWindowHandles();
+        expect(handlesAfterFirst.length).toBe(2);
+
+        E2ELogger.info('options-window', 'First Options window opened');
+
+        // 2. Switch back to main window
+        await browser.switchToWindow(handlesAfterFirst[0]);
+        await browser.pause(500);
+
+        // 3. Try to open Options again
+        await clickMenuItemById('menu-file-options');
+        await browser.pause(1000);
+
+        // 4. Should still be only 2 windows (no duplicate)
+        const handlesAfterSecond = await browser.getWindowHandles();
+        expect(handlesAfterSecond.length).toBe(2);
+
+        E2ELogger.info('options-window', 'No duplicate Options window created');
+
+        // 5. Verify the existing Options window was focused (not a new one)
+        // The handles should be the same
+        expect(handlesAfterSecond).toEqual(handlesAfterFirst);
+
+        // 6. Cleanup: close Options window
+        await browser.switchToWindow(handlesAfterSecond[1]);
+        const closeBtn = await $(Selectors.optionsCloseButton);
+        await closeBtn.click();
+        await waitForWindowCount(1, 5000);
+
+        // Switch back to main
+        const finalHandles = await browser.getWindowHandles();
+        await browser.switchToWindow(finalHandles[0]);
     });
 });

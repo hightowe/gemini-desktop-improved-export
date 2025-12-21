@@ -46,12 +46,25 @@
     -webkit-app-region: drag;
 }
 
+.options-titlebar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 12px;
+    margin-right: 8px;
+    height: 100%;
+    /* Icon should not be draggable to allow potential future clicks/menus */
+    -webkit-app-region: no-drag;
+}
+
 .options-titlebar-title {
     font-size: 12px;
     font-weight: 400;
     color: var(--text-primary);
     /* Prevent text selection during drag */
     pointer-events: none;
+    /* Ensure title stays centered in its flex container */
+    text-align: center;
 }
 
 /* === Window Controls (Windows/Linux only) === */

@@ -38,7 +38,12 @@ export const OptionsWindowTitlebar = memo(function OptionsWindowTitlebar({ title
 
     return (
         <header className="options-titlebar" data-testid="options-titlebar">
-            {/* Drag region - covers entire titlebar for easy window dragging */}
+            {/* Icon - Left justified */}
+            <div className="options-titlebar-icon">
+                <img src="./icon.png" alt="App Icon" style={{ width: 16, height: 16 }} />
+            </div>
+
+            {/* Drag region - Centered title */}
             <div className="options-titlebar-drag-region">
                 <span className="options-titlebar-title" data-testid="options-titlebar-title">
                     {title}

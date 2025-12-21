@@ -34,3 +34,5 @@ release/
 
 # GitHub App credentials
 gha-creds-*.json
+
+.wdio-test-data/

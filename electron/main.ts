@@ -11,6 +11,11 @@ import * as fs from 'fs';
 import { setupHeaderStripping } from './utils/security';
 import { getDistHtmlPath } from './utils/paths';
 
+import { createLogger } from './utils/logger';
+
+// Setup Logger
+const logger = createLogger('[Main]');
+
 // Set application name for Windows/Linux
 app.setName('Gemini Desktop');
 import WindowManager from './managers/windowManager';
@@ -51,12 +56,18 @@ const trayManager = new TrayManager(windowManager);
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
+    logger.log('Another instance is already running. Quitting...');
     app.quit();
 } else {
     app.on('second-instance', () => {
         // Someone tried to run a second instance, we should focus our window.
+        logger.log('Second instance detected. Focusing existing window...');
         if (windowManager) {
-            windowManager.restoreFromTray();
+            if (windowManager.getMainWindow()) {
+                windowManager.restoreFromTray();
+            } else {
+                windowManager.createMainWindow();
+            }
         }
     });
 

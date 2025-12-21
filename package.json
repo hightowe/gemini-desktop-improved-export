@@ -12,7 +12,7 @@
     "build": "tsc && vite build",
     "build:electron": "tsc -p tsconfig.electron.json && node scripts/rename-electron-output.cjs",
     "preview": "vite preview",
-    "electron:dev": "npm run build:electron && concurrently \"npm run dev\" \"wait-on http://localhost:1420 && electron .\"",
+    "electron:dev": "npm run build:electron && concurrently --kill-others \"npm run dev\" \"wait-on http://localhost:1420 && electron .\"",
     "electron:build": "npm run build && npm run build:electron && electron-builder",
     "dist:mac-x64": "electron-builder --mac --x64 --publish never",
     "dist:mac-arm64": "electron-builder --mac --arm64 --publish never",

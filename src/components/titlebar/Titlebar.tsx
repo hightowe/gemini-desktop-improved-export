@@ -40,7 +40,7 @@ export function Titlebar({ config = {} }: TitlebarProps) {
                 {mergedConfig.showIcon && (
                     <div className="titlebar-icon">
                         {/* Placeholder for app icon - can be customized later */}
-                        <img src="/icon.png" alt="App Icon" style={{ width: 16, height: 16 }} />
+                        <img src="./icon.png" alt="App Icon" style={{ width: 16, height: 16 }} />
                     </div>
                 )}
                 <TitlebarMenu menus={menus} />

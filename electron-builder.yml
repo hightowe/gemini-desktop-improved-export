@@ -54,6 +54,7 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   perMachine: false
+  artifactName: ${productName}-${version}-${arch}-installer.${ext}
 
 # macOS Configuration
 # Note: Architecture is specified via CLI flags (--x64 or --arm64)

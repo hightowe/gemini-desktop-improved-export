@@ -87,4 +87,27 @@ describe('Application Startup', () => {
         const webviewContainer = await $(Selectors.webviewContainer);
         await expect(webviewContainer).toBeExisting();
     });
+
+    it('should display the app icon in the titlebar', async () => {
+        const titlebar = await $(Selectors.titlebar);
+        await titlebar.waitForExist({ timeout: 10000 });
+
+        // Find the icon img element
+        const iconImg = await titlebar.$('img[alt="App Icon"]');
+        await expect(iconImg).toBeExisting();
+
+        // Verify the icon has the correct src attribute
+        const iconSrc = await iconImg.getAttribute('src');
+        expect(iconSrc).toContain('icon.png');
+
+        // Verify the image actually loaded (not broken)
+        // naturalWidth > 0 means the image loaded successfully
+        const isLoaded = await browser.execute(() => {
+            const img = document.querySelector('header.titlebar img[alt="App Icon"]') as HTMLImageElement;
+            return img ? img.naturalWidth > 0 : false;
+        });
+        expect(isLoaded).toBe(true);
+
+        E2ELogger.info('app-startup', 'App icon loaded successfully in titlebar');
+    });
 });

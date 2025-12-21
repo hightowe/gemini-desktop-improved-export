@@ -28,6 +28,7 @@ export default class WindowManager {
     readonly isDev: boolean;
     private mainWindow: BrowserWindow | null = null;
     private optionsWindow: BrowserWindow | null = null;
+    private authWindow: BrowserWindow | null = null;
     private quickChatWindow: BrowserWindow | null = null;
     private isQuitting: boolean = false;
 
@@ -56,7 +57,13 @@ export default class WindowManager {
     createAuthWindow(url: string): BrowserWindow {
         logger.log('Creating auth window for:', url);
 
-        const authWindow = new BrowserWindow(AUTH_WINDOW_CONFIG);
+        // Close any existing auth window before creating a new one
+        if (this.authWindow && !this.authWindow.isDestroyed()) {
+            this.authWindow.close();
+        }
+
+        this.authWindow = new BrowserWindow(AUTH_WINDOW_CONFIG);
+        const authWindow = this.authWindow;
 
         // Load the URL and handle initial load errors
         authWindow.loadURL(url).catch((error) => {
@@ -123,9 +130,10 @@ export default class WindowManager {
             }
         });
 
-        // Log when window is closed (by user or auto-close)
+        // Log when window is closed (by user or auto-close) and clear reference
         authWindow.on('closed', () => {
             logger.log('Auth window closed');
+            this.authWindow = null;
         });
 
         // Handle unresponsive renderer (rare but possible)
@@ -352,6 +360,17 @@ export default class WindowManager {
             if (!this.mainWindow) {
                 logger.warn('Cannot hide to tray: no main window');
                 return;
+            }
+
+            // Close auxiliary windows when hiding main window (dependent window pattern)
+            // This prevents orphaned windows when user closes to tray
+            if (this.optionsWindow) {
+                this.optionsWindow.close();
+                this.optionsWindow = null;
+            }
+            if (this.authWindow && !this.authWindow.isDestroyed()) {
+                this.authWindow.close();
+                this.authWindow = null;
             }
 
             this.mainWindow.hide();

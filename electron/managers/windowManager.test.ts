@@ -179,6 +179,25 @@ describe('WindowManager', () => {
             // Event handler was called (coverage of line 46)
         });
 
+        it('clears auth window reference when window is closed', () => {
+            windowManager.createAuthWindow('https://accounts.google.com');
+            expect(windowManager['authWindow']).not.toBeNull();
+
+            const win = (BrowserWindow as any).getAllWindows()[0];
+            const closeHandler = win.on.mock.calls.find((call: any) => call[0] === 'closed')[1];
+            closeHandler();
+
+            expect(windowManager['authWindow']).toBeNull();
+        });
+
+        it('closes existing auth window before creating a new one', () => {
+            const win1 = windowManager.createAuthWindow('https://accounts.google.com');
+            const win2 = windowManager.createAuthWindow('https://accounts.google.com/new');
+
+            expect(win1.close).toHaveBeenCalled();
+            expect(win2).not.toBe(win1);
+        });
+
         it('sets up did-navigate listener on auth window', () => {
             const win = windowManager.createAuthWindow('https://accounts.google.com');
             const navigateCall = win.webContents.on.mock.calls.find((c: any) => c[0] === 'did-navigate');
@@ -687,6 +706,47 @@ describe('WindowManager', () => {
 
             // Should not throw
             expect(() => windowManager.hideToTray()).not.toThrow();
+        });
+
+        it('closes options window when hiding main window to tray', () => {
+            mocks.isMacOS = false;
+            windowManager.createMainWindow();
+            const optionsWin = windowManager.createOptionsWindow();
+
+            windowManager.hideToTray();
+
+            expect(optionsWin.close).toHaveBeenCalled();
+        });
+
+        it('handles case where options window does not exist when hiding to tray', () => {
+            mocks.isMacOS = false;
+            windowManager.createMainWindow();
+            // Don't create options window
+
+            // Should not throw
+            expect(() => windowManager.hideToTray()).not.toThrow();
+        });
+
+        it('closes auth window when hiding main window to tray', () => {
+            mocks.isMacOS = false;
+            windowManager.createMainWindow();
+            const authWin = windowManager.createAuthWindow('https://accounts.google.com');
+
+            windowManager.hideToTray();
+
+            expect(authWin.close).toHaveBeenCalled();
+        });
+
+        it('closes both options and auth windows when hiding to tray', () => {
+            mocks.isMacOS = false;
+            windowManager.createMainWindow();
+            const optionsWin = windowManager.createOptionsWindow();
+            const authWin = windowManager.createAuthWindow('https://accounts.google.com');
+
+            windowManager.hideToTray();
+
+            expect(optionsWin.close).toHaveBeenCalled();
+            expect(authWin.close).toHaveBeenCalled();
         });
     });
 

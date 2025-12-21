@@ -1,16 +1,16 @@
 # =============================================================================
-# Atomic Release Workflow (DO NOT USE)
+# Atomic Release Workflow (Reusable)
 # =============================================================================
 #
 # This reusable workflow handles the packaging and publishing process.
-# It runs on multiple platforms (macOS, Windows, Linux) to:
-#   - Download build artifacts
-#   - Package the application
-#   - Publish to GitHub Releases
+# 
+# Strategy: Build with --publish never, then upload via softprops/action-gh-release
+# This avoids electron-builder's buggy GitHub upload mechanism that causes
+# "already_exists" errors on blockmap files.
 #
 # =============================================================================
 
-name: Release (DO NOT USE)
+name: Release (Reusable)
 
 on:
   workflow_call:
@@ -21,82 +21,14 @@ env:
   ELECTRON_ENABLE_LOGGING: true
 
 jobs:
-  # Pre-cleanup: Delete ALL existing assets before any platform uploads
-  # This prevents race conditions when platforms run in parallel
-  cleanup:
-    name: Clean Existing Assets
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Delete All Existing Release Assets
-        run: |
-          # Get version from package.json (works for both tag and manual triggers)
-          VERSION=$(node -p "require('./package.json').version")
-          TAG="v${VERSION}"
-          echo "Looking for release with tag: $TAG"
-          
-          # Get release info - properly handle 404 when release doesn't exist
-          RESPONSE=$(gh api repos/${{ github.repository }}/releases/tags/$TAG 2>&1) || true
-          
-          # Check if release exists
-          if echo "$RESPONSE" | grep -q '"message":"Not Found"'; then
-            echo "No existing release found for tag $TAG, skipping asset deletion"
-            echo "This is expected for first-time releases."
-            exit 0
-          fi
-          
-          # Extract release ID
-          RELEASE_ID=$(echo "$RESPONSE" | jq -r '.id')
-          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
-            echo "Could not extract release ID, skipping asset deletion"
-            exit 0
-          fi
-
-          echo "================================================="
-          echo "Deleting ALL existing assets for Release ID: $RELEASE_ID"
-          echo "================================================="
-
-          # Count assets before deletion
-          ASSET_COUNT=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --paginate --jq '. | length')
-          echo "Total assets to delete: $ASSET_COUNT"
-          echo ""
-
-          # Delete ALL assets (will be rebuilt by the platform jobs)
-          gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --paginate --jq '.[] | "\(.id)\t\(.name)"' | while read -r line; do
-            ASSET_ID=$(echo "$line" | cut -f1)
-            ASSET_NAME=$(echo "$line" | cut -f2)
-
-            echo "[DELETE] Asset: '$ASSET_NAME' (ID: $ASSET_ID)"
-            if gh api -X DELETE repos/${{ github.repository }}/releases/assets/$ASSET_ID 2>&1; then
-              echo "  ✓ Successfully deleted"
-            else
-              echo "  ⚠ Failed to delete (might be already deleted)"
-            fi
-          done
-
-          echo ""
-          echo "================================================="
-          echo "Waiting 15 seconds for GitHub API propagation..."
-          echo "================================================="
-          sleep 15
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        continue-on-error: true
-
-  release:
-    name: Release (${{ matrix.os }})
-    needs: cleanup  # Wait for cleanup to finish
-    runs-on: ${{ matrix.os }}
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-
+  # ==========================================================================
+  # macOS x64 Build
+  # ==========================================================================
+  macos-x64:
+    name: macOS (x64)
+    runs-on: macos-latest
+    env:
+      npm_config_arch: x64
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -110,7 +42,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      # Download build artifacts from _build.yml
       - name: Download Frontend Build
         uses: actions/download-artifact@v4
         with:
@@ -123,33 +54,205 @@ jobs:
           name: electron-dist
           path: dist-electron/
 
-      # Run Electron Builder
-      # This step builds the artifacts and uploads them to the GitHub Release
-      # Force overwrite in case cleanup didn't fully propagate
-      - name: Build & Publish via Electron Builder
-        run: npx --yes electron-builder --publish always
-        # Note: electron-builder automatically handles overwrites when publishing to GitHub
+      - name: Build (without publish)
+        run: npm run dist:mac-x64
         env:
-          # GitHub token for publishing releases
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-          # macOS Signing & Notarization Secrets (Optional - Empty = Unsigned)
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          
-          # Windows Signing Secrets (Optional - Empty = Unsigned)
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
-      # Upload build artifacts for debugging if needed
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            release/*.dmg
+            release/*.zip
+            release/*.zip.blockmap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: release-artifacts-${{ matrix.os }}
+          name: release-artifacts-macos-x64
+          path: release/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ==========================================================================
+  # macOS arm64 Build
+  # ==========================================================================
+  macos-arm64:
+    name: macOS (arm64)
+    runs-on: macos-latest
+    env:
+      npm_config_arch: arm64
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+      
+      - name: Download Electron Build
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-dist
+          path: dist-electron/
+
+      - name: Build (without publish)
+        run: npm run dist:mac-arm64
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            release/*.dmg
+            release/*.zip
+            release/*.zip.blockmap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-artifacts-macos-arm64
+          path: release/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ==========================================================================
+  # Windows Build
+  # ==========================================================================
+  windows:
+    name: Windows (x64)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+      
+      - name: Download Electron Build
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-dist
+          path: dist-electron/
+
+      - name: Build (without publish)
+        run: npm run dist:win
+        shell: bash
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            release/*.exe
+            release/*.exe.blockmap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-artifacts-windows
+          path: release/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ==========================================================================
+  # Linux Build
+  # ==========================================================================
+  linux:
+    name: Linux (x64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+      
+      - name: Download Electron Build
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-dist
+          path: dist-electron/
+
+      - name: Build (without publish)
+        run: npm run dist:linux
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            release/*.AppImage
+            release/*.deb
+            release/*.rpm
+            release/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-artifacts-linux
           path: release/
           retention-days: 7
           if-no-files-found: ignore

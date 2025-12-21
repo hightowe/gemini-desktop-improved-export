@@ -23,7 +23,9 @@ export function setupHeaderStripping(session: Session): void {
         '*://gemini.google.com/*',
         '*://*.gemini.google.com/*',
         '*://aistudio.google.com/*',
-        '*://*.google.com/gemini/*'
+        '*://*.google.com/gemini/*',
+        '*://accounts.google.com/*',
+        '*://ogs.google.com/*'
     ];
 
     session.webRequest.onHeadersReceived(

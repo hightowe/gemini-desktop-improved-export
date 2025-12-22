@@ -123,4 +123,41 @@ describe('Dependent Windows', () => {
         await optionsCloseBtn.click();
         await waitForWindowCount(1, 5000);
     });
+
+    it('should close all dependent windows (Options + Auth) when main window hides to tray', async () => {
+        // 1. Open Options window
+        await clickMenuItemById('menu-file-options');
+        await waitForWindowCount(2, 5000);
+        E2ELogger.info('dependent-windows', 'Options window opened');
+
+        // 2. Open Auth window (via menu)
+        const mainHandle = await getMainWindowHandle();
+        await browser.switchToWindow(mainHandle);
+        await clickMenuItemById('menu-file-sign-in');
+
+        // Wait for auth window to appear (might already be open from Options)
+        await browser.pause(1000);
+        const handles = await browser.getWindowHandles();
+        E2ELogger.info('dependent-windows', `Windows after opening auth: ${handles.length}`);
+
+        // Should have at least 2 windows (main + options, auth may merge or not)
+        expect(handles.length).toBeGreaterThanOrEqual(2);
+
+        // 3. Switch back to main window and close it
+        const currentMainHandle = await getMainWindowHandle();
+        await browser.switchToWindow(currentMainHandle);
+        await closeCurrentWindow();
+        E2ELogger.info('dependent-windows', 'Closed main window');
+
+        // 4. Wait for all windows to close/hide
+        await browser.pause(1500);
+        await waitForWindowCount(0, 5000);
+        E2ELogger.info('dependent-windows', 'All dependent windows closed with main window');
+
+        // 5. Restore from tray for cleanup
+        await browser.execute(() => {
+            window.electronAPI.showWindow();
+        });
+        await waitForWindowCount(1, 5000);
+    });
 });

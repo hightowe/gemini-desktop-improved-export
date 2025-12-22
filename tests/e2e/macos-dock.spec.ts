@@ -17,7 +17,7 @@ import { browser, $, expect } from '@wdio/globals';
 import { Selectors } from './helpers/selectors';
 import { E2ELogger } from './helpers/logger';
 import { isMacOS } from './helpers/platform';
-import { verifyTrayCreated } from './helpers/trayActions';
+import { verifyTrayCreated, getTrayTooltip } from './helpers/trayActions';
 
 /**
  * Simulate the 'activate' event that macOS sends when Dock icon is clicked.
@@ -165,22 +165,13 @@ describe('macOS Dock and Menubar Behavior', () => {
                 return;
             }
 
-            const trayState = await browser.electron.execute(() => {
-                const trayManager = (global as any).trayManager as {
-                    getTray?: () => Electron.Tray | null;
-                } | undefined;
+            const tooltip = await getTrayTooltip();
 
-                const tray = trayManager?.getTray?.();
-                return {
-                    exists: !!tray,
-                    tooltip: tray?.getToolTip() ?? null,
-                };
-            });
+            expect(tooltip).not.toBeNull();
+            // Optional: verify tooltip content if it's constant
+            // expect(tooltip).toBe('Gemini');
 
-            expect(trayState.exists).toBe(true);
-            expect(trayState.tooltip).not.toBeNull();
-
-            E2ELogger.info('macos-dock', `Menubar tray tooltip: "${trayState.tooltip}"`);
+            E2ELogger.info('macos-dock', `Menubar tray tooltip: "${tooltip}"`);
         });
     });
 

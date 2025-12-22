@@ -56,31 +56,44 @@ export interface TrayMenuItem {
  */
 export async function getTrayState(): Promise<TrayState> {
     return browser.electron.execute(() => {
-        const trayManager = (global as any).trayManager as E2ETrayManager | undefined;
+        try {
+            const trayManager = (global as any).trayManager as E2ETrayManager | undefined;
 
-        if (!trayManager) {
+            if (!trayManager) {
+                return {
+                    exists: false,
+                    isDestroyed: true,
+                    tooltip: null,
+                };
+            }
+
+            const tray = trayManager.getTray?.();
+
+            if (!tray) {
+                return {
+                    exists: false,
+                    isDestroyed: true,
+                    tooltip: null,
+                };
+            }
+
+            // Check if destroyed first to avoid accessing properties on destroyed instance
+            const isDestroyed = tray.isDestroyed();
+
+            return {
+                exists: true,
+                isDestroyed,
+                // Safely access tooltip only if not destroyed
+                tooltip: !isDestroyed && (tray as any).getToolTip ? (tray as any).getToolTip() : null,
+            };
+        } catch (error) {
+            console.error('[E2E] getTrayState error:', error);
             return {
                 exists: false,
                 isDestroyed: true,
                 tooltip: null,
             };
         }
-
-        const tray = trayManager.getTray?.();
-
-        if (!tray) {
-            return {
-                exists: false,
-                isDestroyed: true,
-                tooltip: null,
-            };
-        }
-
-        return {
-            exists: true,
-            isDestroyed: tray.isDestroyed(),
-            tooltip: tray.getToolTip() || null,
-        };
     });
 }
 

@@ -189,6 +189,66 @@ describe('Quick Chat Feature', () => {
             // Should have at least 2 windows (main + quick chat)
             expect(windowStates.length).toBeGreaterThanOrEqual(1);
         });
+
+        it('should hide automatically when it loses focus (blur-to-hide)', async () => {
+            // 1. Show Quick Chat
+            await showQuickChatWindow();
+            await browser.pause(E2E_TIMING.QUICK_CHAT_SHOW_DELAY_MS);
+
+            let state = await getQuickChatState();
+            expect(state.windowVisible).toBe(true);
+
+            // 2. Focus the main window to trigger blur on Quick Chat
+            await browser.electron.execute((electron) => {
+                const wins = electron.BrowserWindow.getAllWindows();
+                const main = wins.find(w => w.getTitle().includes('Gemini'));
+                if (main) main.focus();
+            });
+
+            await browser.pause(E2E_TIMING.UI_STATE_PAUSE_MS);
+
+            // 3. Quick Chat should now be hidden
+            state = await getQuickChatState();
+            expect(state.windowVisible).toBe(false);
+            E2ELogger.info('quick-chat', 'Quick Chat window hidden on blur');
+        });
+
+        it('should reposition to active display when shown again', async () => {
+            // This test verifies that showQuickChat() calls _calculateQuickChatPosition()
+            // and setPosition() even if the window already exists.
+
+            // 1. Show at initial position
+            await showQuickChatWindow();
+            await browser.pause(E2E_TIMING.QUICK_CHAT_SHOW_DELAY_MS);
+
+            const pos1 = await browser.electron.execute((electron) => {
+                const windowManager = (global as any).windowManager;
+                const win = windowManager.getQuickChatWindow();
+                return win ? win.getPosition() : [0, 0];
+            });
+
+            // 2. Move window manually to a different position
+            await browser.electron.execute((electron) => {
+                const windowManager = (global as any).windowManager;
+                const win = windowManager.getQuickChatWindow();
+                if (win) win.setPosition(100, 100);
+            });
+
+            // 3. Show again
+            await showQuickChatWindow();
+            await browser.pause(E2E_TIMING.QUICK_CHAT_SHOW_DELAY_MS);
+
+            // 4. Position should be restored to centered (pos1)
+            const pos2 = await browser.electron.execute((electron) => {
+                const windowManager = (global as any).windowManager;
+                const win = windowManager.getQuickChatWindow();
+                return win ? win.getPosition() : [0, 0];
+            });
+
+            expect(pos2[0]).toBe(pos1[0]);
+            expect(pos2[1]).toBe(pos1[1]);
+            E2ELogger.info('quick-chat', 'Quick Chat window repositioned on second show');
+        });
     });
 
     describe('Text Submission', () => {

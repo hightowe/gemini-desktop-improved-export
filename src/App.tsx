@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { MainLayout } from './components/layout';
+import { MainLayout, OfflineOverlay } from './components';
 import { ThemeProvider } from './context/ThemeContext';
+import { useNetworkStatus } from './hooks';
 import { GEMINI_APP_URL } from './utils/constants';
 import { createRendererLogger } from './utils';
 import './App.css';
@@ -17,6 +18,7 @@ const logger = createRendererLogger('[App]');
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isOnline = useNetworkStatus();
 
   /**
    * Handle successful iframe load.
@@ -42,6 +44,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      {!isOnline && <OfflineOverlay />}
       <MainLayout>
         <div className="webview-container" data-testid="webview-container">
           {isLoading && (

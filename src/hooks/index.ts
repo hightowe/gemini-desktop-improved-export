@@ -6,3 +6,4 @@
 export { useWindowControls } from './useWindowControls';
 export { useOptionsWindow } from './useOptionsWindow';
 export { useWebviewInit } from './useWebviewInit';
+export { useNetworkStatus } from './useNetworkStatus';

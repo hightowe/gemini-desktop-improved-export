@@ -34,6 +34,9 @@ export const config = {
         './tests/e2e/auth.spec.ts',
         './tests/e2e/oauth-links.spec.ts',
         './tests/e2e/single-instance.spec.ts',
+        './tests/e2e/window-management-edge-cases.spec.ts',
+        './tests/e2e/offline-behavior.spec.ts',
+        './tests/e2e/session-persistence.spec.ts',
     ],
     maxInstances: 1,
 

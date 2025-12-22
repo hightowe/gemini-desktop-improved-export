@@ -36,4 +36,82 @@ describe('External Link Sanitization', () => {
         const handles = await browser.getWindowHandles();
         expect(handles.length).toBe(1);
     });
+
+    it('should block direct navigation of main window to external URLs', async () => {
+        // This tests the `will-navigate` handler in WindowManager
+
+        const initialUrl = await browser.getUrl();
+
+        // Attempt to navigate to an external URL using window.location
+        await browser.execute(() => {
+            window.location.href = 'https://google.com';
+        });
+
+        // Wait a bit and check URL
+        await browser.pause(1000);
+
+        const currentUrl = await browser.getUrl();
+        // Should still be on original URL (or at least not google.com)
+        expect(currentUrl).toBe(initialUrl);
+    });
+
+    it('should open links inside Gemini iframe in system browser', async () => {
+        // This is a critical security test. Links inside the webview iframe
+        // must also be intercepted and opened externally.
+
+        // 1. Find the Gemini iframe and inject a link into it
+        await browser.electron.execute((electron) => {
+            const wins = electron.BrowserWindow.getAllWindows();
+            const main = wins.find(w => w.getTitle().includes('Gemini'));
+            if (!main) return;
+
+            const webContents = main.webContents;
+            const frames = webContents.mainFrame.frames;
+            // Find a frame that looks like Gemini (usually the largest one or matches URL)
+            const geminiFrame = frames.find(f => f.url.includes('google.com'));
+
+            if (geminiFrame) {
+                geminiFrame.executeJavaScript(`
+                    const link = document.createElement('a');
+                    link.href = 'https://google.com';
+                    link.target = '_blank';
+                    link.textContent = 'Iframe External Link';
+                    link.id = 'iframe-external-link';
+                    link.style.cssText = 'position:fixed;top:50px;left:50px;z-index:9999;background:green;color:white;padding:10px;';
+                    document.body.appendChild(link);
+                    console.log('Injected link into iframe');
+                `);
+            }
+        });
+
+        // 2. Click the link inside the iframe
+        // Since we can't easily click inside the iframe via WDIO selectors in this setup,
+        // we'll trigger the click via executeJavaScript in the iframe
+        await browser.electron.execute((electron) => {
+            const wins = electron.BrowserWindow.getAllWindows();
+            const main = wins.find(w => w.getTitle().includes('Gemini'));
+            if (!main) return;
+
+            const webContents = main.webContents;
+            const frames = webContents.mainFrame.frames;
+            const geminiFrame = frames.find(f => f.url.includes('google.com'));
+
+            if (geminiFrame) {
+                geminiFrame.executeJavaScript(`
+                    const link = document.getElementById('iframe-external-link');
+                    if (link) link.click();
+                `);
+            }
+        });
+
+        await browser.pause(1000);
+
+        // 3. Verify no new Electron window was opened
+        const handles = await browser.getWindowHandles();
+        expect(handles.length).toBe(1);
+
+        // 4. Verify main window didn't navigate
+        const currentUrl = await browser.getUrl();
+        expect(currentUrl).not.toContain('google.com');
+    });
 });

@@ -26,6 +26,9 @@ import { waitForWindowCount, closeCurrentWindow } from './helpers/windowActions'
 interface SettingsData {
     theme?: 'light' | 'dark' | 'system';
     hotkeysEnabled?: boolean;
+    hotkeyAlwaysOnTop?: boolean;
+    hotkeyBossKey?: boolean;
+    hotkeyQuickChat?: boolean;
 }
 
 /**
@@ -170,6 +173,108 @@ describe('Settings Persistence', () => {
             expect(settingsAfterRestore?.hotkeysEnabled).toBe(wasEnabled);
 
             E2ELogger.info('settings-persistence', `Hotkey state restored: ${settingsAfterRestore?.hotkeysEnabled}`);
+
+            // Cleanup
+            await closeCurrentWindow();
+            await browser.switchToWindow(handles[0]);
+        });
+    });
+
+    describe('Individual Hotkey Toggle Persistence', () => {
+        it('should save individual hotkey toggle states to settings file', async () => {
+            // 1. Open Options window
+            await clickMenuItemById('menu-file-options');
+            await waitForWindowCount(2, 5000);
+
+            const handles = await browser.getWindowHandles();
+            await browser.switchToWindow(handles[1]);
+            await browser.pause(500);
+
+            // 2. Get initial toggle states for all three hotkeys
+            const alwaysOnTopToggle = await $('[data-testid="hotkey-toggle-alwaysOnTop-switch"]');
+            const bossKeyToggle = await $('[data-testid="hotkey-toggle-bossKey-switch"]');
+            const quickChatToggle = await $('[data-testid="hotkey-toggle-quickChat-switch"]');
+
+            await alwaysOnTopToggle.waitForDisplayed({ timeout: 5000 });
+
+            const initialAlwaysOnTop = (await alwaysOnTopToggle.getAttribute('aria-checked')) === 'true';
+            const initialBossKey = (await bossKeyToggle.getAttribute('aria-checked')) === 'true';
+            const initialQuickChat = (await quickChatToggle.getAttribute('aria-checked')) === 'true';
+
+            E2ELogger.info('settings-persistence', `Initial states - AlwaysOnTop: ${initialAlwaysOnTop}, BossKey: ${initialBossKey}, QuickChat: ${initialQuickChat}`);
+
+            // 3. Toggle Always-on-Top hotkey and verify persistence
+            await alwaysOnTopToggle.click();
+            await browser.pause(500);
+
+            let settings = await readSettingsFile();
+            expect(settings?.hotkeyAlwaysOnTop).toBe(!initialAlwaysOnTop);
+            E2ELogger.info('settings-persistence', `AlwaysOnTop saved: ${settings?.hotkeyAlwaysOnTop}`);
+
+            // 4. Toggle Boss Key hotkey and verify persistence
+            await bossKeyToggle.click();
+            await browser.pause(500);
+
+            settings = await readSettingsFile();
+            expect(settings?.hotkeyBossKey).toBe(!initialBossKey);
+            E2ELogger.info('settings-persistence', `BossKey saved: ${settings?.hotkeyBossKey}`);
+
+            // 5. Toggle Quick Chat hotkey and verify persistence
+            await quickChatToggle.click();
+            await browser.pause(500);
+
+            settings = await readSettingsFile();
+            expect(settings?.hotkeyQuickChat).toBe(!initialQuickChat);
+            E2ELogger.info('settings-persistence', `QuickChat saved: ${settings?.hotkeyQuickChat}`);
+
+            // 6. Restore original states
+            await alwaysOnTopToggle.click();
+            await bossKeyToggle.click();
+            await quickChatToggle.click();
+            await browser.pause(500);
+
+            // 7. Verify all states restored
+            const restoredSettings = await readSettingsFile();
+            expect(restoredSettings?.hotkeyAlwaysOnTop).toBe(initialAlwaysOnTop);
+            expect(restoredSettings?.hotkeyBossKey).toBe(initialBossKey);
+            expect(restoredSettings?.hotkeyQuickChat).toBe(initialQuickChat);
+
+            E2ELogger.info('settings-persistence', 'All individual hotkey states restored');
+
+            // Cleanup
+            await closeCurrentWindow();
+            await browser.switchToWindow(handles[0]);
+        });
+
+        it('should persist each hotkey independently', async () => {
+            // 1. Open Options window
+            await clickMenuItemById('menu-file-options');
+            await waitForWindowCount(2, 5000);
+
+            const handles = await browser.getWindowHandles();
+            await browser.switchToWindow(handles[1]);
+            await browser.pause(500);
+
+            // 2. Toggle only Boss Key (leave others unchanged)
+            const bossKeyToggle = await $('[data-testid="hotkey-toggle-bossKey-switch"]');
+            await bossKeyToggle.waitForDisplayed({ timeout: 5000 });
+
+            const initialBossKey = (await bossKeyToggle.getAttribute('aria-checked')) === 'true';
+            await bossKeyToggle.click();
+            await browser.pause(500);
+
+            // 3. Verify only Boss Key changed in settings
+            const settings = await readSettingsFile();
+            expect(settings?.hotkeyBossKey).toBe(!initialBossKey);
+
+            // 4. Restore and verify
+            await bossKeyToggle.click();
+            await browser.pause(500);
+
+            const restoredSettings = await readSettingsFile();
+            expect(restoredSettings?.hotkeyBossKey).toBe(initialBossKey);
+
+            E2ELogger.info('settings-persistence', 'Individual hotkey persistence verified');
 
             // Cleanup
             await closeCurrentWindow();

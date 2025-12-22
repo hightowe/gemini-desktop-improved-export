@@ -13,6 +13,8 @@ const specs = [
     'tests/e2e/external-links.spec.ts',
     'tests/e2e/quick-chat.spec.ts',
     'tests/e2e/quick-chat-injection.spec.ts',
+    'tests/e2e/auth.spec.ts',
+    'tests/e2e/macos-dock.spec.ts',
     'tests/e2e/window-controls.spec.ts'
 ];
 

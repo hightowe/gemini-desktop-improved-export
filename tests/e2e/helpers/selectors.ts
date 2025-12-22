@@ -15,6 +15,7 @@ import {
     LAYOUT_TEST_IDS,
     TITLEBAR_TEST_IDS,
     OPTIONS_TEST_IDS,
+    QUICK_CHAT_TEST_IDS,
 } from '../../../src/utils/testIds';
 
 /**
@@ -62,5 +63,10 @@ export const Selectors = {
      * @param theme The theme ID (e.g., 'light', 'dark', 'system')
      */
     themeCard: (theme: string) => testId(OPTIONS_TEST_IDS.themeCard(theme)),
+
+    // Quick Chat
+    quickChatContainer: testId(QUICK_CHAT_TEST_IDS.QUICK_CHAT_CONTAINER),
+    quickChatInput: testId(QUICK_CHAT_TEST_IDS.QUICK_CHAT_INPUT),
+    quickChatSubmit: testId(QUICK_CHAT_TEST_IDS.QUICK_CHAT_SUBMIT),
 } as const;
 

@@ -119,6 +119,32 @@ export default class MenuManager {
 
         const menu = Menu.buildFromTemplate(template);
         Menu.setApplicationMenu(menu);
+
+        if (isMac()) {
+            this.buildDockMenu();
+        }
+    }
+
+    /**
+     * Builds and sets the Dock menu (macOS only).
+     */
+    private buildDockMenu(): void {
+        const dockTemplate: MenuItemConstructorOptions[] = [
+            {
+                label: 'Show Gemini',
+                click: () => this.windowManager.restoreFromTray()
+            },
+            { type: 'separator' },
+            {
+                label: 'Settings',
+                click: () => this.windowManager.createOptionsWindow()
+            }
+        ];
+
+        const dockMenu = Menu.buildFromTemplate(dockTemplate);
+        if (app.dock) {
+            app.dock.setMenu(dockMenu);
+        }
     }
 
     private buildAppMenu(): MenuItemConstructorOptions {

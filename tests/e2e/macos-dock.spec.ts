@@ -114,6 +114,36 @@ describe('macOS Dock and Menubar Behavior', () => {
 
             E2ELogger.info('macos-dock', 'App configured to stay running when windows closed');
         });
+
+        it('should have correct Dock menu items on macOS', async () => {
+            if (!(await isMacOS())) {
+                return;
+            }
+
+            const dockMenuState = await browser.electron.execute((electron) => {
+                // In Electron, app.dock.getMenu() can be used to retrieve the menu
+                const menu = electron.app.dock.getMenu();
+                if (!menu) return { exists: false, items: [] };
+
+                return {
+                    exists: true,
+                    // Get labels of all items
+                    items: menu.items.map(item => ({
+                        label: item.label,
+                        type: item.type
+                    }))
+                };
+            });
+
+            expect(dockMenuState.exists).toBe(true);
+
+            // Verify our implemented items: "Show Gemini", separator, "Settings"
+            const labels = dockMenuState.items.map((i: any) => i.label);
+            expect(labels).toContain('Show Gemini');
+            expect(labels).toContain('Settings');
+
+            E2ELogger.info('macos-dock', `Dock menu verified with ${dockMenuState.items.length} items`);
+        });
     });
 
     describe('Menubar Tray Icon (macOS)', () => {

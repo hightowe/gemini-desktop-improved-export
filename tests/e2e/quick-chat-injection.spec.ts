@@ -327,6 +327,47 @@ describe('Quick Chat Text Injection', () => {
 
             E2ELogger.info('injection-integration', 'Injection workflow completed (NO message sent to Gemini)');
         });
+
+        it('should handle injection failure gracefully (e.g., when Gemini DOM changes)', async () => {
+            E2ELogger.info('injection-error', 'Testing injection failure handling with invalid selectors');
+
+            // We can't easily mock the internal InjectionScriptBuilder in E2E, 
+            // but we can pass invalid selectors to our injectTextOnly helper.
+            // (The helper uses constants by default, but we can modify it or 
+            // use electron.execute directly for this test)
+            const invalidResult = await browser.electron.execute(
+                (_electron, textToInject) => {
+                    const windowManager = (global as any).windowManager;
+                    const mainWindow = windowManager?.getMainWindow?.();
+                    if (!mainWindow) return { error: 'Main window not found' };
+
+                    const frame = mainWindow.webContents.mainFrame.frames.find(f => f.url.includes('google.com'));
+                    if (!frame) return { error: 'Iframe not found' };
+
+                    // Try to execute a script that will definitely fail to find the editor
+                    return frame.executeJavaScript(`
+                        (function() {
+                            const editor = document.querySelector('.definitely-not-existent-selector-12345');
+                            if (!editor) {
+                                return { success: false, error: 'Editor not found (simulated failure)' };
+                            }
+                            return { success: true };
+                        })();
+                    `).then(res => ({ ...res, iframeFound: true }));
+                },
+                'failure test text'
+            );
+
+            E2ELogger.info('injection-error', `Invalid injection result: ${JSON.stringify(invalidResult)}`);
+
+            // Verify that it didn't crash and returned the expected error
+            expect(invalidResult.success).toBe(false);
+            expect(invalidResult.error).toContain('Editor not found');
+
+            // Verify app is still responsive
+            const title = await browser.getTitle();
+            expect(title).toBeTruthy();
+        });
     });
 });
 

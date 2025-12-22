@@ -253,6 +253,54 @@ describe('Quick Chat Feature', () => {
             expect(pos2[1]).toBe(pos1[1]);
             E2ELogger.info('quick-chat', 'Quick Chat window repositioned on second show');
         });
+
+        it('should persist input content when hidden and shown again', async () => {
+            // 1. Show Quick Chat
+            await showQuickChatWindow();
+            await browser.pause(E2E_TIMING.QUICK_CHAT_SHOW_DELAY_MS);
+
+            // 2. Type some text into the input
+            const testText = 'Persistence test message ' + Date.now();
+
+            await browser.electron.execute((electron: any, text: string) => {
+                const windows = electron.BrowserWindow.getAllWindows();
+                // Find Quick Chat window by title
+                const qcWin = windows.find((w: any) => w.getTitle().includes('Quick Chat'));
+                if (qcWin) {
+                    // Use executeJavaScript on the webContents
+                    qcWin.webContents.executeJavaScript(`
+                        (function() {
+                            const input = document.querySelector('input');
+                            if (input) {
+                                input.value = '${text}';
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                        })()
+                    `);
+                }
+            }, testText);
+
+            // 3. Hide the window
+            await hideQuickChatWindow();
+            await browser.pause(E2E_TIMING.QUICK_CHAT_HIDE_DELAY_MS);
+
+            // 4. Show the window again
+            await showQuickChatWindow();
+            await browser.pause(E2E_TIMING.QUICK_CHAT_SHOW_DELAY_MS);
+
+            // 5. Verify the text is still there
+            const persistedText = await browser.electron.execute((electron: any) => {
+                const windows = electron.BrowserWindow.getAllWindows();
+                const qcWin = windows.find((w: any) => w.getTitle().includes('Quick Chat'));
+                if (qcWin) {
+                    return qcWin.webContents.executeJavaScript("document.querySelector('input')?.value || ''");
+                }
+                return null;
+            });
+
+            expect(persistedText).toBe(testText);
+            E2ELogger.info('quick-chat', 'Quick Chat text persistence verified');
+        });
     });
 
     describe('Text Submission', () => {

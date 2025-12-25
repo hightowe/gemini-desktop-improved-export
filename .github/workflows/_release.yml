@@ -56,17 +56,12 @@ jobs:
 
       - name: Build (without publish)
         run: npm run dist:mac-x64
-        env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
+          fail_on_unmatched_files: true
           files: |
             release/*.dmg
             release/*.zip
@@ -76,12 +71,11 @@ jobs:
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: release-artifacts-macos-x64
           path: release/
           retention-days: 7
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   # ==========================================================================
   # macOS arm64 Build
@@ -118,17 +112,12 @@ jobs:
 
       - name: Build (without publish)
         run: npm run dist:mac-arm64
-        env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
+          fail_on_unmatched_files: true
           files: |
             release/*.dmg
             release/*.zip
@@ -138,12 +127,11 @@ jobs:
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: release-artifacts-macos-arm64
           path: release/
           retention-days: 7
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   # ==========================================================================
   # Windows Build
@@ -180,13 +168,20 @@ jobs:
         run: npm run dist:win
         shell: bash
         env:
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          # Azure Trusted Signing configuration
+          AZURE_SIGN_ENDPOINT: ${{ secrets.AZURE_SIGN_ENDPOINT }}
+          AZURE_PUBLISHER_NAME: ${{ secrets.AZURE_PUBLISHER_NAME }}
+          AZURE_CODE_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
+          AZURE_CERTIFICATE_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
+          fail_on_unmatched_files: true
           files: |
             release/*.exe
             release/*.exe.blockmap
@@ -195,12 +190,11 @@ jobs:
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: release-artifacts-windows
           path: release/
           retention-days: 7
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   # ==========================================================================
   # Linux Build
@@ -240,6 +234,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
+          fail_on_unmatched_files: true
           files: |
             release/*.AppImage
             release/*.deb
@@ -250,9 +245,8 @@ jobs:
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: release-artifacts-linux
           path: release/
           retention-days: 7
-          if-no-files-found: ignore
+          if-no-files-found: error

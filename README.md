@@ -23,27 +23,40 @@
 
 Users have been asking for a desktop Gemini client with these features—**we deliver on all of them**:
 
-| What Users Want                                | Status                     |
-| ---------------------------------------------- | -------------------------- |
-| 🖥️ Native desktop app (not just a browser tab) | ✅ **You got it**          |
-| ⌨️ Global keyboard shortcuts                   | ✅ **Ctrl+Shift+Space**    |
-| 📌 Always-on-top window                        | ✅ **Quick Chat has this** |
-| 💻 Cross-platform (Windows, macOS, Linux)      | ✅ **All three**           |
-| 🔐 Stable login & persistent sessions          | ✅ **OAuth done right**    |
-| 🔒 No data collection                          | ✅ **Zero telemetry**      |
+| What Users Want                                | Status                         |
+| ---------------------------------------------- | ------------------------------ |
+| 🖥️ Native desktop app (not just a browser tab) | ✅ **Native & Fast**           |
+| ⌨️ Global keyboard shortcuts                   | ✅ **Fully Customizable**      |
+| 🚀 Spotlight-style Quick Chat                  | ✅ **Instant Access**          |
+| 📌 Always-on-top window                        | ✅ **Easy Access to Gemini**   |
+| 🕵️ Quick Privacy / Hiding                     | ✅ **Stealth Mode**            |
+| 💻 Cross-platform (Windows, macOS, Linux)      | ✅ **All three**               |
+| 🔐 Stable login & persistent sessions          | ✅ **OAuth done right**        |
+| 🔒 No data collection                          | ✅ **Zero telemetry**          |
 
 ---
 
-## 🚀 Quick Chat — Spotlight for Gemini
+### 🚀 Quick Chat - Spotlight for Gemini
 
-Press **`Ctrl+Shift+Space`** (or **`Cmd+Shift+Space`** on Mac) from anywhere to instantly summon Gemini.
+**Like macOS Spotlight, but for AI.** Press **`Ctrl+Shift+Space`** (or **`Cmd+Shift+Space`** on Mac) from anywhere—writing code, browsing, reading docs—and a floating command center appears instantly.
 
 <!-- [INSERT QUICK CHAT SCREENSHOT HERE] -->
 
-- **Always-on-top** floating window
-- **Transparent, minimal UI** — just you and the prompt
-- **Submit and it goes to your main Gemini chat**
-- **Press Escape** to dismiss
+**What makes it powerful:**
+
+- **🌟 Spotlight-Style Access** — Global hotkey summons Gemini over any app, just like `Cmd+Space` on Mac
+- **💬 Floating Window** — Centered, always-on-top dialog that doesn't disrupt your workflow
+- **⚡ Zero Friction** — Auto-focuses on input, submit your query, then it vanishes—results appear in your main Gemini chat
+- **⌨️ Keyboard-First** — Type, submit with Enter, dismiss with Escape. No context switching required
+- **🎯 Smart Positioning** — Appears on your active screen, keeps you in the flow
+
+### 🕵️ Stealth Mode
+
+Need to vanish? Press **`Ctrl+Alt+E`** (or **`Cmd+Alt+E`**) to instantly minimize the app to the system tray. Out of sight, out of mind, until you need it again.
+
+### 📌 Always On Top
+
+Keep Gemini visible while you work. Toggle "Always On Top" mode with **`Ctrl+Shift+T`** (or **`Cmd+Shift+T`**) so you can reference chats without switching windows.
 
 ---
 
@@ -54,15 +67,15 @@ Press **`Ctrl+Shift+Space`** (or **`Cmd+Shift+Space`** on Mac) from anywhere to 
 Download the latest `.exe` installer from [Releases](https://github.com/bwendell/gemini-desktop/releases).
 
 ```
-gemini-desktop-setup-x.x.x.exe
+Gemini Desktop-x.x.x-x64-installer.exe
 ```
 
 ### macOS
 
 Download the `.dmg` for your architecture from [Releases](https://github.com/bwendell/gemini-desktop/releases):
 
-- **Apple Silicon (M1/M2/M3)**: `gemini-desktop-x.x.x-arm64.dmg`
-- **Intel**: `gemini-desktop-x.x.x-x64.dmg`
+- **Apple Silicon (M1/M2/M3)**: `Gemini Desktop-x.x.x-arm64.dmg`
+- **Intel**: `Gemini Desktop-x.x.x-x64.dmg`
 
 ### Linux
 
@@ -70,11 +83,11 @@ Download the `.AppImage` or `.deb` from [Releases](https://github.com/bwendell/g
 
 ```bash
 # AppImage
-chmod +x gemini-desktop-x.x.x.AppImage
-./gemini-desktop-x.x.x.AppImage
+chmod +x "Gemini Desktop-x.x.x-x64.AppImage"
+./"Gemini Desktop-x.x.x-x64.AppImage"
 
 # Debian/Ubuntu
-sudo dpkg -i gemini-desktop-x.x.x.deb
+sudo dpkg -i "Gemini Desktop-x.x.x-x64.deb"
 ```
 
 ---
@@ -101,14 +114,14 @@ sudo dpkg -i gemini-desktop-x.x.x.deb
 
 ## ⌨️ Keyboard Shortcuts
 
-| Shortcut           | Action            |
-| ------------------ | ----------------- |
-| `Ctrl+Shift+Space` | Toggle Quick Chat |
-| `Ctrl+Alt+E`       | Minimize to tray  |
-| `Ctrl+,`           | Open Settings     |
-| `Escape`           | Close Quick Chat  |
+| Shortcut           | Action                              |
+| ------------------ | ----------------------------------- |
+| `Ctrl+Shift+Space` | Toggle Quick Chat                   |
+| `Ctrl+Alt+E`       | **Stealth Mode** (Minimize to tray) |
+| `Ctrl+,`           | Open Settings                       |
+| `Escape`           | Close Quick Chat                    |
 
-> 💡 Hotkeys can be disabled in Settings if they conflict with other apps.
+> 💡 Hotkeys can be modified in Settings if they conflict with other apps.
 
 ---
 
@@ -116,25 +129,13 @@ sudo dpkg -i gemini-desktop-x.x.x.deb
 
 - 🚀 **Native Experience** — Run Gemini as a standalone desktop app
 - 🎨 **Custom Title Bar** — Native-feeling window controls
+- 🕵️ **Stealth Mode** — Instantly hide the app with one keystroke
+- 📌 **Always On Top** — Pin the window above others
 - 🔄 **System Tray** — Minimize to tray, quick access
 - 🌙 **Theme Sync** — Follows your system light/dark preference
 - ⚡ **Quick Chat** — Spotlight-style prompt from anywhere
 
 <!-- [INSERT MAIN WINDOW SCREENSHOT HERE] -->
-
----
-
-## 🚧 Roadmap & Limitations
-
-**In Progress:**
-
-- 🧘 Zen/Distraction-free mode
-
-**Not Included:**
-
-- 🔍 Find in Page — Not yet implemented
-- 🎤 Voice assistant mode — Not planned
-- 📁 Chat folders/recycle bin — Handled by Google's UI (out of scope)
 
 ---
 
@@ -193,8 +194,10 @@ npm run test:all
 
 ```
 gemini-desktop/
-├── src/           # React frontend
-├── electron/      # Electron main process
+├── src/
+│   ├── main/      # Electron main process
+│   ├── renderer/  # React frontend
+│   └── shared/    # Shared types & constants
 ├── tests/         # E2E and unit tests
 └── build/         # Build assets (icons, etc.)
 ```

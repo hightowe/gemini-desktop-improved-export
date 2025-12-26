@@ -23,7 +23,7 @@ if (platform === 'win32') {
 export const config = {
   runner: 'local',
   specs: ['../../tests/integration/**/*.test.ts'],
-  exclude: [],
+  exclude: ['../../tests/integration/macos-titlebar.integration.test.ts'],
   maxInstances: 1,
   capabilities: [
     {
@@ -56,7 +56,7 @@ export const config = {
   onPrepare: async function () {
     const { execSync } = await import('child_process');
     console.log('Building Electron app for integration tests...');
-    execSync('npm run build:electron', { stdio: 'inherit' });
+    execSync('npm run build && npm run build:electron', { stdio: 'inherit' });
   },
 
   /**

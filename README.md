@@ -204,6 +204,32 @@ gemini-desktop/
 
 ---
 
+## 🧪 Automated Testing
+
+We take stability seriously. Gemini Desktop is backed by a comprehensive automated testing suite ensuring that core features work reliably and regressions are caught early.
+
+### Our Strategy
+
+- **Unit Tests**: Verify individual components and logic in isolation.
+- **Integration Tests**: Ensure different parts of the system (Electron main process, renderer, localized APIs) work together smoothly.
+- **End-to-End (E2E) Tests**: Simulate real user interactions—clicking, typing, and navigating—to validate full application flows.
+
+### Running Tests
+
+If you're contributing or just curious, you can run the full suite yourself:
+
+```bash
+# Run all tests (Unit, Integration, E2E)
+npm run test:all
+
+# Run only E2E tests
+npm run test:e2e
+```
+
+We believe that a robust test suite is key to maintaining a high-quality experience.
+
+---
+
 ## ⭐ Star History
 
 If you find this project useful, please consider giving it a star! ⭐

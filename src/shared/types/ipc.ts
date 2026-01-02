@@ -6,8 +6,37 @@
  */
 
 import type { ThemeData, ThemePreference } from './theme';
-import type { HotkeyId, IndividualHotkeySettings, HotkeyAccelerators, HotkeySettings } from './hotkeys';
+import type {
+  HotkeyId,
+  IndividualHotkeySettings,
+  HotkeyAccelerators,
+  HotkeySettings,
+} from './hotkeys';
 import type { UpdateInfo, DownloadProgress } from './updates';
+
+/**
+ * Print progress event data types
+ */
+export interface PrintProgressStartData {
+  /** Total number of pages to capture */
+  totalPages: number;
+}
+
+export interface PrintProgressUpdateData {
+  /** Current page being captured (1-indexed) */
+  currentPage: number;
+  /** Total number of pages */
+  totalPages: number;
+  /** Progress percentage (0-100) */
+  progress: number;
+}
+
+export interface PrintProgressEndData {
+  /** Whether the capture was cancelled by user */
+  cancelled: boolean;
+  /** Whether capture was successful (when not cancelled) */
+  success: boolean;
+}
 
 /**
  * Electron API exposed to renderer process via contextBridge.
@@ -120,9 +149,7 @@ export interface ElectronAPI {
   setHotkeyAccelerator: (id: HotkeyId, accelerator: string) => void;
 
   /** Listen for hotkey accelerator changes. Returns unsubscribe function. */
-  onHotkeyAcceleratorsChanged: (
-    callback: (accelerators: HotkeyAccelerators) => void
-  ) => () => void;
+  onHotkeyAcceleratorsChanged: (callback: (accelerators: HotkeyAccelerators) => void) => () => void;
 
   // =========================================================================
   // Always On Top API
@@ -202,4 +229,58 @@ export interface ElectronAPI {
 
   /** Listen for debug error trigger (dev only) */
   onDebugTriggerError: (callback: () => void) => () => void;
+
+  // =========================================================================
+  // Print to PDF API
+  // =========================================================================
+
+  /**
+   * Trigger the print-to-pdf flow.
+   * This will capture the current conversation and save it to a PDF file.
+   */
+  printToPdf: () => void;
+
+  /** Cancel an in-progress print operation */
+  cancelPrint: () => void;
+
+  /** Listen for print-to-pdf success. Returns unsubscribe function. */
+  onPrintToPdfSuccess: (callback: (filePath: string) => void) => () => void;
+
+  /** Listen for print-to-pdf error. Returns unsubscribe function. */
+  onPrintToPdfError: (callback: (error: string) => void) => () => void;
+
+  /**
+   * Listen for print progress start event.
+   * Called when capture begins with total page count estimate.
+   * Returns unsubscribe function.
+   */
+  onPrintProgressStart: (callback: (data: PrintProgressStartData) => void) => () => void;
+
+  /**
+   * Listen for print progress update event.
+   * Called for each captured page with current progress.
+   * Returns unsubscribe function.
+   */
+  onPrintProgressUpdate: (callback: (data: PrintProgressUpdateData) => void) => () => void;
+
+  /**
+   * Listen for print progress end event.
+   * Called when capture completes or is cancelled.
+   * Returns unsubscribe function.
+   */
+  onPrintProgressEnd: (callback: (data: PrintProgressEndData) => void) => () => void;
+
+  /**
+   * Listen for print overlay hide event.
+   * Called before each viewport capture to hide the overlay.
+   * Returns unsubscribe function.
+   */
+  onPrintOverlayHide: (callback: () => void) => () => void;
+
+  /**
+   * Listen for print overlay show event.
+   * Called after each viewport capture to show the overlay again.
+   * Returns unsubscribe function.
+   */
+  onPrintOverlayShow: (callback: () => void) => () => void;
 }

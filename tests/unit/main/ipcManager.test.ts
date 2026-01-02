@@ -5,6 +5,58 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ipcMain, nativeTheme, BrowserWindow } from 'electron';
 import IpcManager from '../../../src/main/managers/ipcManager';
 
+// Mock Electron
+const { mockIpcMain, mockNativeTheme, mockBrowserWindow } = vi.hoisted(() => {
+  const mockIpcMain = {
+    on: vi.fn((channel, listener) => {
+      mockIpcMain._listeners.set(channel, listener);
+    }),
+    handle: vi.fn((channel, handler) => {
+      mockIpcMain._handlers.set(channel, handler);
+    }),
+    _listeners: new Map(),
+    _handlers: new Map(),
+    _reset: () => {
+      mockIpcMain._listeners.clear();
+      mockIpcMain._handlers.clear();
+    },
+  };
+
+  let _themeSource = 'system';
+  const mockNativeTheme = {
+    get themeSource() {
+      return _themeSource;
+    },
+    set themeSource(val) {
+      _themeSource = val;
+      mockNativeTheme.shouldUseDarkColors = val === 'dark';
+    },
+    shouldUseDarkColors: false,
+    _reset: () => {
+      _themeSource = 'system';
+      mockNativeTheme.shouldUseDarkColors = false;
+    },
+  };
+
+  const mockBrowserWindow = {
+    fromWebContents: vi.fn(),
+    getAllWindows: vi.fn().mockReturnValue([]),
+    _reset: () => {
+      mockBrowserWindow.fromWebContents.mockReset();
+      mockBrowserWindow.getAllWindows.mockReset();
+      mockBrowserWindow.getAllWindows.mockReturnValue([]);
+    },
+  };
+
+  return { mockIpcMain, mockNativeTheme, mockBrowserWindow };
+});
+
+vi.mock('electron', () => ({
+  ipcMain: mockIpcMain,
+  nativeTheme: mockNativeTheme,
+  BrowserWindow: mockBrowserWindow,
+}));
+
 // Mock SettingsStore to prevent side effects during import
 vi.mock('../../../src/main/store', () => {
   return {
@@ -34,6 +86,7 @@ describe('IpcManager', () => {
   let mockWindowManager: any;
   let mockStore: any;
   let mockUpdateManager: any;
+  let mockPrintManager: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -79,10 +132,16 @@ describe('IpcManager', () => {
       devClearBadge: vi.fn(),
     };
 
+    // Mock PrintManager
+    mockPrintManager = {
+      printToPdf: vi.fn().mockResolvedValue(undefined),
+    };
+
     ipcManager = new IpcManager(
       mockWindowManager,
       null,
       mockUpdateManager,
+      mockPrintManager,
       mockStore as any,
       mockLogger
     );
@@ -100,7 +159,7 @@ describe('IpcManager', () => {
         set: vi.fn(),
       };
 
-      new IpcManager(mockWindowManager, null, null, darkStore as any, mockLogger);
+      new IpcManager(mockWindowManager, null, null, null, darkStore as any, mockLogger);
       expect(nativeTheme.themeSource).toBe('dark');
     });
   });
@@ -243,6 +302,7 @@ describe('IpcManager', () => {
         mockWindowManager,
         mockHotkeyManager,
         mockUpdateManager,
+        mockPrintManager,
         mockStore as any,
         mockLogger
       );
@@ -254,11 +314,17 @@ describe('IpcManager', () => {
         if (key === 'hotkeyAlwaysOnTop') return true;
         if (key === 'hotkeyBossKey') return false;
         if (key === 'hotkeyQuickChat') return true;
+        if (key === 'hotkeyPrintToPdf') return true;
         return undefined;
       });
       const handler = (ipcMain as any)._handlers.get('hotkeys:individual:get');
       const result = await handler();
-      expect(result).toEqual({ alwaysOnTop: true, bossKey: false, quickChat: true });
+      expect(result).toEqual({
+        alwaysOnTop: true,
+        bossKey: false,
+        quickChat: true,
+        printToPdf: true,
+      });
     });
     // ... (skipping repetitve parts for brevity, I'll rely on my knowledge of the file to construct the write)
     it('handles hotkeys:individual:set without hotkeyManager', () => {
@@ -266,6 +332,7 @@ describe('IpcManager', () => {
         mockWindowManager,
         null,
         mockUpdateManager,
+        null,
         mockStore as any,
         mockLogger
       );
@@ -309,7 +376,14 @@ describe('IpcManager', () => {
     });
 
     it('handles auto-update:get-enabled (without manager)', async () => {
-      ipcManager = new IpcManager(mockWindowManager, null, null, mockStore as any, mockLogger);
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
       ipcManager.setupIpcHandlers();
       const handler = (ipcMain as any)._handlers.get('auto-update:get-enabled');
       mockStore.get.mockReturnValue(false);
@@ -319,7 +393,14 @@ describe('IpcManager', () => {
     });
 
     it('handles auto-update:get-enabled fallback when store returns undefined', async () => {
-      ipcManager = new IpcManager(mockWindowManager, null, null, mockStore as any, mockLogger);
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
       ipcManager.setupIpcHandlers();
       const handler = (ipcMain as any)._handlers.get('auto-update:get-enabled');
       mockStore.get.mockReturnValue(undefined);
@@ -343,7 +424,14 @@ describe('IpcManager', () => {
     });
 
     it('handles auto-update:set-enabled (without manager)', () => {
-      ipcManager = new IpcManager(mockWindowManager, null, null, mockStore as any, mockLogger);
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
       ipcManager.setupIpcHandlers();
       const handler = (ipcMain as any)._listeners.get('auto-update:set-enabled');
       handler({}, true);
@@ -364,7 +452,14 @@ describe('IpcManager', () => {
     });
 
     it('handles auto-update:check (without manager)', () => {
-      ipcManager = new IpcManager(mockWindowManager, null, null, mockStore as any, mockLogger);
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
       ipcManager.setupIpcHandlers();
       const handler = (ipcMain as any)._listeners.get('auto-update:check');
       handler(); // Should not crash
@@ -387,7 +482,14 @@ describe('IpcManager', () => {
     });
 
     it('handles auto-update:install (without manager)', () => {
-      ipcManager = new IpcManager(mockWindowManager, null, null, mockStore as any, mockLogger);
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
       ipcManager.setupIpcHandlers();
       const handler = (ipcMain as any)._listeners.get('auto-update:install');
       handler(); // Should not crash
@@ -427,7 +529,14 @@ describe('IpcManager', () => {
     });
 
     it('handles dev:test:show-badge without manager', () => {
-      ipcManager = new IpcManager(mockWindowManager, null, null, mockStore as any, mockLogger);
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
       ipcManager.setupIpcHandlers();
       const handler = (ipcMain as any)._listeners.get('dev:test:show-badge');
       handler({}, '2.0.0-test'); // Should not crash
@@ -450,7 +559,14 @@ describe('IpcManager', () => {
     });
 
     it('handles dev:test:clear-badge without manager', () => {
-      ipcManager = new IpcManager(mockWindowManager, null, null, mockStore as any, mockLogger);
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
       ipcManager.setupIpcHandlers();
       const handler = (ipcMain as any)._listeners.get('dev:test:clear-badge');
       handler(); // Should not crash
@@ -778,6 +894,116 @@ describe('IpcManager', () => {
     });
   });
 
+  describe('Print Handlers', () => {
+    beforeEach(() => {
+      ipcManager.setupIpcHandlers();
+    });
+
+    it('handles print-to-pdf:trigger', () => {
+      const handler = (ipcMain as any)._listeners.get('print-to-pdf:trigger');
+      const mockEvent = { sender: {} };
+      handler(mockEvent);
+      expect(mockPrintManager.printToPdf).toHaveBeenCalledWith(mockEvent.sender);
+    });
+
+    it('handles print-to-pdf:trigger with uninitialized manager', () => {
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        mockUpdateManager,
+        null, // No PrintManager
+        mockStore as any,
+        mockLogger
+      );
+      ipcManager.setupIpcHandlers();
+
+      const handler = (ipcMain as any)._listeners.get('print-to-pdf:trigger');
+      handler({ sender: {} });
+
+      expect(mockLogger.error).toHaveBeenCalledWith('PrintManager not initialized');
+    });
+
+    it('handles print-to-pdf:trigger error', async () => {
+      const handler = (ipcMain as any)._listeners.get('print-to-pdf:trigger');
+      const error = new Error('Print failed');
+      mockPrintManager.printToPdf.mockRejectedValue(error);
+
+      await handler({ sender: {} });
+
+      expect(mockLogger.error).toHaveBeenCalledWith('Error during printToPdf:', error);
+    });
+
+    it('handles print-to-pdf-triggered event', () => {
+      const eventHandler = mockWindowManager.on.mock.calls.find(
+        (call: any) => call[0] === 'print-to-pdf-triggered'
+      )[1];
+
+      const mockMainWindow = {
+        webContents: {},
+        isDestroyed: () => false,
+      };
+      mockWindowManager.getMainWindow.mockReturnValue(mockMainWindow);
+
+      eventHandler();
+
+      expect(mockPrintManager.printToPdf).toHaveBeenCalledWith(mockMainWindow.webContents);
+    });
+
+    it('handles print-to-pdf-triggered with missing main window', () => {
+      const eventHandler = mockWindowManager.on.mock.calls.find(
+        (call: any) => call[0] === 'print-to-pdf-triggered'
+      )[1];
+
+      mockWindowManager.getMainWindow.mockReturnValue(null);
+
+      eventHandler();
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'Cannot print: Main window not found or destroyed'
+      );
+      expect(mockPrintManager.printToPdf).not.toHaveBeenCalled();
+    });
+
+    it('handles print-to-pdf-triggered with uninitialized manager', () => {
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        mockUpdateManager,
+        null, // No PrintManager
+        mockStore as any,
+        mockLogger
+      );
+      mockWindowManager.on.mockClear();
+      ipcManager.setupIpcHandlers();
+
+      const eventHandler = mockWindowManager.on.mock.calls.find(
+        (call: any) => call[0] === 'print-to-pdf-triggered'
+      )[1];
+
+      eventHandler();
+
+      expect(mockLogger.error).toHaveBeenCalledWith('PrintManager not initialized');
+    });
+
+    it('handles print-to-pdf-triggered error', async () => {
+      const eventHandler = mockWindowManager.on.mock.calls.find(
+        (call: any) => call[0] === 'print-to-pdf-triggered'
+      )[1];
+
+      const mockMainWindow = {
+        webContents: {},
+        isDestroyed: () => false,
+      };
+      mockWindowManager.getMainWindow.mockReturnValue(mockMainWindow);
+      const error = new Error('Local print failed');
+      mockPrintManager.printToPdf.mockRejectedValue(error);
+
+      await eventHandler();
+
+      expect(mockLogger.error).toHaveBeenCalledWith('Error during printToPdf (local):', error);
+    });
+  });
+
   describe('Additional Error Handling', () => {
     beforeEach(() => {
       ipcManager.setupIpcHandlers();
@@ -917,7 +1143,12 @@ describe('IpcManager', () => {
       });
       const handler = (ipcMain as any)._handlers.get('hotkeys:individual:get');
       const result = await handler();
-      expect(result).toEqual({ alwaysOnTop: true, bossKey: true, quickChat: true });
+      expect(result).toEqual({
+        alwaysOnTop: true,
+        bossKey: true,
+        quickChat: true,
+        printToPdf: true,
+      });
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Error getting individual hotkeys state:',
         expect.any(Error)
@@ -1120,6 +1351,10 @@ describe('IpcManager', () => {
       // quickChat case
       handler({}, 'quickChat', false);
       expect(mockStore.set).toHaveBeenCalledWith('hotkeyQuickChat', false);
+
+      // printToPdf case
+      handler({}, 'printToPdf', true);
+      expect(mockStore.set).toHaveBeenCalledWith('hotkeyPrintToPdf', true);
     });
 
     it('covers invalid always-on-top-set input type', () => {
@@ -1132,6 +1367,352 @@ describe('IpcManager', () => {
 
       expect(mockWindowManager.setAlwaysOnTop).not.toHaveBeenCalled();
       expect(mockLogger.warn).toHaveBeenCalledWith('Invalid alwaysOnTop value: not-a-boolean');
+    });
+  });
+
+  describe('Accelerator Handlers', () => {
+    let mockHotkeyManager: any;
+
+    beforeEach(() => {
+      mockHotkeyManager = {
+        setIndividualEnabled: vi.fn(),
+        setAccelerator: vi.fn(),
+        getAccelerators: vi.fn().mockReturnValue({
+          alwaysOnTop: 'CmdOrCtrl+Shift+T',
+          bossKey: 'CmdOrCtrl+Alt+E',
+          quickChat: 'CmdOrCtrl+Shift+Space',
+          printToPdf: 'CmdOrCtrl+Shift+P',
+        }),
+      };
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        mockHotkeyManager,
+        mockUpdateManager,
+        mockPrintManager,
+        mockStore as any,
+        mockLogger
+      );
+      ipcManager.setupIpcHandlers();
+    });
+
+    it('handles hotkeys:accelerator:get', async () => {
+      mockStore.get.mockImplementation((key: string) => {
+        if (key === 'acceleratorAlwaysOnTop') return 'CmdOrCtrl+Shift+T';
+        if (key === 'acceleratorBossKey') return 'CmdOrCtrl+Alt+E';
+        if (key === 'acceleratorQuickChat') return 'CmdOrCtrl+Shift+Space';
+        if (key === 'acceleratorPrintToPdf') return 'CmdOrCtrl+Shift+P';
+        return undefined;
+      });
+      const handler = (ipcMain as any)._handlers.get('hotkeys:accelerator:get');
+      const result = await handler();
+      expect(result).toEqual({
+        alwaysOnTop: 'CmdOrCtrl+Shift+T',
+        bossKey: 'CmdOrCtrl+Alt+E',
+        quickChat: 'CmdOrCtrl+Shift+Space',
+        printToPdf: 'CmdOrCtrl+Shift+P',
+      });
+    });
+
+    it('handles hotkeys:accelerator:get error', async () => {
+      mockStore.get.mockImplementation(() => {
+        throw new Error('Get failed');
+      });
+      const handler = (ipcMain as any)._handlers.get('hotkeys:accelerator:get');
+      const result = await handler();
+      expect(result.alwaysOnTop).toBeDefined();
+      expect(mockLogger.error).toHaveBeenCalled();
+    });
+
+    it('handles hotkeys:accelerator:set', () => {
+      const handler = (ipcMain as any)._listeners.get('hotkeys:accelerator:set');
+      const mockWin = { isDestroyed: () => false, webContents: { send: vi.fn() } };
+      (BrowserWindow as any).getAllWindows = vi.fn().mockReturnValue([mockWin]);
+
+      handler({}, 'alwaysOnTop', 'CmdOrCtrl+Alt+T');
+
+      expect(mockStore.set).toHaveBeenCalledWith('acceleratorAlwaysOnTop', 'CmdOrCtrl+Alt+T');
+      expect(mockHotkeyManager.setAccelerator).toHaveBeenCalledWith(
+        'alwaysOnTop',
+        'CmdOrCtrl+Alt+T'
+      );
+    });
+
+    it('handles hotkeys:accelerator:set for all hotkey IDs', () => {
+      const handler = (ipcMain as any)._listeners.get('hotkeys:accelerator:set');
+      const mockWin = { isDestroyed: () => false, webContents: { send: vi.fn() } };
+      (BrowserWindow as any).getAllWindows = vi.fn().mockReturnValue([mockWin]);
+
+      handler({}, 'bossKey', 'CmdOrCtrl+Alt+B');
+      expect(mockStore.set).toHaveBeenCalledWith('acceleratorBossKey', 'CmdOrCtrl+Alt+B');
+
+      handler({}, 'quickChat', 'CmdOrCtrl+Q');
+      expect(mockStore.set).toHaveBeenCalledWith('acceleratorQuickChat', 'CmdOrCtrl+Q');
+
+      handler({}, 'printToPdf', 'CmdOrCtrl+P');
+      expect(mockStore.set).toHaveBeenCalledWith('acceleratorPrintToPdf', 'CmdOrCtrl+P');
+    });
+
+    it('handles hotkeys:accelerator:set with invalid id', () => {
+      const handler = (ipcMain as any)._listeners.get('hotkeys:accelerator:set');
+      handler({}, 'invalidId', 'CmdOrCtrl+X');
+      expect(mockLogger.warn).toHaveBeenCalledWith('Invalid hotkey id: invalidId');
+    });
+
+    it('handles hotkeys:accelerator:set with empty accelerator', () => {
+      const handler = (ipcMain as any)._listeners.get('hotkeys:accelerator:set');
+      handler({}, 'alwaysOnTop', '');
+      expect(mockLogger.warn).toHaveBeenCalledWith('Invalid accelerator value: ');
+    });
+
+    it('handles hotkeys:accelerator:set with whitespace-only accelerator', () => {
+      const handler = (ipcMain as any)._listeners.get('hotkeys:accelerator:set');
+      handler({}, 'alwaysOnTop', '   ');
+      expect(mockLogger.warn).toHaveBeenCalledWith('Invalid accelerator value:    ');
+    });
+
+    it('handles hotkeys:accelerator:set error', () => {
+      const handler = (ipcMain as any)._listeners.get('hotkeys:accelerator:set');
+      mockStore.set.mockImplementation(() => {
+        throw new Error('Set failed');
+      });
+      handler({}, 'alwaysOnTop', 'CmdOrCtrl+T');
+      expect(mockLogger.error).toHaveBeenCalled();
+    });
+
+    it('handles hotkeys:accelerator:set broadcast error', () => {
+      const handler = (ipcMain as any)._listeners.get('hotkeys:accelerator:set');
+      const mockWin = {
+        id: 1,
+        isDestroyed: () => false,
+        webContents: {
+          send: vi.fn(() => {
+            throw new Error('Send failed');
+          }),
+        },
+      };
+      (BrowserWindow as any).getAllWindows = vi.fn().mockReturnValue([mockWin]);
+      handler({}, 'alwaysOnTop', 'CmdOrCtrl+T');
+      expect(mockLogger.error).toHaveBeenCalled();
+    });
+
+    it('handles hotkeys:accelerator:set without hotkeyManager', () => {
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        mockUpdateManager,
+        null,
+        mockStore as any,
+        mockLogger
+      );
+      ipcManager.setupIpcHandlers();
+      const handler = (ipcMain as any)._listeners.get('hotkeys:accelerator:set');
+      const mockWin = { isDestroyed: () => false, webContents: { send: vi.fn() } };
+      (BrowserWindow as any).getAllWindows = vi.fn().mockReturnValue([mockWin]);
+      handler({}, 'alwaysOnTop', 'CmdOrCtrl+X');
+      expect(mockStore.set).toHaveBeenCalledWith('acceleratorAlwaysOnTop', 'CmdOrCtrl+X');
+    });
+
+    it('handles hotkeys:full-settings:get', async () => {
+      mockStore.get.mockImplementation((key: string) => {
+        if (key === 'hotkeyAlwaysOnTop') return true;
+        if (key === 'hotkeyBossKey') return false;
+        if (key === 'hotkeyQuickChat') return true;
+        if (key === 'hotkeyPrintToPdf') return false;
+        if (key === 'acceleratorAlwaysOnTop') return 'CmdOrCtrl+T';
+        if (key === 'acceleratorBossKey') return 'CmdOrCtrl+E';
+        if (key === 'acceleratorQuickChat') return 'CmdOrCtrl+Space';
+        if (key === 'acceleratorPrintToPdf') return 'CmdOrCtrl+P';
+        return undefined;
+      });
+      const handler = (ipcMain as any)._handlers.get('hotkeys:full-settings:get');
+      const result = await handler();
+      expect(result.alwaysOnTop).toEqual({ enabled: true, accelerator: 'CmdOrCtrl+T' });
+      expect(result.bossKey).toEqual({ enabled: false, accelerator: 'CmdOrCtrl+E' });
+    });
+
+    it('handles hotkeys:full-settings:get error', async () => {
+      mockStore.get.mockImplementation(() => {
+        throw new Error('Get failed');
+      });
+      const handler = (ipcMain as any)._handlers.get('hotkeys:full-settings:get');
+      const result = await handler();
+      expect(result.alwaysOnTop.enabled).toBe(true);
+      expect(mockLogger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('Dev Testing Handlers - Extended', () => {
+    beforeEach(() => {
+      ipcManager.setupIpcHandlers();
+    });
+
+    it('handles dev:test:set-update-enabled', () => {
+      const handler = (ipcMain as any)._listeners.get('dev:test:set-update-enabled');
+      handler({}, false);
+      expect(mockUpdateManager.setEnabled).toHaveBeenCalledWith(false);
+    });
+
+    it('handles dev:test:set-update-enabled without manager', () => {
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
+      ipcManager.setupIpcHandlers();
+      const handler = (ipcMain as any)._listeners.get('dev:test:set-update-enabled');
+      handler({}, true);
+      // Should not crash
+    });
+
+    it('handles dev:test:emit-update-event', () => {
+      mockUpdateManager.devEmitUpdateEvent = vi.fn();
+      const handler = (ipcMain as any)._listeners.get('dev:test:emit-update-event');
+      handler({}, 'update-available', { version: '2.0.0' });
+      expect(mockUpdateManager.devEmitUpdateEvent).toHaveBeenCalledWith('update-available', {
+        version: '2.0.0',
+      });
+    });
+
+    it('handles dev:test:emit-update-event without manager', () => {
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
+      ipcManager.setupIpcHandlers();
+      const handler = (ipcMain as any)._listeners.get('dev:test:emit-update-event');
+      handler({}, 'update-available', {});
+      // Should not crash
+    });
+
+    it('handles dev:test:mock-platform', () => {
+      mockUpdateManager.devMockPlatform = vi.fn();
+      mockUpdateManager.devMockEnv = vi.fn();
+      const handler = (ipcMain as any)._listeners.get('dev:test:mock-platform');
+      handler({}, 'darwin', { NODE_ENV: 'test' });
+      expect(mockUpdateManager.devMockPlatform).toHaveBeenCalledWith('darwin');
+      expect(mockUpdateManager.devMockEnv).toHaveBeenCalledWith({ NODE_ENV: 'test' });
+    });
+
+    it('handles dev:test:mock-platform with null values', () => {
+      mockUpdateManager.devMockPlatform = vi.fn();
+      mockUpdateManager.devMockEnv = vi.fn();
+      const handler = (ipcMain as any)._listeners.get('dev:test:mock-platform');
+      handler({}, null, null);
+      expect(mockUpdateManager.devMockPlatform).toHaveBeenCalledWith(null);
+      expect(mockUpdateManager.devMockEnv).toHaveBeenCalledWith(null);
+    });
+
+    it('handles dev:test:mock-platform without manager', () => {
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
+      ipcManager.setupIpcHandlers();
+      const handler = (ipcMain as any)._listeners.get('dev:test:mock-platform');
+      handler({}, 'win32', {});
+      // Should not crash
+    });
+
+    it('handles tray:get-tooltip', async () => {
+      mockUpdateManager.getTrayTooltip = vi.fn().mockReturnValue('Test Tooltip');
+      const handler = (ipcMain as any)._handlers.get('tray:get-tooltip');
+      const result = await handler();
+      expect(result).toBe('Test Tooltip');
+    });
+
+    it('handles tray:get-tooltip without getTrayTooltip method', async () => {
+      const handler = (ipcMain as any)._handlers.get('tray:get-tooltip');
+      const result = await handler();
+      expect(result).toBe('');
+    });
+
+    it('handles tray:get-tooltip without manager', async () => {
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
+      ipcManager.setupIpcHandlers();
+      const handler = (ipcMain as any)._handlers.get('tray:get-tooltip');
+      const result = await handler();
+      expect(result).toBe('');
+    });
+
+    it('handles tray:get-tooltip error', async () => {
+      mockUpdateManager.getTrayTooltip = vi.fn(() => {
+        throw new Error('Tooltip error');
+      });
+      const handler = (ipcMain as any)._handlers.get('tray:get-tooltip');
+      const result = await handler();
+      expect(result).toBe('');
+      expect(mockLogger.error).toHaveBeenCalled();
+    });
+
+    it('handles auto-update:get-last-check', async () => {
+      mockUpdateManager.getLastCheckTime = vi.fn().mockReturnValue(1234567890);
+      const handler = (ipcMain as any)._handlers.get('auto-update:get-last-check');
+      const result = await handler();
+      expect(result).toBe(1234567890);
+    });
+
+    it('handles auto-update:get-last-check without method', async () => {
+      const handler = (ipcMain as any)._handlers.get('auto-update:get-last-check');
+      const result = await handler();
+      expect(result).toBe(0);
+    });
+
+    it('handles auto-update:get-last-check without manager', async () => {
+      ipcManager = new IpcManager(
+        mockWindowManager,
+        null,
+        null,
+        null,
+        mockStore as any,
+        mockLogger
+      );
+      ipcManager.setupIpcHandlers();
+      const handler = (ipcMain as any)._handlers.get('auto-update:get-last-check');
+      const result = await handler();
+      expect(result).toBe(0);
+    });
+  });
+
+  describe('Print to PDF with destroyed window', () => {
+    beforeEach(() => {
+      ipcManager.setupIpcHandlers();
+    });
+
+    it('handles print-to-pdf-triggered with destroyed main window', () => {
+      const eventHandler = mockWindowManager.on.mock.calls.find(
+        (call: any) => call[0] === 'print-to-pdf-triggered'
+      )[1];
+
+      const mockMainWindow = {
+        webContents: {},
+        isDestroyed: () => true,
+      };
+      mockWindowManager.getMainWindow.mockReturnValue(mockMainWindow);
+
+      eventHandler();
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'Cannot print: Main window not found or destroyed'
+      );
+      expect(mockPrintManager.printToPdf).not.toHaveBeenCalled();
     });
   });
 });

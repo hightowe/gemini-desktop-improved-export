@@ -13,6 +13,7 @@ import type {
   HotkeySettings,
 } from './hotkeys';
 import type { UpdateInfo, DownloadProgress } from './updates';
+import type { ToastPayload } from './toast';
 
 /**
  * Print progress event data types
@@ -283,4 +284,26 @@ export interface ElectronAPI {
    * Returns unsubscribe function.
    */
   onPrintOverlayShow: (callback: () => void) => () => void;
+
+  // =========================================================================
+  // Toast API
+  // =========================================================================
+
+  /**
+   * Listen for toast show events from main process.
+   * Called when main process wants to display a toast notification.
+   * Returns unsubscribe function.
+   */
+  onToastShow: (callback: (payload: ToastPayload) => void) => () => void;
+
+  // =========================================================================
+  // Shell API
+  // =========================================================================
+
+  /**
+   * Reveal a file in the system's file explorer.
+   * Opens the folder containing the file and selects it.
+   * @param path - Absolute path to the file to reveal
+   */
+  revealInFolder: (path: string) => void;
 }

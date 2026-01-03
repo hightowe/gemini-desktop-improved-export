@@ -109,6 +109,12 @@ describe('PDF Export Toast Integration', () => {
       const toast = await $('[data-testid="toast"].toast--error');
       await toast.waitForExist({ timeout: 5000 });
 
+      // Wait for toast content to be rendered (macOS timing issue)
+      await browser.waitUntil(async () => (await toast.getText()).length > 0, {
+        timeout: 5000,
+        timeoutMsg: 'Toast text not rendered',
+      });
+
       const toastText = await toast.getText();
       expect(toastText).toContain('Failed to export PDF');
       expect(toastText).toContain(errorMsg);

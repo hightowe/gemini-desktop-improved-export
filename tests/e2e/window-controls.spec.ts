@@ -38,9 +38,21 @@ describe('Window Controls Functionality', () => {
 
   afterEach(async () => {
     // Ensure window is visible and restored for next test
-    await restoreWindow();
-    await showWindow();
-    await ensureSingleWindow();
+    // Wrapped in try-catch to handle "Promise was collected" errors that can occur
+    // when the WebSocket connection closes during cleanup after the final test
+    try {
+      await restoreWindow();
+      await showWindow();
+      await ensureSingleWindow();
+    } catch (error) {
+      // Ignore "Promise was collected" errors during cleanup - these occur when
+      // the test framework tears down the WebSocket before cleanup completes
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes('Promise was collected')) {
+        throw error;
+      }
+      E2ELogger.info('window-controls', 'Cleanup interrupted by test teardown (safe to ignore)');
+    }
   });
 
   // =========================================================================

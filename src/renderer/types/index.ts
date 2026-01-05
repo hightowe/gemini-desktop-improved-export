@@ -12,15 +12,15 @@ export type WindowAction = 'minimize' | 'maximize' | 'close';
  * Webview configuration options
  */
 export interface WebviewConfig {
-  url: string;
-  label: string;
+    url: string;
+    label: string;
 }
 
 /**
  * Titlebar configuration for theming extensibility
  */
 export interface TitlebarConfig {
-  title: string;
-  showIcon?: boolean;
-  // Future: theme configuration
+    title: string;
+    showIcon?: boolean;
+    // Future: theme configuration
 }

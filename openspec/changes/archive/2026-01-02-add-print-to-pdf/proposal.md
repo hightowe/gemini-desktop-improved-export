@@ -20,12 +20,12 @@ Users need the ability to export their Gemini chat conversations to PDF for arch
 
 - Affected specs: None (new capability)
 - Affected code:
-  - `src/main/managers/menuManager.ts` - Add File menu item
-  - `src/main/managers/hotkeyManager.ts` - Add new hotkey
-  - `src/shared/types/hotkeys.ts` - Add `printToPdf` to `HotkeyId`
-  - `src/shared/constants/ipc-channels.ts` - Add print-to-pdf channels
-  - `src/renderer/components/options/IndividualHotkeyToggles.tsx` - Add toggle config
-  - `src/main/managers/` - New PrintManager or extension to existing manager
-  - `src/preload/preload.ts` - Expose print API to renderer
-  - E2E tests for the new feature
-  - Integration tests for the new feature
+    - `src/main/managers/menuManager.ts` - Add File menu item
+    - `src/main/managers/hotkeyManager.ts` - Add new hotkey
+    - `src/shared/types/hotkeys.ts` - Add `printToPdf` to `HotkeyId`
+    - `src/shared/constants/ipc-channels.ts` - Add print-to-pdf channels
+    - `src/renderer/components/options/IndividualHotkeyToggles.tsx` - Add toggle config
+    - `src/main/managers/` - New PrintManager or extension to existing manager
+    - `src/preload/preload.ts` - Expose print API to renderer
+    - E2E tests for the new feature
+    - Integration tests for the new feature

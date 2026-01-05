@@ -6,129 +6,123 @@ import SettingsStore from '../../../../src/store';
 
 // Mock electron-log
 vi.mock('electron-log', () => ({
-  default: {
-    transports: {
-      file: { level: 'info' },
+    default: {
+        transports: {
+            file: { level: 'info' },
+        },
+        scope: vi.fn().mockReturnThis(),
+        log: vi.fn(),
+        info: vi.fn(),
+        error: vi.fn(),
     },
-    scope: vi.fn().mockReturnThis(),
-    log: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-  },
 }));
 
 // Mock electron-updater using vi.hoisted to avoid reference errors
 const { mockAutoUpdater } = vi.hoisted(() => {
-  const EventEmitter = require('events');
-  const mock: any = new EventEmitter();
-  mock.checkForUpdatesAndNotify = vi.fn().mockResolvedValue(null);
-  mock.logger = {};
-  mock.autoDownload = true;
-  mock.autoInstallOnAppQuit = true;
-  mock.forceDevUpdateConfig = false;
-  mock.removeAllListeners = vi.fn();
-  return { mockAutoUpdater: mock };
+    const EventEmitter = require('events');
+    const mock: any = new EventEmitter();
+    mock.checkForUpdatesAndNotify = vi.fn().mockResolvedValue(null);
+    mock.logger = {};
+    mock.autoDownload = true;
+    mock.autoInstallOnAppQuit = true;
+    mock.forceDevUpdateConfig = false;
+    mock.removeAllListeners = vi.fn();
+    return { mockAutoUpdater: mock };
 });
 
 vi.mock('electron-updater', () => ({
-  autoUpdater: mockAutoUpdater,
+    autoUpdater: mockAutoUpdater,
 }));
 
 // Mock SettingsStore
 const mockSettings = {
-  get: vi.fn(),
-  set: vi.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
 } as unknown as SettingsStore<any>;
 
 describe('UpdateManager', () => {
-  let updateManager: UpdateManager;
-  let mockWebContents: any;
-  let mockWindow: any;
+    let updateManager: UpdateManager;
+    let mockWebContents: any;
+    let mockWindow: any;
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (mockAutoUpdater as any).removeAllListeners.mockClear();
+    beforeEach(() => {
+        vi.clearAllMocks();
+        (mockAutoUpdater as any).removeAllListeners.mockClear();
 
-    // Mock app.isPackaged to be true so checkForUpdates runs
-    (app as any).isPackaged = true;
+        // Mock app.isPackaged to be true so checkForUpdates runs
+        (app as any).isPackaged = true;
 
-    // Setup mock window and webContents using the electron-mock structure
-    // We need to instantiate a BrowserWindow so it appears in getAllWindows()
-    mockWindow = new BrowserWindow();
-    mockWebContents = mockWindow.webContents;
+        // Setup mock window and webContents using the electron-mock structure
+        // We need to instantiate a BrowserWindow so it appears in getAllWindows()
+        mockWindow = new BrowserWindow();
+        mockWebContents = mockWindow.webContents;
 
-    // Default settings
-    (mockSettings.get as any).mockReturnValue(true);
+        // Default settings
+        (mockSettings.get as any).mockReturnValue(true);
 
-    updateManager = new UpdateManager(mockSettings);
-  });
+        updateManager = new UpdateManager(mockSettings);
+    });
 
-  afterEach(() => {
-    updateManager.destroy();
-    // Clean up mock windows
-    (BrowserWindow as any)._reset();
-  });
+    afterEach(() => {
+        updateManager.destroy();
+        // Clean up mock windows
+        (BrowserWindow as any)._reset();
+    });
 
-  it('should mask raw error messages when broadcasting to windows', async () => {
-    const rawError = new Error('<div>Massive HTML Error</div> with stack trace...');
+    it('should mask raw error messages when broadcasting to windows', async () => {
+        const rawError = new Error('<div>Massive HTML Error</div> with stack trace...');
 
-    // First trigger a successful update check to ensure autoUpdater is lazily loaded
-    // and event listeners are set up
-    await updateManager.checkForUpdates(false);
+        // First trigger a successful update check to ensure autoUpdater is lazily loaded
+        // and event listeners are set up
+        await updateManager.checkForUpdates(false);
 
-    // Emit error from autoUpdater
-    mockAutoUpdater.emit('error', rawError);
+        // Emit error from autoUpdater
+        mockAutoUpdater.emit('error', rawError);
 
-    // Verify valid generic message was sent
-    expect(mockWebContents.send).toHaveBeenCalledWith(
-      'auto-update:error',
-      'The auto-update service encountered an error. Please try again later.'
-    );
+        // Verify valid generic message was sent
+        expect(mockWebContents.send).toHaveBeenCalledWith(
+            'auto-update:error',
+            'The auto-update service encountered an error. Please try again later.'
+        );
 
-    // Verify raw message was NOT sent
-    expect(mockWebContents.send).not.toHaveBeenCalledWith(
-      'auto-update:error',
-      expect.stringContaining('<div>')
-    );
-  });
+        // Verify raw message was NOT sent
+        expect(mockWebContents.send).not.toHaveBeenCalledWith('auto-update:error', expect.stringContaining('<div>'));
+    });
 
-  it('should mask raw error messages when checkForUpdates fails', async () => {
-    const rawError = new Error('Network Connection Refused: <details>...');
-    (mockAutoUpdater.checkForUpdatesAndNotify as any).mockRejectedValueOnce(rawError);
+    it('should mask raw error messages when checkForUpdates fails', async () => {
+        const rawError = new Error('Network Connection Refused: <details>...');
+        (mockAutoUpdater.checkForUpdatesAndNotify as any).mockRejectedValueOnce(rawError);
 
-    await updateManager.checkForUpdates(true);
+        await updateManager.checkForUpdates(true);
 
-    // Verify valid generic message was sent
-    expect(mockWebContents.send).toHaveBeenCalledWith(
-      'update-error',
-      'The auto-update service encountered an error. Please try again later.'
-    );
-    expect(mockWebContents.send).not.toHaveBeenCalledWith(
-      'update-error',
-      expect.stringContaining('Refused')
-    );
-  });
+        // Verify valid generic message was sent
+        expect(mockWebContents.send).toHaveBeenCalledWith(
+            'update-error',
+            'The auto-update service encountered an error. Please try again later.'
+        );
+        expect(mockWebContents.send).not.toHaveBeenCalledWith('update-error', expect.stringContaining('Refused'));
+    });
 
-  it('should suppress error and treat as "not-available" when 404/unreachable', async () => {
-    // Simulate a 404 error from electron-updater (e.g. repo has no releases)
-    const error404 = new Error('HttpError: 404 Not Found"');
-    (mockAutoUpdater.checkForUpdatesAndNotify as any).mockRejectedValueOnce(error404);
+    it('should suppress error and treat as "not-available" when 404/unreachable', async () => {
+        // Simulate a 404 error from electron-updater (e.g. repo has no releases)
+        const error404 = new Error('HttpError: 404 Not Found"');
+        (mockAutoUpdater.checkForUpdatesAndNotify as any).mockRejectedValueOnce(error404);
 
-    // Call with manual=false (background check) - this is the key scenario to suppress
-    await updateManager.checkForUpdates(false);
+        // Call with manual=false (background check) - this is the key scenario to suppress
+        await updateManager.checkForUpdates(false);
 
-    // Should NOT broadcast update-error
-    expect(mockWebContents.send).not.toHaveBeenCalledWith('update-error', expect.any(String));
-  });
+        // Should NOT broadcast update-error
+        expect(mockWebContents.send).not.toHaveBeenCalledWith('update-error', expect.any(String));
+    });
 
-  it('should SHOW error when manual check fails with 404/unreachable', async () => {
-    const error404 = new Error('HttpError: 404 Not Found"');
-    (mockAutoUpdater.checkForUpdatesAndNotify as any).mockRejectedValueOnce(error404);
+    it('should SHOW error when manual check fails with 404/unreachable', async () => {
+        const error404 = new Error('HttpError: 404 Not Found"');
+        (mockAutoUpdater.checkForUpdatesAndNotify as any).mockRejectedValueOnce(error404);
 
-    // Call with manual=true
-    await updateManager.checkForUpdates(true);
+        // Call with manual=true
+        await updateManager.checkForUpdates(true);
 
-    // Should broadcast update-error because it's manual
-    expect(mockWebContents.send).toHaveBeenCalledWith('update-error', expect.any(String));
-  });
+        // Should broadcast update-error because it's manual
+        expect(mockWebContents.send).toHaveBeenCalledWith('update-error', expect.any(String));
+    });
 });

@@ -15,95 +15,91 @@
 import { browser, expect } from '@wdio/globals';
 import { E2ELogger } from './helpers/logger';
 import {
-  GEMINI_MICROPHONE_BUTTON_SELECTORS,
-  GEMINI_ERROR_TOAST_SELECTORS,
-  GEMINI_MICROPHONE_ERROR_TEXT,
-  GEMINI_DOMAIN_PATTERNS,
+    GEMINI_MICROPHONE_BUTTON_SELECTORS,
+    GEMINI_ERROR_TOAST_SELECTORS,
+    GEMINI_MICROPHONE_ERROR_TEXT,
+    GEMINI_DOMAIN_PATTERNS,
 } from './helpers/e2eConstants';
 
 describe('Microphone Permission', () => {
-  beforeEach(async () => {
-    // Wait for Gemini iframe to load
-    await browser.pause(5000);
-  });
-
-  describe('Iframe Configuration', () => {
-    it('should have iframe with microphone permission attribute', async () => {
-      const allowAttr = await browser.execute(() => {
-        const iframe = document.querySelector('iframe[data-testid="gemini-iframe"]');
-        if (!iframe) throw new Error('Iframe not found');
-        return iframe.getAttribute('allow') || '';
-      });
-
-      expect(allowAttr).toContain('microphone');
-      expect(allowAttr).toContain('camera');
-      expect(allowAttr).toContain('display-capture');
-      E2ELogger.info('microphone', `Iframe allow attribute: ${allowAttr}`);
-    });
-  });
-
-  describe('Microphone Button Interaction', () => {
-    it('should have Gemini frame loaded', async () => {
-      // Pass domain patterns to execute context
-      const domainPatterns = [...GEMINI_DOMAIN_PATTERNS];
-
-      const frameInfo = await browser.electron.execute(
-        (electron: typeof import('electron'), domains: string[]) => {
-          const windows = electron.BrowserWindow.getAllWindows();
-          const mainWindow = windows[0];
-          if (!mainWindow) throw new Error('No main window found');
-
-          const frames = mainWindow.webContents.mainFrame.frames;
-          const geminiFrame = frames.find((f) => {
-            try {
-              return domains.some((domain) => f.url.includes(domain));
-            } catch {
-              return false;
-            }
-          });
-
-          if (!geminiFrame) throw new Error('Gemini frame not loaded');
-          return { frameUrl: geminiFrame.url, frameCount: frames.length };
-        },
-        domainPatterns
-      );
-
-      expect(frameInfo.frameUrl).toContain('gemini');
-      E2ELogger.info('microphone', `Found Gemini frame: ${frameInfo.frameUrl}`);
+    beforeEach(async () => {
+        // Wait for Gemini iframe to load
+        await browser.pause(5000);
     });
 
-    it('should not show error toast when clicking microphone button', async () => {
-      // Pass selectors to execute context
-      const micSelectors = [...GEMINI_MICROPHONE_BUTTON_SELECTORS];
-      const toastSelectors = [...GEMINI_ERROR_TOAST_SELECTORS];
-      const errorText = GEMINI_MICROPHONE_ERROR_TEXT;
-      const domainPatterns = [...GEMINI_DOMAIN_PATTERNS];
+    describe('Iframe Configuration', () => {
+        it('should have iframe with microphone permission attribute', async () => {
+            const allowAttr = await browser.execute(() => {
+                const iframe = document.querySelector('iframe[data-testid="gemini-iframe"]');
+                if (!iframe) throw new Error('Iframe not found');
+                return iframe.getAttribute('allow') || '';
+            });
 
-      // Click microphone button via main process (to access iframe frames)
-      const clickResult = await browser.electron.execute(
-        (
-          electron: typeof import('electron'),
-          micSels: string[],
-          domains: string[]
-        ) => {
-          const windows = electron.BrowserWindow.getAllWindows();
-          const mainWindow = windows[0];
-          if (!mainWindow) throw new Error('No main window found');
+            expect(allowAttr).toContain('microphone');
+            expect(allowAttr).toContain('camera');
+            expect(allowAttr).toContain('display-capture');
+            E2ELogger.info('microphone', `Iframe allow attribute: ${allowAttr}`);
+        });
+    });
 
-          const frames = mainWindow.webContents.mainFrame.frames;
-          const geminiFrame = frames.find((f) => {
-            try {
-              return domains.some((domain) => f.url.includes(domain));
-            } catch {
-              return false;
-            }
-          });
+    describe('Microphone Button Interaction', () => {
+        it('should have Gemini frame loaded', async () => {
+            // Pass domain patterns to execute context
+            const domainPatterns = [...GEMINI_DOMAIN_PATTERNS];
 
-          if (!geminiFrame) throw new Error('Gemini frame not accessible');
+            const frameInfo = await browser.electron.execute(
+                (electron: typeof import('electron'), domains: string[]) => {
+                    const windows = electron.BrowserWindow.getAllWindows();
+                    const mainWindow = windows[0];
+                    if (!mainWindow) throw new Error('No main window found');
 
-          // Build click script using provided selectors
-          const selectorsJson = JSON.stringify(micSels);
-          const clickScript = `
+                    const frames = mainWindow.webContents.mainFrame.frames;
+                    const geminiFrame = frames.find((f) => {
+                        try {
+                            return domains.some((domain) => f.url.includes(domain));
+                        } catch {
+                            return false;
+                        }
+                    });
+
+                    if (!geminiFrame) throw new Error('Gemini frame not loaded');
+                    return { frameUrl: geminiFrame.url, frameCount: frames.length };
+                },
+                domainPatterns
+            );
+
+            expect(frameInfo.frameUrl).toContain('gemini');
+            E2ELogger.info('microphone', `Found Gemini frame: ${frameInfo.frameUrl}`);
+        });
+
+        it('should not show error toast when clicking microphone button', async () => {
+            // Pass selectors to execute context
+            const micSelectors = [...GEMINI_MICROPHONE_BUTTON_SELECTORS];
+            const toastSelectors = [...GEMINI_ERROR_TOAST_SELECTORS];
+            const errorText = GEMINI_MICROPHONE_ERROR_TEXT;
+            const domainPatterns = [...GEMINI_DOMAIN_PATTERNS];
+
+            // Click microphone button via main process (to access iframe frames)
+            const clickResult = await browser.electron.execute(
+                (electron: typeof import('electron'), micSels: string[], domains: string[]) => {
+                    const windows = electron.BrowserWindow.getAllWindows();
+                    const mainWindow = windows[0];
+                    if (!mainWindow) throw new Error('No main window found');
+
+                    const frames = mainWindow.webContents.mainFrame.frames;
+                    const geminiFrame = frames.find((f) => {
+                        try {
+                            return domains.some((domain) => f.url.includes(domain));
+                        } catch {
+                            return false;
+                        }
+                    });
+
+                    if (!geminiFrame) throw new Error('Gemini frame not accessible');
+
+                    // Build click script using provided selectors
+                    const selectorsJson = JSON.stringify(micSels);
+                    const clickScript = `
             (function() {
               const selectors = ${selectorsJson};
               for (const sel of selectors) {
@@ -117,45 +113,40 @@ describe('Microphone Permission', () => {
             })();
           `;
 
-          geminiFrame.executeJavaScript(clickScript);
-          return { executed: true };
-        },
-        micSelectors,
-        domainPatterns
-      );
+                    geminiFrame.executeJavaScript(clickScript);
+                    return { executed: true };
+                },
+                micSelectors,
+                domainPatterns
+            );
 
-      expect(clickResult.executed).toBe(true);
-      E2ELogger.info('microphone', 'Clicked microphone button');
+            expect(clickResult.executed).toBe(true);
+            E2ELogger.info('microphone', 'Clicked microphone button');
 
-      // Wait for any error toast to appear
-      await browser.pause(2000);
+            // Wait for any error toast to appear
+            await browser.pause(2000);
 
-      // Check for error toast
-      const hasErrorToast = await browser.electron.execute(
-        (
-          electron: typeof import('electron'),
-          toastSels: string[],
-          errText: string,
-          domains: string[]
-        ) => {
-          const windows = electron.BrowserWindow.getAllWindows();
-          const mainWindow = windows[0];
-          if (!mainWindow) return false;
+            // Check for error toast
+            const hasErrorToast = await browser.electron.execute(
+                (electron: typeof import('electron'), toastSels: string[], errText: string, domains: string[]) => {
+                    const windows = electron.BrowserWindow.getAllWindows();
+                    const mainWindow = windows[0];
+                    if (!mainWindow) return false;
 
-          const frames = mainWindow.webContents.mainFrame.frames;
-          const geminiFrame = frames.find((f) => {
-            try {
-              return domains.some((domain) => f.url.includes(domain));
-            } catch {
-              return false;
-            }
-          });
+                    const frames = mainWindow.webContents.mainFrame.frames;
+                    const geminiFrame = frames.find((f) => {
+                        try {
+                            return domains.some((domain) => f.url.includes(domain));
+                        } catch {
+                            return false;
+                        }
+                    });
 
-          if (!geminiFrame) return false;
+                    if (!geminiFrame) return false;
 
-          // Build toast check script
-          const selectorsJson = JSON.stringify(toastSels);
-          const toastScript = `
+                    // Build toast check script
+                    const selectorsJson = JSON.stringify(toastSels);
+                    const toastScript = `
             (function() {
               const selectors = ${selectorsJson};
               for (const sel of selectors) {
@@ -168,19 +159,19 @@ describe('Microphone Permission', () => {
             })();
           `;
 
-          // Note: executeJavaScript is async, so we can't get the result synchronously
-          // We return optimistic false here and rely on page state
-          geminiFrame.executeJavaScript(toastScript);
-          return false;
-        },
-        toastSelectors,
-        errorText,
-        domainPatterns
-      );
+                    // Note: executeJavaScript is async, so we can't get the result synchronously
+                    // We return optimistic false here and rely on page state
+                    geminiFrame.executeJavaScript(toastScript);
+                    return false;
+                },
+                toastSelectors,
+                errorText,
+                domainPatterns
+            );
 
-      // Verify no microphone error toast appeared
-      expect(hasErrorToast).toBe(false);
-      E2ELogger.info('microphone', 'No microphone error toast detected');
+            // Verify no microphone error toast appeared
+            expect(hasErrorToast).toBe(false);
+            E2ELogger.info('microphone', 'No microphone error toast detected');
+        });
     });
-  });
 });

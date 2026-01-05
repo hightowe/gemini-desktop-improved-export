@@ -13,62 +13,62 @@ import { expectUrlHash } from './helpers/assertions';
 import { isMacOS } from './helpers/platform';
 
 describe('General Menu Actions', () => {
-  const mainWindow = new MainWindowPage();
-  const optionsPage = new OptionsPage();
+    const mainWindow = new MainWindowPage();
+    const optionsPage = new OptionsPage();
 
-  beforeEach(async () => {
-    await waitForAppReady();
-  });
-
-  afterEach(async () => {
-    await ensureSingleWindow();
-  });
-
-  it('should open About tab in Options window when clicking "About Gemini Desktop"', async () => {
-    // 1. Click Help -> About using MainWindowPage
-    await mainWindow.openAboutViaMenu();
-
-    // 2. Wait for Options window
-    await waitForWindowCount(2);
-
-    // 3. Wait for Options page to load
-    await optionsPage.waitForLoad();
-
-    // 4. Verify URL hash is #about
-    await expectUrlHash('#about');
-
-    // 5. Verify the About tab is active
-    expect(await optionsPage.isAboutTabActive()).toBe(true);
-
-    // Cleanup - close options window
-    await optionsPage.close();
-  });
-
-  it('should reload the page when clicking View -> Reload', async function () {
-    // SKIP on macOS: Programmatically clicking Electron native menu items with
-    // `role: 'reload'` via `item.click()` doesn't fire the role action.
-    // This is a known Electron limitation for role-based menu items.
-    // The reload functionality works correctly for real user interactions.
-    if (await isMacOS()) {
-      this.skip();
-    }
-
-    // 1. Inject a variable into the window to track state
-    await browser.execute(() => {
-      (window as any).__e2e_test_var = 'loaded';
+    beforeEach(async () => {
+        await waitForAppReady();
     });
 
-    const valBefore = await browser.execute(() => (window as any).__e2e_test_var);
-    expect(valBefore).toBe('loaded');
+    afterEach(async () => {
+        await ensureSingleWindow();
+    });
 
-    // 2. Trigger Reload using MainWindowPage menu action
-    await mainWindow.clickMenuById('menu-view-reload');
+    it('should open About tab in Options window when clicking "About Gemini Desktop"', async () => {
+        // 1. Click Help -> About using MainWindowPage
+        await mainWindow.openAboutViaMenu();
 
-    // 3. Wait for reload to complete
-    await browser.pause(1000);
+        // 2. Wait for Options window
+        await waitForWindowCount(2);
 
-    // 4. Verify variable is GONE (undefined) because page reloaded
-    const valAfter = await browser.execute(() => (window as any).__e2e_test_var);
-    expect(valAfter).toBeFalsy();
-  });
+        // 3. Wait for Options page to load
+        await optionsPage.waitForLoad();
+
+        // 4. Verify URL hash is #about
+        await expectUrlHash('#about');
+
+        // 5. Verify the About tab is active
+        expect(await optionsPage.isAboutTabActive()).toBe(true);
+
+        // Cleanup - close options window
+        await optionsPage.close();
+    });
+
+    it('should reload the page when clicking View -> Reload', async function () {
+        // SKIP on macOS: Programmatically clicking Electron native menu items with
+        // `role: 'reload'` via `item.click()` doesn't fire the role action.
+        // This is a known Electron limitation for role-based menu items.
+        // The reload functionality works correctly for real user interactions.
+        if (await isMacOS()) {
+            this.skip();
+        }
+
+        // 1. Inject a variable into the window to track state
+        await browser.execute(() => {
+            (window as any).__e2e_test_var = 'loaded';
+        });
+
+        const valBefore = await browser.execute(() => (window as any).__e2e_test_var);
+        expect(valBefore).toBe('loaded');
+
+        // 2. Trigger Reload using MainWindowPage menu action
+        await mainWindow.clickMenuById('menu-view-reload');
+
+        // 3. Wait for reload to complete
+        await browser.pause(1000);
+
+        // 4. Verify variable is GONE (undefined) because page reloaded
+        const valAfter = await browser.execute(() => (window as any).__e2e_test_var);
+        expect(valAfter).toBeFalsy();
+    });
 });

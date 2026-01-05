@@ -20,15 +20,15 @@ Users can benefit from AI-powered text completion while typing prompts in Quick 
 
 - Affected specs: None (new capability)
 - Affected code:
-  - `src/main/managers/llmManager.ts` - **NEW** manager for model lifecycle and inference
-  - `src/main/store.ts` - Add text prediction settings
-  - `src/shared/constants/ipc-channels.ts` - Add text prediction channels
-  - `src/shared/types/text-prediction.ts` - **NEW** types for prediction settings/status
-  - `src/shared/types/ipc.ts` - Extend `ElectronAPI` interface
-  - `src/preload/preload.ts` - Expose prediction APIs
-  - `src/main/managers/ipcManager.ts` - Add prediction handlers
-  - `src/renderer/components/options/TextPredictionSettings.tsx` - **NEW** settings component
-  - `src/renderer/components/options/OptionsWindow.tsx` - Add settings section
-  - `src/renderer/components/quickchat/QuickChatApp.tsx` - Add ghost text and Tab handling
-  - `src/renderer/components/quickchat/QuickChat.css` - Ghost text styling
-  - `package.json` - Add `node-llama-cpp` dependency
+    - `src/main/managers/llmManager.ts` - **NEW** manager for model lifecycle and inference
+    - `src/main/store.ts` - Add text prediction settings
+    - `src/shared/constants/ipc-channels.ts` - Add text prediction channels
+    - `src/shared/types/text-prediction.ts` - **NEW** types for prediction settings/status
+    - `src/shared/types/ipc.ts` - Extend `ElectronAPI` interface
+    - `src/preload/preload.ts` - Expose prediction APIs
+    - `src/main/managers/ipcManager.ts` - Add prediction handlers
+    - `src/renderer/components/options/TextPredictionSettings.tsx` - **NEW** settings component
+    - `src/renderer/components/options/OptionsWindow.tsx` - Add settings section
+    - `src/renderer/components/quickchat/QuickChatApp.tsx` - Add ghost text and Tab handling
+    - `src/renderer/components/quickchat/QuickChat.css` - Ghost text styling
+    - `package.json` - Add `node-llama-cpp` dependency

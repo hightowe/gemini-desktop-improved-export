@@ -14,11 +14,11 @@ import { IndividualHotkeysProvider } from '@/context/IndividualHotkeysContext';
 import '@/App.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ThemeProvider>
-      <IndividualHotkeysProvider>
-        <OptionsWindow />
-      </IndividualHotkeysProvider>
-    </ThemeProvider>
-  </React.StrictMode>
+    <React.StrictMode>
+        <ThemeProvider>
+            <IndividualHotkeysProvider>
+                <OptionsWindow />
+            </IndividualHotkeysProvider>
+        </ThemeProvider>
+    </React.StrictMode>
 );

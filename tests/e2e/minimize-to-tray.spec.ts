@@ -27,175 +27,175 @@ import { waitForAppReady } from './helpers/workflows';
 import { isMacOS } from './helpers/platform';
 
 describe('Minimize-to-Tray Workflow', () => {
-  const tray = new TrayPage();
+    const tray = new TrayPage();
 
-  /**
-   * Helper to hide window using platform-appropriate method.
-   * - macOS: Uses hideWindowToTray() since native traffic lights are used
-   * - Windows/Linux: Uses hideViaCloseButton() to test custom close button
-   */
-  async function hideWindow(): Promise<void> {
-    if (await isMacOS()) {
-      await tray.hideWindowToTray();
-    } else {
-      await tray.hideViaCloseButton();
+    /**
+     * Helper to hide window using platform-appropriate method.
+     * - macOS: Uses hideWindowToTray() since native traffic lights are used
+     * - Windows/Linux: Uses hideViaCloseButton() to test custom close button
+     */
+    async function hideWindow(): Promise<void> {
+        if (await isMacOS()) {
+            await tray.hideWindowToTray();
+        } else {
+            await tray.hideViaCloseButton();
+        }
     }
-  }
 
-  beforeEach(async () => {
-    // Ensure app is loaded and window is visible
-    await waitForAppReady();
+    beforeEach(async () => {
+        // Ensure app is loaded and window is visible
+        await waitForAppReady();
 
-    // Make sure window is visible before each test
-    const visible = await tray.isWindowVisible();
-    if (!visible) {
-      await tray.clickAndWaitForWindow();
-    }
-  });
-
-  afterEach(async () => {
-    // Restore window after each test
-    const visible = await tray.isWindowVisible();
-    if (!visible) {
-      await tray.clickAndWaitForWindow();
-    }
-  });
-
-  describe('Close Action Triggers Hide-to-Tray', () => {
-    it('should hide window to tray when close action is triggered', async () => {
-      // Verify window is visible initially
-      const initialVisible = await tray.isWindowVisible();
-      expect(initialVisible).toBe(true);
-
-      // Trigger close (platform-appropriate method)
-      await hideWindow();
-
-      // Window should be hidden
-      const hiddenToTray = await tray.isHiddenToTray();
-      expect(hiddenToTray).toBe(true);
-
-      E2ELogger.info('minimize-to-tray', 'Window hidden to tray');
+        // Make sure window is visible before each test
+        const visible = await tray.isWindowVisible();
+        if (!visible) {
+            await tray.clickAndWaitForWindow();
+        }
     });
 
-    it('should not be minimized to taskbar (hidden vs minimized)', async () => {
-      // Trigger close to hide
-      await hideWindow();
-
-      // Should NOT be minimized (minimized is different from hidden)
-      const isMinimized = await tray.isWindowMinimized();
-      expect(isMinimized).toBe(false);
-
-      // Should not be visible
-      const isVisible = await tray.isWindowVisible();
-      expect(isVisible).toBe(false);
-
-      E2ELogger.info('minimize-to-tray', 'Window is hidden, not minimized');
+    afterEach(async () => {
+        // Restore window after each test
+        const visible = await tray.isWindowVisible();
+        if (!visible) {
+            await tray.clickAndWaitForWindow();
+        }
     });
 
-    // Skip: Electron doesn't provide an isSkipTaskbar() getter - we can only setSkipTaskbar().
-    // The functionality is tested implicitly by verifying hide-to-tray works correctly.
-    it.skip('should skip taskbar on Windows/Linux when hidden to tray', async () => {
-      // Skip on macOS (no taskbar concept)
-      if (await isMacOS()) {
-        E2ELogger.info('minimize-to-tray', 'Skipping taskbar test on macOS');
-        return;
-      }
+    describe('Close Action Triggers Hide-to-Tray', () => {
+        it('should hide window to tray when close action is triggered', async () => {
+            // Verify window is visible initially
+            const initialVisible = await tray.isWindowVisible();
+            expect(initialVisible).toBe(true);
 
-      // Skip on Linux CI (Xvfb limitations)
-      if (await tray.isLinuxCI()) {
-        E2ELogger.info('minimize-to-tray', 'Skipping taskbar test on Linux CI');
-        return;
-      }
+            // Trigger close (platform-appropriate method)
+            await hideWindow();
 
-      // Trigger close to hide
-      await hideWindow();
+            // Window should be hidden
+            const hiddenToTray = await tray.isHiddenToTray();
+            expect(hiddenToTray).toBe(true);
 
-      // Should skip taskbar
-      const skipTaskbar = await tray.isSkipTaskbar();
-      expect(skipTaskbar).toBe(true);
+            E2ELogger.info('minimize-to-tray', 'Window hidden to tray');
+        });
 
-      E2ELogger.info('minimize-to-tray', 'Window is skipping taskbar');
+        it('should not be minimized to taskbar (hidden vs minimized)', async () => {
+            // Trigger close to hide
+            await hideWindow();
+
+            // Should NOT be minimized (minimized is different from hidden)
+            const isMinimized = await tray.isWindowMinimized();
+            expect(isMinimized).toBe(false);
+
+            // Should not be visible
+            const isVisible = await tray.isWindowVisible();
+            expect(isVisible).toBe(false);
+
+            E2ELogger.info('minimize-to-tray', 'Window is hidden, not minimized');
+        });
+
+        // Skip: Electron doesn't provide an isSkipTaskbar() getter - we can only setSkipTaskbar().
+        // The functionality is tested implicitly by verifying hide-to-tray works correctly.
+        it.skip('should skip taskbar on Windows/Linux when hidden to tray', async () => {
+            // Skip on macOS (no taskbar concept)
+            if (await isMacOS()) {
+                E2ELogger.info('minimize-to-tray', 'Skipping taskbar test on macOS');
+                return;
+            }
+
+            // Skip on Linux CI (Xvfb limitations)
+            if (await tray.isLinuxCI()) {
+                E2ELogger.info('minimize-to-tray', 'Skipping taskbar test on Linux CI');
+                return;
+            }
+
+            // Trigger close to hide
+            await hideWindow();
+
+            // Should skip taskbar
+            const skipTaskbar = await tray.isSkipTaskbar();
+            expect(skipTaskbar).toBe(true);
+
+            E2ELogger.info('minimize-to-tray', 'Window is skipping taskbar');
+        });
     });
-  });
 
-  describe('Restore from Tray After Hiding', () => {
-    it('should restore window from tray after hiding', async () => {
-      // 1. Hide to tray
-      await hideWindow();
+    describe('Restore from Tray After Hiding', () => {
+        it('should restore window from tray after hiding', async () => {
+            // 1. Hide to tray
+            await hideWindow();
 
-      // Verify hidden
-      const hiddenAfterMinimize = await tray.isHiddenToTray();
-      expect(hiddenAfterMinimize).toBe(true);
+            // Verify hidden
+            const hiddenAfterMinimize = await tray.isHiddenToTray();
+            expect(hiddenAfterMinimize).toBe(true);
 
-      // 2. Click tray to restore
-      await tray.clickAndWaitForWindow();
+            // 2. Click tray to restore
+            await tray.clickAndWaitForWindow();
 
-      // 3. Window should be visible again
-      const visibleAfterRestore = await tray.isWindowVisible();
-      expect(visibleAfterRestore).toBe(true);
+            // 3. Window should be visible again
+            const visibleAfterRestore = await tray.isWindowVisible();
+            expect(visibleAfterRestore).toBe(true);
 
-      E2ELogger.info('minimize-to-tray', 'Window restored from tray after hide');
+            E2ELogger.info('minimize-to-tray', 'Window restored from tray after hide');
+        });
+
+        it('should restore taskbar visibility on Windows/Linux', async () => {
+            // Skip on macOS
+            if (await isMacOS()) {
+                return;
+            }
+
+            // Skip on Linux CI
+            if (await tray.isLinuxCI()) {
+                return;
+            }
+
+            // 1. Hide to tray
+            await hideWindow();
+
+            // 2. Restore via tray click
+            await tray.clickAndWaitForWindow();
+
+            // 3. Should NOT skip taskbar anymore
+            const skipTaskbar = await tray.isSkipTaskbar();
+            expect(skipTaskbar).toBe(false);
+
+            E2ELogger.info('minimize-to-tray', 'Taskbar visibility restored after restore');
+        });
     });
 
-    it('should restore taskbar visibility on Windows/Linux', async () => {
-      // Skip on macOS
-      if (await isMacOS()) {
-        return;
-      }
+    describe('Tray Icon Persists', () => {
+        it('should keep tray icon visible after hiding to tray', async () => {
+            // Hide to tray
+            await hideWindow();
 
-      // Skip on Linux CI
-      if (await tray.isLinuxCI()) {
-        return;
-      }
+            // Tray should still exist
+            const trayExists = await tray.isCreated();
+            expect(trayExists).toBe(true);
 
-      // 1. Hide to tray
-      await hideWindow();
-
-      // 2. Restore via tray click
-      await tray.clickAndWaitForWindow();
-
-      // 3. Should NOT skip taskbar anymore
-      const skipTaskbar = await tray.isSkipTaskbar();
-      expect(skipTaskbar).toBe(false);
-
-      E2ELogger.info('minimize-to-tray', 'Taskbar visibility restored after restore');
+            E2ELogger.info('minimize-to-tray', 'Tray icon persists when window is hidden');
+        });
     });
-  });
 
-  describe('Tray Icon Persists', () => {
-    it('should keep tray icon visible after hiding to tray', async () => {
-      // Hide to tray
-      await hideWindow();
+    describe('Multiple Hide/Restore Cycles', () => {
+        it('should handle multiple hide/restore cycles', async () => {
+            // Cycle 1
+            await hideWindow();
+            let hidden = await tray.isHiddenToTray();
+            expect(hidden).toBe(true);
 
-      // Tray should still exist
-      const trayExists = await tray.isCreated();
-      expect(trayExists).toBe(true);
+            await tray.clickAndWaitForWindow();
+            let visible = await tray.isWindowVisible();
+            expect(visible).toBe(true);
 
-      E2ELogger.info('minimize-to-tray', 'Tray icon persists when window is hidden');
+            // Cycle 2
+            await hideWindow();
+            hidden = await tray.isHiddenToTray();
+            expect(hidden).toBe(true);
+
+            await tray.clickAndWaitForWindow();
+            visible = await tray.isWindowVisible();
+            expect(visible).toBe(true);
+
+            E2ELogger.info('minimize-to-tray', 'Multiple hide/restore cycles successful');
+        });
     });
-  });
-
-  describe('Multiple Hide/Restore Cycles', () => {
-    it('should handle multiple hide/restore cycles', async () => {
-      // Cycle 1
-      await hideWindow();
-      let hidden = await tray.isHiddenToTray();
-      expect(hidden).toBe(true);
-
-      await tray.clickAndWaitForWindow();
-      let visible = await tray.isWindowVisible();
-      expect(visible).toBe(true);
-
-      // Cycle 2
-      await hideWindow();
-      hidden = await tray.isHiddenToTray();
-      expect(hidden).toBe(true);
-
-      await tray.clickAndWaitForWindow();
-      visible = await tray.isWindowVisible();
-      expect(visible).toBe(true);
-
-      E2ELogger.info('minimize-to-tray', 'Multiple hide/restore cycles successful');
-    });
-  });
 });

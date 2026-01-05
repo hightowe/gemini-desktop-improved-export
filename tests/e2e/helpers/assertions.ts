@@ -27,17 +27,17 @@ import { E2E_TIMING } from './e2eConstants';
  * @param options.timeoutMsg - Custom timeout message
  */
 export async function expectElementDisplayed(
-  selector: string,
-  options: { timeout?: number; timeoutMsg?: string } = {}
+    selector: string,
+    options: { timeout?: number; timeoutMsg?: string } = {}
 ): Promise<void> {
-  const { timeout = 5000, timeoutMsg } = options;
-  const element = await $(selector);
-  await element.waitForDisplayed({
-    timeout,
-    timeoutMsg: timeoutMsg || `Element '${selector}' was not displayed within ${timeout}ms`,
-  });
-  await expect(element).toBeDisplayed();
-  E2ELogger.info('assertions', `✓ Element displayed: ${selector}`);
+    const { timeout = 5000, timeoutMsg } = options;
+    const element = await $(selector);
+    await element.waitForDisplayed({
+        timeout,
+        timeoutMsg: timeoutMsg || `Element '${selector}' was not displayed within ${timeout}ms`,
+    });
+    await expect(element).toBeDisplayed();
+    E2ELogger.info('assertions', `✓ Element displayed: ${selector}`);
 }
 
 /**
@@ -47,18 +47,15 @@ export async function expectElementDisplayed(
  * @param options - Optional configuration
  * @param options.timeout - Timeout in ms (default: 5000)
  */
-export async function expectElementNotDisplayed(
-  selector: string,
-  options: { timeout?: number } = {}
-): Promise<void> {
-  const { timeout = 5000 } = options;
-  const element = await $(selector);
-  await element.waitForDisplayed({
-    timeout,
-    reverse: true,
-    timeoutMsg: `Element '${selector}' was still displayed after ${timeout}ms`,
-  });
-  E2ELogger.info('assertions', `✓ Element not displayed: ${selector}`);
+export async function expectElementNotDisplayed(selector: string, options: { timeout?: number } = {}): Promise<void> {
+    const { timeout = 5000 } = options;
+    const element = await $(selector);
+    await element.waitForDisplayed({
+        timeout,
+        reverse: true,
+        timeoutMsg: `Element '${selector}' was still displayed after ${timeout}ms`,
+    });
+    E2ELogger.info('assertions', `✓ Element not displayed: ${selector}`);
 }
 
 /**
@@ -67,17 +64,14 @@ export async function expectElementNotDisplayed(
  * @param selector - CSS selector for the element
  * @param options - Optional configuration
  */
-export async function expectElementExists(
-  selector: string,
-  options: { timeout?: number } = {}
-): Promise<void> {
-  const { timeout = 5000 } = options;
-  const element = await $(selector);
-  await element.waitForExist({
-    timeout,
-    timeoutMsg: `Element '${selector}' did not exist within ${timeout}ms`,
-  });
-  E2ELogger.info('assertions', `✓ Element exists: ${selector}`);
+export async function expectElementExists(selector: string, options: { timeout?: number } = {}): Promise<void> {
+    const { timeout = 5000 } = options;
+    const element = await $(selector);
+    await element.waitForExist({
+        timeout,
+        timeoutMsg: `Element '${selector}' did not exist within ${timeout}ms`,
+    });
+    E2ELogger.info('assertions', `✓ Element exists: ${selector}`);
 }
 
 // =============================================================================
@@ -92,18 +86,18 @@ export async function expectElementExists(
  * @param options.selectorPattern - Custom selector pattern (default: options-tab-{tabName})
  */
 export async function expectTabActive(
-  tabName: string,
-  options: { selectorPattern?: string; timeout?: number } = {}
+    tabName: string,
+    options: { selectorPattern?: string; timeout?: number } = {}
 ): Promise<void> {
-  const { selectorPattern = `options-tab-${tabName}`, timeout = 5000 } = options;
-  const selector = `[data-testid="${selectorPattern}"]`;
-  const tab = await $(selector);
+    const { selectorPattern = `options-tab-${tabName}`, timeout = 5000 } = options;
+    const selector = `[data-testid="${selectorPattern}"]`;
+    const tab = await $(selector);
 
-  await tab.waitForDisplayed({ timeout });
-  const isSelected = await tab.getAttribute('aria-selected');
-  expect(isSelected).toBe('true');
+    await tab.waitForDisplayed({ timeout });
+    const isSelected = await tab.getAttribute('aria-selected');
+    expect(isSelected).toBe('true');
 
-  E2ELogger.info('assertions', `✓ Tab active: ${tabName}`);
+    E2ELogger.info('assertions', `✓ Tab active: ${tabName}`);
 }
 
 /**
@@ -111,18 +105,15 @@ export async function expectTabActive(
  *
  * @param tabName - The tab identifier
  */
-export async function expectTabNotActive(
-  tabName: string,
-  options: { selectorPattern?: string } = {}
-): Promise<void> {
-  const { selectorPattern = `options-tab-${tabName}` } = options;
-  const selector = `[data-testid="${selectorPattern}"]`;
-  const tab = await $(selector);
+export async function expectTabNotActive(tabName: string, options: { selectorPattern?: string } = {}): Promise<void> {
+    const { selectorPattern = `options-tab-${tabName}` } = options;
+    const selector = `[data-testid="${selectorPattern}"]`;
+    const tab = await $(selector);
 
-  const isSelected = await tab.getAttribute('aria-selected');
-  expect(isSelected).not.toBe('true');
+    const isSelected = await tab.getAttribute('aria-selected');
+    expect(isSelected).not.toBe('true');
 
-  E2ELogger.info('assertions', `✓ Tab not active: ${tabName}`);
+    E2ELogger.info('assertions', `✓ Tab not active: ${tabName}`);
 }
 
 // =============================================================================
@@ -135,12 +126,12 @@ export async function expectTabNotActive(
  * @param expectedTheme - The expected theme ('light' or 'dark')
  */
 export async function expectThemeApplied(expectedTheme: 'light' | 'dark'): Promise<void> {
-  const actualTheme = await browser.execute(() => {
-    return document.documentElement.getAttribute('data-theme');
-  });
+    const actualTheme = await browser.execute(() => {
+        return document.documentElement.getAttribute('data-theme');
+    });
 
-  expect(actualTheme).toBe(expectedTheme);
-  E2ELogger.info('assertions', `✓ Theme applied: ${expectedTheme}`);
+    expect(actualTheme).toBe(expectedTheme);
+    E2ELogger.info('assertions', `✓ Theme applied: ${expectedTheme}`);
 }
 
 /**
@@ -150,9 +141,9 @@ export async function expectThemeApplied(expectedTheme: 'light' | 'dark'): Promi
  * @returns The current theme value
  */
 export async function getCurrentTheme(): Promise<string | null> {
-  return browser.execute(() => {
-    return document.documentElement.getAttribute('data-theme');
-  });
+    return browser.execute(() => {
+        return document.documentElement.getAttribute('data-theme');
+    });
 }
 
 // =============================================================================
@@ -165,26 +156,23 @@ export async function getCurrentTheme(): Promise<string | null> {
  * @param expectedCount - Expected number of windows
  * @param options - Optional configuration
  */
-export async function expectWindowCount(
-  expectedCount: number,
-  options: { timeout?: number } = {}
-): Promise<void> {
-  const { timeout = 5000 } = options;
+export async function expectWindowCount(expectedCount: number, options: { timeout?: number } = {}): Promise<void> {
+    const { timeout = 5000 } = options;
 
-  await browser.waitUntil(
-    async () => {
-      const handles = await browser.getWindowHandles();
-      return handles.length === expectedCount;
-    },
-    {
-      timeout,
-      timeoutMsg: `Expected ${expectedCount} windows, but found ${(await browser.getWindowHandles()).length}`,
-    }
-  );
+    await browser.waitUntil(
+        async () => {
+            const handles = await browser.getWindowHandles();
+            return handles.length === expectedCount;
+        },
+        {
+            timeout,
+            timeoutMsg: `Expected ${expectedCount} windows, but found ${(await browser.getWindowHandles()).length}`,
+        }
+    );
 
-  const handles = await browser.getWindowHandles();
-  expect(handles.length).toBe(expectedCount);
-  E2ELogger.info('assertions', `✓ Window count: ${expectedCount}`);
+    const handles = await browser.getWindowHandles();
+    expect(handles.length).toBe(expectedCount);
+    E2ELogger.info('assertions', `✓ Window count: ${expectedCount}`);
 }
 
 /**
@@ -192,24 +180,21 @@ export async function expectWindowCount(
  *
  * @param initialCount - The initial window count before the action
  */
-export async function expectNewWindowOpened(
-  initialCount: number,
-  options: { timeout?: number } = {}
-): Promise<void> {
-  const { timeout = 5000 } = options;
+export async function expectNewWindowOpened(initialCount: number, options: { timeout?: number } = {}): Promise<void> {
+    const { timeout = 5000 } = options;
 
-  await browser.waitUntil(
-    async () => {
-      const handles = await browser.getWindowHandles();
-      return handles.length > initialCount;
-    },
-    {
-      timeout,
-      timeoutMsg: `No new window opened. Initial count: ${initialCount}`,
-    }
-  );
+    await browser.waitUntil(
+        async () => {
+            const handles = await browser.getWindowHandles();
+            return handles.length > initialCount;
+        },
+        {
+            timeout,
+            timeoutMsg: `No new window opened. Initial count: ${initialCount}`,
+        }
+    );
 
-  E2ELogger.info('assertions', `✓ New window opened (was ${initialCount})`);
+    E2ELogger.info('assertions', `✓ New window opened (was ${initialCount})`);
 }
 
 // =============================================================================
@@ -223,26 +208,25 @@ export async function expectNewWindowOpened(
  * @param expectedState - Whether it should be checked/enabled
  */
 export async function expectToggleState(
-  toggleTestId: string,
-  expectedState: boolean,
-  options: { timeout?: number } = {}
+    toggleTestId: string,
+    expectedState: boolean,
+    options: { timeout?: number } = {}
 ): Promise<void> {
-  const { timeout = 5000 } = options;
-  const selector = `[data-testid="${toggleTestId}"]`;
-  const toggle = await $(selector);
+    const { timeout = 5000 } = options;
+    const selector = `[data-testid="${toggleTestId}"]`;
+    const toggle = await $(selector);
 
-  await toggle.waitForDisplayed({ timeout });
+    await toggle.waitForDisplayed({ timeout });
 
-  // Toggles may use 'checked', 'aria-checked', or a class
-  const ariaChecked = await toggle.getAttribute('aria-checked');
-  const isChecked = await toggle.getAttribute('checked');
-  const className = await toggle.getAttribute('class');
+    // Toggles may use 'checked', 'aria-checked', or a class
+    const ariaChecked = await toggle.getAttribute('aria-checked');
+    const isChecked = await toggle.getAttribute('checked');
+    const className = await toggle.getAttribute('class');
 
-  const actualState =
-    ariaChecked === 'true' || isChecked !== null || (className && className.includes('checked'));
+    const actualState = ariaChecked === 'true' || isChecked !== null || (className && className.includes('checked'));
 
-  expect(actualState).toBe(expectedState);
-  E2ELogger.info('assertions', `✓ Toggle ${toggleTestId}: ${expectedState ? 'ON' : 'OFF'}`);
+    expect(actualState).toBe(expectedState);
+    E2ELogger.info('assertions', `✓ Toggle ${toggleTestId}: ${expectedState ? 'ON' : 'OFF'}`);
 }
 
 // =============================================================================
@@ -256,18 +240,18 @@ export async function expectToggleState(
  * @param expectedText - Text that should be present (can be partial)
  */
 export async function expectElementContainsText(
-  selector: string,
-  expectedText: string,
-  options: { timeout?: number } = {}
+    selector: string,
+    expectedText: string,
+    options: { timeout?: number } = {}
 ): Promise<void> {
-  const { timeout = 5000 } = options;
-  const element = await $(selector);
+    const { timeout = 5000 } = options;
+    const element = await $(selector);
 
-  await element.waitForDisplayed({ timeout });
-  const actualText = await element.getText();
+    await element.waitForDisplayed({ timeout });
+    const actualText = await element.getText();
 
-  expect(actualText.toLowerCase()).toContain(expectedText.toLowerCase());
-  E2ELogger.info('assertions', `✓ Element contains text: "${expectedText}"`);
+    expect(actualText.toLowerCase()).toContain(expectedText.toLowerCase());
+    E2ELogger.info('assertions', `✓ Element contains text: "${expectedText}"`);
 }
 
 /**
@@ -277,18 +261,18 @@ export async function expectElementContainsText(
  * @param expectedText - Exact text expected
  */
 export async function expectElementText(
-  selector: string,
-  expectedText: string,
-  options: { timeout?: number } = {}
+    selector: string,
+    expectedText: string,
+    options: { timeout?: number } = {}
 ): Promise<void> {
-  const { timeout = 5000 } = options;
-  const element = await $(selector);
+    const { timeout = 5000 } = options;
+    const element = await $(selector);
 
-  await element.waitForDisplayed({ timeout });
-  const actualText = await element.getText();
+    await element.waitForDisplayed({ timeout });
+    const actualText = await element.getText();
 
-  expect(actualText).toBe(expectedText);
-  E2ELogger.info('assertions', `✓ Element text: "${expectedText}"`);
+    expect(actualText).toBe(expectedText);
+    E2ELogger.info('assertions', `✓ Element text: "${expectedText}"`);
 }
 
 // =============================================================================
@@ -301,9 +285,9 @@ export async function expectElementText(
  * @param expectedHash - Hash fragment to check for (e.g., '#about')
  */
 export async function expectUrlHash(expectedHash: string): Promise<void> {
-  const url = await browser.getUrl();
-  expect(url).toContain(expectedHash);
-  E2ELogger.info('assertions', `✓ URL contains hash: ${expectedHash}`);
+    const url = await browser.getUrl();
+    expect(url).toContain(expectedHash);
+    E2ELogger.info('assertions', `✓ URL contains hash: ${expectedHash}`);
 }
 
 /**
@@ -312,9 +296,9 @@ export async function expectUrlHash(expectedHash: string): Promise<void> {
  * @param expectedSubstring - Substring to check for
  */
 export async function expectUrlContains(expectedSubstring: string): Promise<void> {
-  const url = await browser.getUrl();
-  expect(url).toContain(expectedSubstring);
-  E2ELogger.info('assertions', `✓ URL contains: ${expectedSubstring}`);
+    const url = await browser.getUrl();
+    expect(url).toContain(expectedSubstring);
+    E2ELogger.info('assertions', `✓ URL contains: ${expectedSubstring}`);
 }
 
 // =============================================================================
@@ -330,20 +314,20 @@ export async function expectUrlContains(expectedSubstring: string): Promise<void
  * @param options.timeout - Timeout in ms (default: 5000)
  */
 export async function expectToastDisplayed(
-  options: { selector?: string; containsText?: string; timeout?: number } = {}
+    options: { selector?: string; containsText?: string; timeout?: number } = {}
 ): Promise<void> {
-  const { selector = '[data-testid="update-toast"]', containsText, timeout = 5000 } = options;
+    const { selector = '[data-testid="update-toast"]', containsText, timeout = 5000 } = options;
 
-  const toast = await $(selector);
-  await toast.waitForDisplayed({ timeout });
-  await expect(toast).toBeDisplayed();
+    const toast = await $(selector);
+    await toast.waitForDisplayed({ timeout });
+    await expect(toast).toBeDisplayed();
 
-  if (containsText) {
-    const text = await toast.getText();
-    expect(text.toLowerCase()).toContain(containsText.toLowerCase());
-  }
+    if (containsText) {
+        const text = await toast.getText();
+        expect(text.toLowerCase()).toContain(containsText.toLowerCase());
+    }
 
-  E2ELogger.info('assertions', `✓ Toast displayed${containsText ? `: "${containsText}"` : ''}`);
+    E2ELogger.info('assertions', `✓ Toast displayed${containsText ? `: "${containsText}"` : ''}`);
 }
 
 // =============================================================================
@@ -357,16 +341,12 @@ export async function expectToastDisplayed(
  * @param property - CSS property name
  * @param expectedValue - Expected value (can be partial match)
  */
-export async function expectCssProperty(
-  selector: string,
-  property: string,
-  expectedValue: string
-): Promise<void> {
-  const element = await $(selector);
-  const cssValue = await element.getCSSProperty(property);
+export async function expectCssProperty(selector: string, property: string, expectedValue: string): Promise<void> {
+    const element = await $(selector);
+    const cssValue = await element.getCSSProperty(property);
 
-  expect(cssValue.value).toContain(expectedValue);
-  E2ELogger.info('assertions', `✓ CSS ${property}: ${expectedValue}`);
+    expect(cssValue.value).toContain(expectedValue);
+    E2ELogger.info('assertions', `✓ CSS ${property}: ${expectedValue}`);
 }
 
 // =============================================================================
@@ -380,16 +360,12 @@ export async function expectCssProperty(
  * @param attribute - Attribute name
  * @param expectedValue - Expected value
  */
-export async function expectAttribute(
-  selector: string,
-  attribute: string,
-  expectedValue: string
-): Promise<void> {
-  const element = await $(selector);
-  const actualValue = await element.getAttribute(attribute);
+export async function expectAttribute(selector: string, attribute: string, expectedValue: string): Promise<void> {
+    const element = await $(selector);
+    const actualValue = await element.getAttribute(attribute);
 
-  expect(actualValue).toBe(expectedValue);
-  E2ELogger.info('assertions', `✓ Attribute ${attribute}="${expectedValue}"`);
+    expect(actualValue).toBe(expectedValue);
+    E2ELogger.info('assertions', `✓ Attribute ${attribute}="${expectedValue}"`);
 }
 
 /**
@@ -399,11 +375,11 @@ export async function expectAttribute(
  * @param className - Class name to check for
  */
 export async function expectHasClass(selector: string, className: string): Promise<void> {
-  const element = await $(selector);
-  const classes = await element.getAttribute('class');
+    const element = await $(selector);
+    const classes = await element.getAttribute('class');
 
-  expect(classes).toContain(className);
-  E2ELogger.info('assertions', `✓ Has class: ${className}`);
+    expect(classes).toContain(className);
+    E2ELogger.info('assertions', `✓ Has class: ${className}`);
 }
 
 /**
@@ -413,9 +389,9 @@ export async function expectHasClass(selector: string, className: string): Promi
  * @param className - Class name that should be absent
  */
 export async function expectNotHasClass(selector: string, className: string): Promise<void> {
-  const element = await $(selector);
-  const classes = await element.getAttribute('class');
+    const element = await $(selector);
+    const classes = await element.getAttribute('class');
 
-  expect(classes).not.toContain(className);
-  E2ELogger.info('assertions', `✓ Does not have class: ${className}`);
+    expect(classes).not.toContain(className);
+    E2ELogger.info('assertions', `✓ Does not have class: ${className}`);
 }

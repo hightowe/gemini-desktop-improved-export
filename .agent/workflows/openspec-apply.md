@@ -20,10 +20,10 @@ Track these steps as TODOs and complete them one by one.
 1. Read `changes/<id>/proposal.md`, `design.md` (if present), and `tasks.md` to confirm scope.
 2. If a specific task is provided (e.g., "task 1.1"), focus only on that task and its subtasks.
 3. Each task in `tasks.md` is self-contained with:
-   - **Files**: What to create/modify/delete
-   - **Context**: References to review
-   - **Acceptance Criteria**: What must be true when done
-   - **Verification**: Commands to run
+    - **Files**: What to create/modify/delete
+    - **Context**: References to review
+    - **Acceptance Criteria**: What must be true when done
+    - **Verification**: Commands to run
 4. Implement the task, keeping edits minimal and focused.
 5. Run the verification commands specified in the task.
 6. **REQUIRED**: After completing implementation, mark the task and all subtasks as `[x]` in `tasks.md`.
@@ -32,4 +32,4 @@ Track these steps as TODOs and complete them one by one.
 **Reference**
 
 - Use `openspec show <id> --json --deltas-only` if you need additional context from the proposal while implementing.
-<!-- OPENSPEC:END -->
+  <!-- OPENSPEC:END -->

@@ -37,10 +37,10 @@ export const APPLICATION_HOTKEY_IDS: HotkeyId[] = ['alwaysOnTop', 'printToPdf'];
  * Maps each hotkey ID to its scope.
  */
 export const HOTKEY_SCOPE_MAP: Record<HotkeyId, HotkeyScope> = {
-  quickChat: 'global',
-  bossKey: 'global',
-  alwaysOnTop: 'application',
-  printToPdf: 'application',
+    quickChat: 'global',
+    bossKey: 'global',
+    alwaysOnTop: 'application',
+    printToPdf: 'application',
 };
 
 /**
@@ -49,7 +49,7 @@ export const HOTKEY_SCOPE_MAP: Record<HotkeyId, HotkeyScope> = {
  * @returns The scope ('global' or 'application')
  */
 export function getHotkeyScope(id: HotkeyId): HotkeyScope {
-  return HOTKEY_SCOPE_MAP[id];
+    return HOTKEY_SCOPE_MAP[id];
 }
 
 /**
@@ -58,7 +58,7 @@ export function getHotkeyScope(id: HotkeyId): HotkeyScope {
  * @returns True if the hotkey is global
  */
 export function isGlobalHotkey(id: HotkeyId): boolean {
-  return HOTKEY_SCOPE_MAP[id] === 'global';
+    return HOTKEY_SCOPE_MAP[id] === 'global';
 }
 
 /**
@@ -67,7 +67,7 @@ export function isGlobalHotkey(id: HotkeyId): boolean {
  * @returns True if the hotkey is application-scoped
  */
 export function isApplicationHotkey(id: HotkeyId): boolean {
-  return HOTKEY_SCOPE_MAP[id] === 'application';
+    return HOTKEY_SCOPE_MAP[id] === 'application';
 }
 
 /**
@@ -75,34 +75,34 @@ export function isApplicationHotkey(id: HotkeyId): boolean {
  * Each key represents a hotkey feature's enabled state.
  */
 export interface IndividualHotkeySettings {
-  /** Always on Top toggle hotkey enabled state */
-  alwaysOnTop: boolean;
-  /** Boss Key / Minimize hotkey enabled state */
-  bossKey: boolean;
-  /** Quick Chat toggle hotkey enabled state */
-  quickChat: boolean;
-  /** Print to PDF hotkey enabled state */
-  printToPdf: boolean;
+    /** Always on Top toggle hotkey enabled state */
+    alwaysOnTop: boolean;
+    /** Boss Key / Minimize hotkey enabled state */
+    bossKey: boolean;
+    /** Quick Chat toggle hotkey enabled state */
+    quickChat: boolean;
+    /** Print to PDF hotkey enabled state */
+    printToPdf: boolean;
 }
 
 /**
  * Configuration for a single hotkey, including its enabled state and accelerator.
  */
 export interface HotkeyConfig {
-  /** Whether the hotkey is enabled */
-  enabled: boolean;
-  /** The keyboard accelerator string (e.g., 'CommandOrControl+Shift+T') */
-  accelerator: string;
+    /** Whether the hotkey is enabled */
+    enabled: boolean;
+    /** The keyboard accelerator string (e.g., 'CommandOrControl+Shift+T') */
+    accelerator: string;
 }
 
 /**
  * Complete hotkey settings with both enabled state and accelerator for each hotkey.
  */
 export interface HotkeySettings {
-  alwaysOnTop: HotkeyConfig;
-  bossKey: HotkeyConfig;
-  quickChat: HotkeyConfig;
-  printToPdf: HotkeyConfig;
+    alwaysOnTop: HotkeyConfig;
+    bossKey: HotkeyConfig;
+    quickChat: HotkeyConfig;
+    printToPdf: HotkeyConfig;
 }
 
 /**
@@ -116,14 +116,14 @@ export type HotkeyAccelerators = Record<HotkeyId, string>;
  * Used when no custom accelerator is configured.
  */
 export const DEFAULT_ACCELERATORS: HotkeyAccelerators = {
-  // Ctrl+Alt+P = Pin window (always on top)
-  // Note: Ctrl+Alt+T conflicts with GNOME terminal shortcut
-  alwaysOnTop: 'CommandOrControl+Alt+P',
-  // Ctrl+Alt+H = Hide window (boss key)
-  // Note: Ctrl+Alt+E was not conflicting but H is more intuitive
-  bossKey: 'CommandOrControl+Alt+H',
-  // Ctrl+Shift+Space = Quick Chat toggle
-  quickChat: 'CommandOrControl+Shift+Space',
-  // Ctrl+Shift+P = Print to PDF
-  printToPdf: 'CommandOrControl+Shift+P',
+    // Ctrl+Alt+P = Pin window (always on top)
+    // Note: Ctrl+Alt+T conflicts with GNOME terminal shortcut
+    alwaysOnTop: 'CommandOrControl+Alt+P',
+    // Ctrl+Alt+H = Hide window (boss key)
+    // Note: Ctrl+Alt+E was not conflicting but H is more intuitive
+    bossKey: 'CommandOrControl+Alt+H',
+    // Ctrl+Shift+Space = Quick Chat toggle
+    quickChat: 'CommandOrControl+Shift+Space',
+    // Ctrl+Shift+P = Print to PDF
+    printToPdf: 'CommandOrControl+Shift+P',
 };

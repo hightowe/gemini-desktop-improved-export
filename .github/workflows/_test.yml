@@ -13,435 +13,419 @@
 name: Test (DO NOT USE)
 
 on:
-  workflow_call:
-    inputs:
-      upload-coverage:
-        description: 'Whether to upload coverage reports'
-        type: boolean
-        default: true
-      e2e-fail-fast:
-        description: 'Stop E2E tests on first failure'
-        type: boolean
-        default: false
-      artifact-suffix:
-        description: 'Suffix for artifact names (e.g., "-release")'
-        type: string
-        default: ''
+    workflow_call:
+        inputs:
+            upload-coverage:
+                description: 'Whether to upload coverage reports'
+                type: boolean
+                default: true
+            e2e-fail-fast:
+                description: 'Stop E2E tests on first failure'
+                type: boolean
+                default: false
+            artifact-suffix:
+                description: 'Suffix for artifact names (e.g., "-release")'
+                type: string
+                default: ''
 
 env:
-  NODE_VERSION: '20'
-  CI: true
-  ELECTRON_ENABLE_LOGGING: true
+    NODE_VERSION: '20'
+    CI: true
+    ELECTRON_ENABLE_LOGGING: true
 
 jobs:
-  # ===========================================================================
-  # Unit Tests
-  # ===========================================================================
-  unit-tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    # ===========================================================================
+    # Unit Tests
+    # ===========================================================================
+    unit-tests:
+        name: Unit Tests
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Install Dependencies
+              run: npm ci
 
-      # Download build artifacts from _build.yml
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
+            # Download build artifacts from _build.yml
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
 
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
 
-      - name: Run Unit Tests
-        run: npm run test && npm run test:electron
-        env:
-          FORCE_COLOR: 1
+            - name: Run Unit Tests
+              run: npm run test && npm run test:electron
+              env:
+                  FORCE_COLOR: 1
 
-      # Optionally upload coverage (CI workflow only)
-      - name: Upload Frontend Coverage Report
-        uses: actions/upload-artifact@v4
-        if: inputs.upload-coverage
-        with:
-          name: coverage-frontend
-          path: coverage/
-          retention-days: 7
+            # Optionally upload coverage (CI workflow only)
+            - name: Upload Frontend Coverage Report
+              uses: actions/upload-artifact@v4
+              if: inputs.upload-coverage
+              with:
+                  name: coverage-frontend
+                  path: coverage/
+                  retention-days: 7
 
-      - name: Upload Electron Coverage Report
-        uses: actions/upload-artifact@v4
-        if: inputs.upload-coverage
-        with:
-          name: coverage-electron
-          path: coverage-electron/
-          retention-days: 7
+            - name: Upload Electron Coverage Report
+              uses: actions/upload-artifact@v4
+              if: inputs.upload-coverage
+              with:
+                  name: coverage-electron
+                  path: coverage-electron/
+                  retention-days: 7
 
-  # ===========================================================================
-  # Integration Tests
-  # ===========================================================================
-  integration-tests:
-    name: Coordinated & Integration Tests (${{ matrix.os }})
-    needs: unit-tests
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
+    # ===========================================================================
+    # Integration Tests
+    # ===========================================================================
+    integration-tests:
+        name: Coordinated & Integration Tests (${{ matrix.os }})
+        needs: unit-tests
+        runs-on: ${{ matrix.os }}
+        permissions:
+            contents: read
 
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest, windows-latest, macos-latest]
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
 
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
 
-      # Linux-specific: Install dependencies and configure for headless Electron
-      - name: Setup Linux Environment
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          # Install Electron dependencies + node-llama-cpp build dependencies (cmake, clang, libgomp1)
-          sudo apt-get install -y xvfb libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64 libayatana-appindicator3-1 libxtst6 cmake clang libgomp1
-          # Ubuntu 24.04+ restricts unprivileged user namespaces which breaks Electron
-          # See: https://github.com/electron/electron/issues/41066
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+            # Linux-specific: Install dependencies and configure for headless Electron
+            - name: Setup Linux Environment
+              if: runner.os == 'Linux'
+              run: |
+                  sudo apt-get update
+                  # Install Electron dependencies + node-llama-cpp build dependencies (cmake, clang, libgomp1)
+                  sudo apt-get install -y xvfb libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64 libayatana-appindicator3-1 libxtst6 cmake clang libgomp1
+                  # Ubuntu 24.04+ restricts unprivileged user namespaces which breaks Electron
+                  # See: https://github.com/electron/electron/issues/41066
+                  sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
-      - name: Run Coordinated Tests
-        run: npm run test:coordinated
-        env:
-          FORCE_COLOR: 1
+            - name: Run Coordinated Tests
+              run: npm run test:coordinated
+              env:
+                  FORCE_COLOR: 1
 
-      - name: Run Real Integration Tests
-        # DO NOT use xvfb-run wrapper - wdio-electron-service's autoXvfb handles xvfb
-        run: npm run test:integration
-        shell: bash
-        env:
-          FORCE_COLOR: 1
+            - name: Run Real Integration Tests
+              # DO NOT use xvfb-run wrapper - wdio-electron-service's autoXvfb handles xvfb
+              run: npm run test:integration
+              shell: bash
+              env:
+                  FORCE_COLOR: 1
 
-  # ===========================================================================
-  # E2E Tests - Windows
-  # ===========================================================================
-  e2e-tests-windows:
-    name: E2E / 🪟 Windows / ${{ matrix.group }}
-    needs: integration-tests
-    runs-on: windows-latest
-    permissions:
-      contents: read
+    # ===========================================================================
+    # E2E Tests - Windows
+    # ===========================================================================
+    e2e-tests-windows:
+        name: E2E / 🪟 Windows / ${{ matrix.group }}
+        needs: integration-tests
+        runs-on: windows-latest
+        permissions:
+            contents: read
 
-    strategy:
-      fail-fast: ${{ inputs.e2e-fail-fast }}
-      matrix:
-        group:
-          [startup, window, menu, hotkeys, quickchat, options, theme, auth, tray, update, stability]
+        strategy:
+            fail-fast: ${{ inputs.e2e-fail-fast }}
+            matrix:
+                group: [startup, window, menu, hotkeys, quickchat, options, theme, auth, tray, update, stability]
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
 
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
 
-      - name: Run E2E Tests
-        run: npm run test:e2e:group:${{ matrix.group }}
-        shell: bash
-        env:
-          ELECTRON_USE_DIST: 'true'
-          DEBUG: 'wdio:*'
+            - name: Run E2E Tests
+              run: npm run test:e2e:group:${{ matrix.group }}
+              shell: bash
+              env:
+                  ELECTRON_USE_DIST: 'true'
+                  DEBUG: 'wdio:*'
 
-      - name: Upload E2E Screenshots (on failure)
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: e2e-screenshots${{ inputs.artifact-suffix }}-${{ matrix.group }}-windows-latest
-          path: |
-            tests/e2e/screenshots/
-            tests/e2e/logs/
-          retention-days: 7
-          if-no-files-found: ignore
+            - name: Upload E2E Screenshots (on failure)
+              uses: actions/upload-artifact@v4
+              if: failure()
+              with:
+                  name: e2e-screenshots${{ inputs.artifact-suffix }}-${{ matrix.group }}-windows-latest
+                  path: |
+                      tests/e2e/screenshots/
+                      tests/e2e/logs/
+                  retention-days: 7
+                  if-no-files-found: ignore
 
-  # ===========================================================================
-  # E2E Tests - macOS
-  # ===========================================================================
-  e2e-tests-macos:
-    name: E2E / 🍎 macOS / ${{ matrix.group }}
-    needs: integration-tests
-    runs-on: macos-latest
-    permissions:
-      contents: read
+    # ===========================================================================
+    # E2E Tests - macOS
+    # ===========================================================================
+    e2e-tests-macos:
+        name: E2E / 🍎 macOS / ${{ matrix.group }}
+        needs: integration-tests
+        runs-on: macos-latest
+        permissions:
+            contents: read
 
-    strategy:
-      fail-fast: ${{ inputs.e2e-fail-fast }}
-      matrix:
-        group:
-          [
-            startup,
-            window,
-            menu,
-            hotkeys,
-            quickchat,
-            options,
-            theme,
-            auth,
-            tray,
-            update,
-            stability,
-            macos,
-          ]
+        strategy:
+            fail-fast: ${{ inputs.e2e-fail-fast }}
+            matrix:
+                group: [startup, window, menu, hotkeys, quickchat, options, theme, auth, tray, update, stability, macos]
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
 
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
 
-      - name: Run E2E Tests
-        run: npm run test:e2e:group:${{ matrix.group }}
-        shell: bash
-        env:
-          ELECTRON_USE_DIST: 'true'
-          DEBUG: 'wdio:*'
+            - name: Run E2E Tests
+              run: npm run test:e2e:group:${{ matrix.group }}
+              shell: bash
+              env:
+                  ELECTRON_USE_DIST: 'true'
+                  DEBUG: 'wdio:*'
 
-      - name: Upload E2E Screenshots (on failure)
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: e2e-screenshots${{ inputs.artifact-suffix }}-${{ matrix.group }}-macos-latest
-          path: |
-            tests/e2e/screenshots/
-            tests/e2e/logs/
-          retention-days: 7
-          if-no-files-found: ignore
+            - name: Upload E2E Screenshots (on failure)
+              uses: actions/upload-artifact@v4
+              if: failure()
+              with:
+                  name: e2e-screenshots${{ inputs.artifact-suffix }}-${{ matrix.group }}-macos-latest
+                  path: |
+                      tests/e2e/screenshots/
+                      tests/e2e/logs/
+                  retention-days: 7
+                  if-no-files-found: ignore
 
-  # ===========================================================================
-  # E2E Tests - Ubuntu
-  # ===========================================================================
-  e2e-tests-ubuntu:
-    name: E2E / 🐧 Ubuntu / ${{ matrix.group }}
-    needs: integration-tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    # ===========================================================================
+    # E2E Tests - Ubuntu
+    # ===========================================================================
+    e2e-tests-ubuntu:
+        name: E2E / 🐧 Ubuntu / ${{ matrix.group }}
+        needs: integration-tests
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
-    strategy:
-      fail-fast: ${{ inputs.e2e-fail-fast }}
-      matrix:
-        group:
-          [startup, window, menu, hotkeys, quickchat, options, theme, auth, tray, update, stability]
+        strategy:
+            fail-fast: ${{ inputs.e2e-fail-fast }}
+            matrix:
+                group: [startup, window, menu, hotkeys, quickchat, options, theme, auth, tray, update, stability]
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-      - name: Setup Linux Environment
-        run: |
-          sudo apt-get update
-          # Install Electron dependencies + node-llama-cpp build dependencies (cmake, clang, libgomp1)
-          sudo apt-get install -y xvfb libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64 libayatana-appindicator3-1 libxtst6 cmake clang libgomp1
-          # Ubuntu 24.04+ restricts unprivileged user namespaces which breaks Electron
-          # See: https://github.com/electron/electron/issues/41066
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+            - name: Setup Linux Environment
+              run: |
+                  sudo apt-get update
+                  # Install Electron dependencies + node-llama-cpp build dependencies (cmake, clang, libgomp1)
+                  sudo apt-get install -y xvfb libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64 libayatana-appindicator3-1 libxtst6 cmake clang libgomp1
+                  # Ubuntu 24.04+ restricts unprivileged user namespaces which breaks Electron
+                  # See: https://github.com/electron/electron/issues/41066
+                  sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
 
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
 
-      - name: Run E2E Tests
-        # DO NOT use xvfb-run wrapper here - it sets DISPLAY which conflicts with
-        # wdio-electron-service's autoXvfb feature for parallel worker processes
-        run: npm run test:e2e:group:${{ matrix.group }}
-        shell: bash
-        env:
-          ELECTRON_USE_DIST: 'true'
-          DEBUG: 'wdio:*'
+            - name: Run E2E Tests
+              # DO NOT use xvfb-run wrapper here - it sets DISPLAY which conflicts with
+              # wdio-electron-service's autoXvfb feature for parallel worker processes
+              run: npm run test:e2e:group:${{ matrix.group }}
+              shell: bash
+              env:
+                  ELECTRON_USE_DIST: 'true'
+                  DEBUG: 'wdio:*'
 
-      - name: Upload E2E Screenshots (on failure)
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: e2e-screenshots${{ inputs.artifact-suffix }}-${{ matrix.group }}-ubuntu-latest
-          path: |
-            tests/e2e/screenshots/
-            tests/e2e/logs/
-          retention-days: 7
-          if-no-files-found: ignore
+            - name: Upload E2E Screenshots (on failure)
+              uses: actions/upload-artifact@v4
+              if: failure()
+              with:
+                  name: e2e-screenshots${{ inputs.artifact-suffix }}-${{ matrix.group }}-ubuntu-latest
+                  path: |
+                      tests/e2e/screenshots/
+                      tests/e2e/logs/
+                  retention-days: 7
+                  if-no-files-found: ignore
 
-  # ===========================================================================
-  # Release E2E Tests (Packaged Builds)
-  # ===========================================================================
-  release-e2e-tests:
-    name: Release E2E / ${{ matrix.emoji }} ${{ matrix.platform }}
-    # Run in parallel with regular E2E tests - only need integration tests to pass
-    needs: integration-tests
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
+    # ===========================================================================
+    # Release E2E Tests (Packaged Builds)
+    # ===========================================================================
+    release-e2e-tests:
+        name: Release E2E / ${{ matrix.emoji }} ${{ matrix.platform }}
+        # Run in parallel with regular E2E tests - only need integration tests to pass
+        needs: integration-tests
+        runs-on: ${{ matrix.os }}
+        permissions:
+            contents: read
 
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            dist-script: 'dist:linux'
-            emoji: '🐧'
-            platform: 'Ubuntu'
-          - os: windows-latest
-            dist-script: 'dist:win'
-            emoji: '🪟'
-            platform: 'Windows'
-          - os: macos-latest
-            dist-script: 'dist:mac-arm64'
-            emoji: '🍎'
-            platform: 'macOS'
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest, windows-latest, macos-latest]
+                include:
+                    - os: ubuntu-latest
+                      dist-script: 'dist:linux'
+                      emoji: '🐧'
+                      platform: 'Ubuntu'
+                    - os: windows-latest
+                      dist-script: 'dist:win'
+                      emoji: '🪟'
+                      platform: 'Windows'
+                    - os: macos-latest
+                      dist-script: 'dist:mac-arm64'
+                      emoji: '🍎'
+                      platform: 'macOS'
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-      # Linux-specific: Install dependencies and configure for headless Electron
-      - name: Setup Linux Environment
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          # Install Electron dependencies + node-llama-cpp build dependencies (cmake, clang, libgomp1)
-          sudo apt-get install -y xvfb libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64 libayatana-appindicator3-1 libxtst6 cmake clang libgomp1
-          # Ubuntu 24.04+ restricts unprivileged user namespaces which breaks Electron
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+            # Linux-specific: Install dependencies and configure for headless Electron
+            - name: Setup Linux Environment
+              if: runner.os == 'Linux'
+              run: |
+                  sudo apt-get update
+                  # Install Electron dependencies + node-llama-cpp build dependencies (cmake, clang, libgomp1)
+                  sudo apt-get install -y xvfb libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64 libayatana-appindicator3-1 libxtst6 cmake clang libgomp1
+                  # Ubuntu 24.04+ restricts unprivileged user namespaces which breaks Electron
+                  sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Install Dependencies
+              run: npm ci
 
-      # Download build artifacts from _build.yml
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
+            # Download build artifacts from _build.yml
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
 
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
 
-      # Package the application for this platform
-      - name: Package Application
-        run: npm run ${{ matrix.dist-script }}
-        shell: bash
+            # Package the application for this platform
+            - name: Package Application
+              run: npm run ${{ matrix.dist-script }}
+              shell: bash
 
-      # Run release E2E tests against packaged build
-      - name: Run Release E2E Tests
-        # DO NOT use xvfb-run wrapper - wdio-electron-service's autoXvfb handles xvfb
-        run: npm run test:e2e:release
-        shell: bash
-        env:
-          DEBUG: 'wdio:*'
+            # Run release E2E tests against packaged build
+            - name: Run Release E2E Tests
+              # DO NOT use xvfb-run wrapper - wdio-electron-service's autoXvfb handles xvfb
+              run: npm run test:e2e:release
+              shell: bash
+              env:
+                  DEBUG: 'wdio:*'
 
-      # Upload artifacts on failure for debugging
-      - name: Upload Release E2E Screenshots (on failure)
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: release-e2e-screenshots${{ inputs.artifact-suffix }}-${{ matrix.os }}
-          path: |
-            tests/e2e/screenshots/
-            tests/e2e/logs/
-            release/
-          retention-days: 7
-          if-no-files-found: ignore
+            # Upload artifacts on failure for debugging
+            - name: Upload Release E2E Screenshots (on failure)
+              uses: actions/upload-artifact@v4
+              if: failure()
+              with:
+                  name: release-e2e-screenshots${{ inputs.artifact-suffix }}-${{ matrix.os }}
+                  path: |
+                      tests/e2e/screenshots/
+                      tests/e2e/logs/
+                      release/
+                  retention-days: 7
+                  if-no-files-found: ignore

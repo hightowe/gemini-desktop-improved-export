@@ -21,135 +21,135 @@ import { waitForAppReady, ensureSingleWindow } from './helpers/workflows';
 import { MainWindowPage, TrayPage } from './pages';
 
 describe('System Tray Functionality', () => {
-  const mainWindow = new MainWindowPage();
-  const tray = new TrayPage();
+    const mainWindow = new MainWindowPage();
+    const tray = new TrayPage();
 
-  beforeEach(async () => {
-    await waitForAppReady();
-  });
-
-  afterEach(async () => {
-    // Ensure tray click restored the window and clean up
-    const isVisible = await tray.isWindowVisible();
-    if (!isVisible) {
-      // Restore window if it's hidden to allow next test to work
-      await tray.restoreWindowViaTrayClick();
-    }
-    await ensureSingleWindow();
-  });
-
-  describe('Tray Icon Creation', () => {
-    it('should create tray icon on app startup', async () => {
-      const trayExists = await tray.isCreated();
-
-      expect(trayExists).toBe(true);
-      E2ELogger.info('tray', 'Tray icon verified as existing');
+    beforeEach(async () => {
+        await waitForAppReady();
     });
 
-    // Skip: Electron Tray API has no getToolTip() method - we can only setToolTip().
-    // The tooltip is verified implicitly by the tray existing (tooltip is set in createTray()).
-    it.skip('should have correct tooltip on tray icon', async () => {
-      const tooltip = await tray.getTooltip();
-
-      // Tooltip should be set (from TRAY_TOOLTIP constant)
-      expect(tooltip).not.toBeNull();
-      expect(tooltip).toContain('Gemini');
-
-      E2ELogger.info('tray', `Tray tooltip: "${tooltip}"`);
+    afterEach(async () => {
+        // Ensure tray click restored the window and clean up
+        const isVisible = await tray.isWindowVisible();
+        if (!isVisible) {
+            // Restore window if it's hidden to allow next test to work
+            await tray.restoreWindowViaTrayClick();
+        }
+        await ensureSingleWindow();
     });
 
-    it('should report tray state correctly', async () => {
-      const state = await tray.getState();
+    describe('Tray Icon Creation', () => {
+        it('should create tray icon on app startup', async () => {
+            const trayExists = await tray.isCreated();
 
-      expect(state.exists).toBe(true);
-      expect(state.isDestroyed).toBe(false);
-      // Note: state.tooltip will be null because Electron has no getToolTip() API
-      // The tooltip being set is verified implicitly by tray creation working.
+            expect(trayExists).toBe(true);
+            E2ELogger.info('tray', 'Tray icon verified as existing');
+        });
 
-      E2ELogger.info('tray', `Tray state: ${JSON.stringify(state)}`);
-    });
-  });
+        // Skip: Electron Tray API has no getToolTip() method - we can only setToolTip().
+        // The tooltip is verified implicitly by the tray existing (tooltip is set in createTray()).
+        it.skip('should have correct tooltip on tray icon', async () => {
+            const tooltip = await tray.getTooltip();
 
-  describe('Tray Click Behavior', () => {
-    it('should restore window when tray icon is clicked', async () => {
-      // 1. First hide window to tray
-      await tray.hideWindowToTray();
+            // Tooltip should be set (from TRAY_TOOLTIP constant)
+            expect(tooltip).not.toBeNull();
+            expect(tooltip).toContain('Gemini');
 
-      // Verify window is hidden
-      const visibleAfterClose = await tray.isWindowVisible();
-      expect(visibleAfterClose).toBe(false);
+            E2ELogger.info('tray', `Tray tooltip: "${tooltip}"`);
+        });
 
-      // 2. Click the tray icon and wait for window
-      await tray.clickAndWaitForWindow();
+        it('should report tray state correctly', async () => {
+            const state = await tray.getState();
 
-      // 3. Window should be visible again
-      const visibleAfterTrayClick = await tray.isWindowVisible();
-      expect(visibleAfterTrayClick).toBe(true);
+            expect(state.exists).toBe(true);
+            expect(state.isDestroyed).toBe(false);
+            // Note: state.tooltip will be null because Electron has no getToolTip() API
+            // The tooltip being set is verified implicitly by tray creation working.
 
-      E2ELogger.info('tray', 'Tray click restored window successfully');
-    });
-  });
-
-  describe('Tray Context Menu Actions', () => {
-    it('should restore window when "Show" menu item is clicked', async () => {
-      // 1. Hide window to tray
-      await tray.hideWindowToTray();
-
-      // Verify hidden
-      const visibleAfterClose = await tray.isWindowVisible();
-      expect(visibleAfterClose).toBe(false);
-
-      // 2. Click "Show" menu item and wait
-      await tray.clickShowMenuItemAndWait();
-
-      // 3. Window should be visible
-      const visibleAfterShow = await tray.isWindowVisible();
-      expect(visibleAfterShow).toBe(true);
-
-      E2ELogger.info('tray', 'Show menu item restored window successfully');
+            E2ELogger.info('tray', `Tray state: ${JSON.stringify(state)}`);
+        });
     });
 
-    // Note: We skip testing "Quit" because it would terminate the app
-    // and break the E2E session. The quit functionality is tested
-    // via unit tests in trayManager.test.ts
-    it.skip('should quit app when "Quit" menu item is clicked', async () => {
-      // This would call: await tray.clickQuitMenuItem();
-      // But we can't test this without ending the session
-    });
-  });
+    describe('Tray Click Behavior', () => {
+        it('should restore window when tray icon is clicked', async () => {
+            // 1. First hide window to tray
+            await tray.hideWindowToTray();
 
-  describe('Tray Integration with Window State', () => {
-    it('should work correctly after multiple hide/restore cycles', async () => {
-      // Cycle 1: Hide and restore via tray click
-      await tray.hideAndRestoreViaTrayClick();
-      let isVisible = await tray.isWindowVisible();
-      expect(isVisible).toBe(true);
+            // Verify window is hidden
+            const visibleAfterClose = await tray.isWindowVisible();
+            expect(visibleAfterClose).toBe(false);
 
-      // Cycle 2: Hide and restore via menu
-      await tray.hideAndRestoreViaShowMenu();
-      isVisible = await tray.isWindowVisible();
-      expect(isVisible).toBe(true);
+            // 2. Click the tray icon and wait for window
+            await tray.clickAndWaitForWindow();
 
-      // Cycle 3: Hide and restore via click again
-      await tray.hideAndRestoreViaTrayClick();
-      isVisible = await tray.isWindowVisible();
-      expect(isVisible).toBe(true);
+            // 3. Window should be visible again
+            const visibleAfterTrayClick = await tray.isWindowVisible();
+            expect(visibleAfterTrayClick).toBe(true);
 
-      E2ELogger.info('tray', 'Multiple hide/restore cycles completed successfully');
+            E2ELogger.info('tray', 'Tray click restored window successfully');
+        });
     });
 
-    it('should keep tray icon after window is hidden', async () => {
-      // Hide window
-      await tray.hideWindowToTray();
+    describe('Tray Context Menu Actions', () => {
+        it('should restore window when "Show" menu item is clicked', async () => {
+            // 1. Hide window to tray
+            await tray.hideWindowToTray();
 
-      // Tray should still exist
-      const trayExists = await tray.isCreated();
-      expect(trayExists).toBe(true);
+            // Verify hidden
+            const visibleAfterClose = await tray.isWindowVisible();
+            expect(visibleAfterClose).toBe(false);
 
-      // Restore window for cleanup
-      await tray.restoreWindowViaTrayClick();
+            // 2. Click "Show" menu item and wait
+            await tray.clickShowMenuItemAndWait();
 
-      E2ELogger.info('tray', 'Tray icon persists when window is hidden');
+            // 3. Window should be visible
+            const visibleAfterShow = await tray.isWindowVisible();
+            expect(visibleAfterShow).toBe(true);
+
+            E2ELogger.info('tray', 'Show menu item restored window successfully');
+        });
+
+        // Note: We skip testing "Quit" because it would terminate the app
+        // and break the E2E session. The quit functionality is tested
+        // via unit tests in trayManager.test.ts
+        it.skip('should quit app when "Quit" menu item is clicked', async () => {
+            // This would call: await tray.clickQuitMenuItem();
+            // But we can't test this without ending the session
+        });
     });
-  });
+
+    describe('Tray Integration with Window State', () => {
+        it('should work correctly after multiple hide/restore cycles', async () => {
+            // Cycle 1: Hide and restore via tray click
+            await tray.hideAndRestoreViaTrayClick();
+            let isVisible = await tray.isWindowVisible();
+            expect(isVisible).toBe(true);
+
+            // Cycle 2: Hide and restore via menu
+            await tray.hideAndRestoreViaShowMenu();
+            isVisible = await tray.isWindowVisible();
+            expect(isVisible).toBe(true);
+
+            // Cycle 3: Hide and restore via click again
+            await tray.hideAndRestoreViaTrayClick();
+            isVisible = await tray.isWindowVisible();
+            expect(isVisible).toBe(true);
+
+            E2ELogger.info('tray', 'Multiple hide/restore cycles completed successfully');
+        });
+
+        it('should keep tray icon after window is hidden', async () => {
+            // Hide window
+            await tray.hideWindowToTray();
+
+            // Tray should still exist
+            const trayExists = await tray.isCreated();
+            expect(trayExists).toBe(true);
+
+            // Restore window for cleanup
+            await tray.restoreWindowViaTrayClick();
+
+            E2ELogger.info('tray', 'Tray icon persists when window is hidden');
+        });
+    });
 });

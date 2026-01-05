@@ -3,7 +3,7 @@ import { Titlebar } from '../titlebar';
 import './layout.css';
 
 interface MainLayoutProps {
-  children?: ReactNode;
+    children?: ReactNode;
 }
 
 /**
@@ -17,10 +17,10 @@ interface MainLayoutProps {
  * proper sizing for the embedded webview.
  */
 export function MainLayout({ children }: MainLayoutProps) {
-  return (
-    <div className="main-layout" data-testid="main-layout">
-      <Titlebar />
-      <main className="main-content">{children}</main>
-    </div>
-  );
+    return (
+        <div className="main-layout" data-testid="main-layout">
+            <Titlebar />
+            <main className="main-content">{children}</main>
+        </div>
+    );
 }

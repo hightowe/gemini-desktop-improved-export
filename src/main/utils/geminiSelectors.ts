@@ -32,122 +32,122 @@ export const GEMINI_SELECTORS_LAST_VERIFIED = '2025-12-23';
  * - Additional component-specific properties
  */
 export const GeminiSelectors = {
-  /**
-   * Domain for matching Gemini iframe URLs.
-   */
-  domain: 'gemini.google.com',
-
-  /**
-   * Legacy domain that may still appear in some URLs.
-   */
-  legacyDomain: 'bard.google.com',
-
-  /**
-   * Chat input editor configuration.
-   * Gemini uses Quill.js for the rich text editor.
-   */
-  editor: {
     /**
-     * CSS selectors for finding the chat input editor.
-     * Ordered by specificity - first match wins.
+     * Domain for matching Gemini iframe URLs.
      */
-    selectors: [
-      '.ql-editor[contenteditable="true"]',
-      '.ql-editor',
-      '[contenteditable="true"][role="textbox"]',
-    ] as const,
+    domain: 'gemini.google.com',
 
     /**
-     * CSS class that indicates the editor is empty/blank.
-     * Must be removed when injecting text.
+     * Legacy domain that may still appear in some URLs.
      */
-    blankClass: 'ql-blank',
+    legacyDomain: 'bard.google.com',
 
     /**
-     * Description for logging/debugging.
+     * Chat input editor configuration.
+     * Gemini uses Quill.js for the rich text editor.
      */
-    description: 'Quill-based rich text editor',
-  },
+    editor: {
+        /**
+         * CSS selectors for finding the chat input editor.
+         * Ordered by specificity - first match wins.
+         */
+        selectors: [
+            '.ql-editor[contenteditable="true"]',
+            '.ql-editor',
+            '[contenteditable="true"][role="textbox"]',
+        ] as const,
 
-  /**
-   * Submit/send button configuration.
-   */
-  submitButton: {
-    /**
-     * CSS selectors for finding the send message button.
-     * Ordered by specificity - first match wins.
-     */
-    selectors: [
-      'button.send-button[aria-label="Send message"]',
-      'button.send-button',
-      'button[aria-label="Send message"]',
-    ] as const,
+        /**
+         * CSS class that indicates the editor is empty/blank.
+         * Must be removed when injecting text.
+         */
+        blankClass: 'ql-blank',
 
-    /**
-     * Description for logging/debugging.
-     */
-    description: 'Send message button',
-  },
-
-  /**
-   * Microphone button configuration.
-   * Used for speech dictation / voice input.
-   */
-  microphoneButton: {
-    /**
-     * CSS selectors for finding the microphone button.
-     * Ordered by specificity - first match wins.
-     */
-    selectors: [
-      'button[data-node-type="speech_dictation_mic_button"]',
-      'button[aria-label="Microphone"]',
-      'speech-dictation-mic-button button',
-    ] as const,
+        /**
+         * Description for logging/debugging.
+         */
+        description: 'Quill-based rich text editor',
+    },
 
     /**
-     * Description for logging/debugging.
+     * Submit/send button configuration.
      */
-    description: 'Speech dictation microphone button',
-  },
+    submitButton: {
+        /**
+         * CSS selectors for finding the send message button.
+         * Ordered by specificity - first match wins.
+         */
+        selectors: [
+            'button.send-button[aria-label="Send message"]',
+            'button.send-button',
+            'button[aria-label="Send message"]',
+        ] as const,
 
-  /**
-   * Error toast / snackbar configuration.
-   * Used to detect permission errors displayed to the user.
-   */
-  errorToast: {
-    /**
-     * CSS selectors for finding error toast messages.
-     * Gemini uses Angular Material snackbar for toasts.
-     */
-    selectors: ['[matsnackbarlabel]', '.mat-mdc-snack-bar-label', '.mdc-snackbar__label'] as const,
-
-    /**
-     * Error message text for microphone permission denied.
-     * Used to detect if microphone access failed.
-     */
-    microphoneErrorText: 'Unable to access the microphone',
+        /**
+         * Description for logging/debugging.
+         */
+        description: 'Send message button',
+    },
 
     /**
-     * Description for logging/debugging.
+     * Microphone button configuration.
+     * Used for speech dictation / voice input.
      */
-    description: 'Error toast / snackbar message',
-  },
+    microphoneButton: {
+        /**
+         * CSS selectors for finding the microphone button.
+         * Ordered by specificity - first match wins.
+         */
+        selectors: [
+            'button[data-node-type="speech_dictation_mic_button"]',
+            'button[aria-label="Microphone"]',
+            'speech-dictation-mic-button button',
+        ] as const,
 
-  /**
-   * Timing configuration for DOM interactions.
-   */
-  timing: {
-    /**
-     * Delay in milliseconds before clicking submit after text injection.
-     * Allows Angular/Quill to process the text injection.
-     */
-    submitDelayMs: 500,
+        /**
+         * Description for logging/debugging.
+         */
+        description: 'Speech dictation microphone button',
+    },
 
     /**
-     * Description for logging/debugging.
+     * Error toast / snackbar configuration.
+     * Used to detect permission errors displayed to the user.
      */
-    description: 'Delay timings for DOM interactions',
-  },
+    errorToast: {
+        /**
+         * CSS selectors for finding error toast messages.
+         * Gemini uses Angular Material snackbar for toasts.
+         */
+        selectors: ['[matsnackbarlabel]', '.mat-mdc-snack-bar-label', '.mdc-snackbar__label'] as const,
+
+        /**
+         * Error message text for microphone permission denied.
+         * Used to detect if microphone access failed.
+         */
+        microphoneErrorText: 'Unable to access the microphone',
+
+        /**
+         * Description for logging/debugging.
+         */
+        description: 'Error toast / snackbar message',
+    },
+
+    /**
+     * Timing configuration for DOM interactions.
+     */
+    timing: {
+        /**
+         * Delay in milliseconds before clicking submit after text injection.
+         * Allows Angular/Quill to process the text injection.
+         */
+        submitDelayMs: 500,
+
+        /**
+         * Description for logging/debugging.
+         */
+        description: 'Delay timings for DOM interactions',
+    },
 } as const;
 
 /**
@@ -166,31 +166,29 @@ export type GeminiSelectorsConfig = typeof GeminiSelectors;
  * @returns The first matching element or null
  */
 export function findGeminiElement(
-  document: Document,
-  selectors: readonly string[],
-  componentName: string,
-  logger?: (message: string) => void
+    document: Document,
+    selectors: readonly string[],
+    componentName: string,
+    logger?: (message: string) => void
 ): Element | null {
-  const log = logger || console.log;
+    const log = logger || console.log;
 
-  for (let i = 0; i < selectors.length; i++) {
-    const selector = selectors[i];
-    const element = document.querySelector(selector);
+    for (let i = 0; i < selectors.length; i++) {
+        const selector = selectors[i];
+        const element = document.querySelector(selector);
 
-    if (element) {
-      if (i === 0) {
-        log(`[GeminiSelectors] ${componentName}: Found with primary selector`);
-      } else {
-        log(
-          `[GeminiSelectors] ${componentName}: Found with fallback selector #${i + 1}: "${selector}"`
-        );
-      }
-      return element;
+        if (element) {
+            if (i === 0) {
+                log(`[GeminiSelectors] ${componentName}: Found with primary selector`);
+            } else {
+                log(`[GeminiSelectors] ${componentName}: Found with fallback selector #${i + 1}: "${selector}"`);
+            }
+            return element;
+        }
     }
-  }
 
-  log(`[GeminiSelectors] ${componentName}: No matching element found`);
-  return null;
+    log(`[GeminiSelectors] ${componentName}: No matching element found`);
+    return null;
 }
 
 /**
@@ -201,20 +199,20 @@ export function findGeminiElement(
  * @returns True if the URL is for Gemini
  */
 export function isGeminiDomain(url: string): boolean {
-  try {
-    const hostname = new URL(url).hostname;
-    return (
-      hostname === GeminiSelectors.domain ||
-      hostname.endsWith(`.${GeminiSelectors.domain}`) ||
-      hostname === GeminiSelectors.legacyDomain ||
-      hostname.endsWith(`.${GeminiSelectors.legacyDomain}`) ||
-      hostname === 'aistudio.google.com' ||
-      hostname.endsWith('.aistudio.google.com')
-    );
-  } catch {
-    // Invalid URL
-    return false;
-  }
+    try {
+        const hostname = new URL(url).hostname;
+        return (
+            hostname === GeminiSelectors.domain ||
+            hostname.endsWith(`.${GeminiSelectors.domain}`) ||
+            hostname === GeminiSelectors.legacyDomain ||
+            hostname.endsWith(`.${GeminiSelectors.legacyDomain}`) ||
+            hostname === 'aistudio.google.com' ||
+            hostname.endsWith('.aistudio.google.com')
+        );
+    } catch {
+        // Invalid URL
+        return false;
+    }
 }
 
 // Re-export individual selector arrays for backwards compatibility

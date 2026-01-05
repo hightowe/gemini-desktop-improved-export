@@ -25,146 +25,146 @@ import { waitForAppReady, ensureSingleWindow } from './helpers/workflows';
 // ============================================================================
 
 describe('Auto-Update Toggle', () => {
-  const mainWindow = new MainWindowPage();
-  const optionsPage = new OptionsPage();
+    const mainWindow = new MainWindowPage();
+    const optionsPage = new OptionsPage();
 
-  let platform: E2EPlatform;
+    let platform: E2EPlatform;
 
-  before(async () => {
-    platform = await getPlatform();
-    E2ELogger.info('auto-update-toggle', `Platform: ${platform.toUpperCase()}`);
-  });
-
-  beforeEach(async () => {
-    E2ELogger.info('auto-update-toggle', 'Opening Options window');
-    await waitForAppReady();
-
-    // Open Options via menu
-    await mainWindow.openOptionsViaMenu();
-    await waitForWindowCount(2, 5000);
-    await optionsPage.waitForLoad();
-  });
-
-  afterEach(async () => {
-    E2ELogger.info('auto-update-toggle', 'Cleaning up');
-    await ensureSingleWindow();
-  });
-
-  // ========================================================================
-  // Rendering Tests
-  // ========================================================================
-
-  describe('Rendering', () => {
-    it('should display the Updates section in Options', async () => {
-      expect(await optionsPage.isUpdatesSectionDisplayed()).toBe(true);
-
-      const heading = await optionsPage.getUpdatesSectionHeading();
-      expect(heading.toLowerCase()).toContain('updates');
-
-      E2ELogger.info('auto-update-toggle', 'Updates section visible');
+    before(async () => {
+        platform = await getPlatform();
+        E2ELogger.info('auto-update-toggle', `Platform: ${platform.toUpperCase()}`);
     });
 
-    it('should display the auto-update toggle', async () => {
-      expect(await optionsPage.isAutoUpdateToggleDisplayed()).toBe(true);
+    beforeEach(async () => {
+        E2ELogger.info('auto-update-toggle', 'Opening Options window');
+        await waitForAppReady();
 
-      E2ELogger.info('auto-update-toggle', 'Auto-update toggle visible');
+        // Open Options via menu
+        await mainWindow.openOptionsViaMenu();
+        await waitForWindowCount(2, 5000);
+        await optionsPage.waitForLoad();
     });
 
-    it('should display toggle with label and description', async () => {
-      const text = await optionsPage.getAutoUpdateToggleText();
-
-      expect(text).toContain('Automatic Updates');
-      expect(text.toLowerCase()).toContain('download');
-
-      E2ELogger.info('auto-update-toggle', 'Toggle has label and description');
+    afterEach(async () => {
+        E2ELogger.info('auto-update-toggle', 'Cleaning up');
+        await ensureSingleWindow();
     });
 
-    it('should have toggle switch element', async () => {
-      // Verify the toggle switch element exists and has aria-checked attribute
-      const isEnabled = await optionsPage.isAutoUpdateEnabled();
-      expect([true, false]).toContain(isEnabled);
+    // ========================================================================
+    // Rendering Tests
+    // ========================================================================
 
-      E2ELogger.info('auto-update-toggle', 'Toggle switch element verified');
-    });
-  });
+    describe('Rendering', () => {
+        it('should display the Updates section in Options', async () => {
+            expect(await optionsPage.isUpdatesSectionDisplayed()).toBe(true);
 
-  // ========================================================================
-  // Interaction Tests
-  // ========================================================================
+            const heading = await optionsPage.getUpdatesSectionHeading();
+            expect(heading.toLowerCase()).toContain('updates');
 
-  describe('Interactions', () => {
-    it('should have aria-checked attribute on toggle switch', async () => {
-      const isEnabled = await optionsPage.isAutoUpdateEnabled();
+            E2ELogger.info('auto-update-toggle', 'Updates section visible');
+        });
 
-      expect([true, false]).toContain(isEnabled);
-      E2ELogger.info('auto-update-toggle', `Initial state: enabled=${isEnabled}`);
-    });
+        it('should display the auto-update toggle', async () => {
+            expect(await optionsPage.isAutoUpdateToggleDisplayed()).toBe(true);
 
-    it('should toggle state when clicked', async () => {
-      const initialEnabled = await optionsPage.isAutoUpdateEnabled();
-      E2ELogger.info('auto-update-toggle', `Initial state: ${initialEnabled}`);
+            E2ELogger.info('auto-update-toggle', 'Auto-update toggle visible');
+        });
 
-      await optionsPage.toggleAutoUpdate();
+        it('should display toggle with label and description', async () => {
+            const text = await optionsPage.getAutoUpdateToggleText();
 
-      const newEnabled = await optionsPage.isAutoUpdateEnabled();
-      E2ELogger.info('auto-update-toggle', `After click: ${newEnabled}`);
+            expect(text).toContain('Automatic Updates');
+            expect(text.toLowerCase()).toContain('download');
 
-      expect(newEnabled).not.toBe(initialEnabled);
+            E2ELogger.info('auto-update-toggle', 'Toggle has label and description');
+        });
 
-      // Restore original state
-      await optionsPage.toggleAutoUpdate();
-    });
+        it('should have toggle switch element', async () => {
+            // Verify the toggle switch element exists and has aria-checked attribute
+            const isEnabled = await optionsPage.isAutoUpdateEnabled();
+            expect([true, false]).toContain(isEnabled);
 
-    it('should toggle back when clicked again', async () => {
-      const initial = await optionsPage.isAutoUpdateEnabled();
-      await optionsPage.toggleAutoUpdate();
-      await optionsPage.toggleAutoUpdate();
-
-      const final = await optionsPage.isAutoUpdateEnabled();
-      expect(final).toBe(initial);
-
-      E2ELogger.info('auto-update-toggle', 'Toggle round-trip verified');
+            E2ELogger.info('auto-update-toggle', 'Toggle switch element verified');
+        });
     });
 
-    it('should remember state within session', async () => {
-      // Set to disabled
-      const initial = await optionsPage.isAutoUpdateEnabled();
-      if (initial) {
-        await optionsPage.toggleAutoUpdate();
-      }
+    // ========================================================================
+    // Interaction Tests
+    // ========================================================================
 
-      // Close and reopen Options window
-      await optionsPage.close();
+    describe('Interactions', () => {
+        it('should have aria-checked attribute on toggle switch', async () => {
+            const isEnabled = await optionsPage.isAutoUpdateEnabled();
 
-      // Reopen
-      await mainWindow.openOptionsViaMenu();
-      await waitForWindowCount(2, 5000);
-      await optionsPage.waitForLoad();
+            expect([true, false]).toContain(isEnabled);
+            E2ELogger.info('auto-update-toggle', `Initial state: enabled=${isEnabled}`);
+        });
 
-      // Verify state was preserved
-      const state = await optionsPage.isAutoUpdateEnabled();
-      expect(state).toBe(false);
+        it('should toggle state when clicked', async () => {
+            const initialEnabled = await optionsPage.isAutoUpdateEnabled();
+            E2ELogger.info('auto-update-toggle', `Initial state: ${initialEnabled}`);
 
-      // Restore to enabled
-      await optionsPage.toggleAutoUpdate();
+            await optionsPage.toggleAutoUpdate();
 
-      E2ELogger.info('auto-update-toggle', 'Session persistence verified');
+            const newEnabled = await optionsPage.isAutoUpdateEnabled();
+            E2ELogger.info('auto-update-toggle', `After click: ${newEnabled}`);
+
+            expect(newEnabled).not.toBe(initialEnabled);
+
+            // Restore original state
+            await optionsPage.toggleAutoUpdate();
+        });
+
+        it('should toggle back when clicked again', async () => {
+            const initial = await optionsPage.isAutoUpdateEnabled();
+            await optionsPage.toggleAutoUpdate();
+            await optionsPage.toggleAutoUpdate();
+
+            const final = await optionsPage.isAutoUpdateEnabled();
+            expect(final).toBe(initial);
+
+            E2ELogger.info('auto-update-toggle', 'Toggle round-trip verified');
+        });
+
+        it('should remember state within session', async () => {
+            // Set to disabled
+            const initial = await optionsPage.isAutoUpdateEnabled();
+            if (initial) {
+                await optionsPage.toggleAutoUpdate();
+            }
+
+            // Close and reopen Options window
+            await optionsPage.close();
+
+            // Reopen
+            await mainWindow.openOptionsViaMenu();
+            await waitForWindowCount(2, 5000);
+            await optionsPage.waitForLoad();
+
+            // Verify state was preserved
+            const state = await optionsPage.isAutoUpdateEnabled();
+            expect(state).toBe(false);
+
+            // Restore to enabled
+            await optionsPage.toggleAutoUpdate();
+
+            E2ELogger.info('auto-update-toggle', 'Session persistence verified');
+        });
     });
-  });
 
-  // ========================================================================
-  // Cross-Platform Tests
-  // ========================================================================
+    // ========================================================================
+    // Cross-Platform Tests
+    // ========================================================================
 
-  describe('Cross-Platform', () => {
-    it('should work on current platform', async () => {
-      const detectedPlatform = await getPlatform();
-      expect(['windows', 'macos', 'linux']).toContain(detectedPlatform);
+    describe('Cross-Platform', () => {
+        it('should work on current platform', async () => {
+            const detectedPlatform = await getPlatform();
+            expect(['windows', 'macos', 'linux']).toContain(detectedPlatform);
 
-      // Toggle should exist and be interactable on all platforms
-      expect(await optionsPage.isAutoUpdateToggleDisplayed()).toBe(true);
+            // Toggle should exist and be interactable on all platforms
+            expect(await optionsPage.isAutoUpdateToggleDisplayed()).toBe(true);
 
-      E2ELogger.info('auto-update-toggle', `Verified on platform: ${detectedPlatform}`);
+            E2ELogger.info('auto-update-toggle', `Verified on platform: ${detectedPlatform}`);
+        });
     });
-  });
 });

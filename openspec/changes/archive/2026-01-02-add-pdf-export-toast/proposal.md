@@ -16,8 +16,8 @@ When users export a chat to PDF, they currently receive no visual feedback about
 
 - Affected specs: `print-to-pdf`, `toast-system`
 - Affected code:
-  - `src/main/managers/ipcManager.ts` - Add IPC handler for reveal in folder
-  - `src/renderer/App.tsx` - Add listener for print-to-pdf success/error events and show toast
-  - `src/shared/constants/ipc-channels.ts` - Add new IPC channel constant
-  - `src/preload/preload.ts` - Expose reveal-in-folder API to renderer
-  - `src/shared/types/ipc.ts` - Add type for the new API
+    - `src/main/managers/ipcManager.ts` - Add IPC handler for reveal in folder
+    - `src/renderer/App.tsx` - Add listener for print-to-pdf success/error events and show toast
+    - `src/shared/constants/ipc-channels.ts` - Add new IPC channel constant
+    - `src/preload/preload.ts` - Expose reveal-in-folder API to renderer
+    - `src/shared/types/ipc.ts` - Add type for the new API

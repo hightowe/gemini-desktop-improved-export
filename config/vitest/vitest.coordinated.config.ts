@@ -11,18 +11,18 @@ const projectRoot = path.resolve(__dirname, '../..');
  * Tests multi-component coordination with mocked Electron APIs.
  */
 export default defineConfig({
-  plugins: [react()],
-  test: {
-    root: projectRoot,
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['tests/unit/main/test/setup.ts'],
-    include: ['tests/coordinated/**/*.test.{ts,tsx}'],
-    exclude: ['node_modules', 'dist'],
-    alias: {
-      '@': path.resolve(projectRoot, 'src/renderer'),
-      electron: path.resolve(projectRoot, 'tests/unit/main/test/electron-mock.ts'),
+    plugins: [react()],
+    test: {
+        root: projectRoot,
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: ['tests/unit/main/test/setup.ts', 'tests/helpers/setup/coordinated.ts'],
+        include: ['tests/coordinated/**/*.test.{ts,tsx}'],
+        exclude: ['node_modules', 'dist'],
+        alias: {
+            '@': path.resolve(projectRoot, 'src/renderer'),
+            electron: path.resolve(projectRoot, 'tests/unit/main/test/electron-mock.ts'),
+        },
+        testTimeout: 30000, // Integration tests may need longer timeouts
     },
-    testTimeout: 30000, // Integration tests may need longer timeouts
-  },
 });

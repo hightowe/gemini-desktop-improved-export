@@ -5,35 +5,35 @@ scripts and automation tools without any interactive UI. This is ideal for
 scripting, automation, CI/CD pipelines, and building AI-powered tools.
 
 - [Headless Mode](#headless-mode)
-  - [Overview](#overview)
-  - [Basic Usage](#basic-usage)
-    - [Direct Prompts](#direct-prompts)
-    - [Stdin Input](#stdin-input)
-    - [Combining with File Input](#combining-with-file-input)
-  - [Output Formats](#output-formats)
-    - [Text Output (Default)](#text-output-default)
-    - [JSON Output](#json-output)
-      - [Response Schema](#response-schema)
-      - [Example Usage](#example-usage)
-    - [Streaming JSON Output](#streaming-json-output)
-      - [When to Use Streaming JSON](#when-to-use-streaming-json)
-      - [Event Types](#event-types)
-      - [Basic Usage](#basic-usage)
-      - [Example Output](#example-output)
-      - [Processing Stream Events](#processing-stream-events)
-      - [Real-World Examples](#real-world-examples)
-    - [File Redirection](#file-redirection)
-  - [Configuration Options](#configuration-options)
-  - [Examples](#examples)
-    - [Code review](#code-review)
-    - [Generate commit messages](#generate-commit-messages)
-    - [API documentation](#api-documentation)
-    - [Batch code analysis](#batch-code-analysis)
-    - [Code review](#code-review-1)
-    - [Log analysis](#log-analysis)
-    - [Release notes generation](#release-notes-generation)
-    - [Model and tool usage tracking](#model-and-tool-usage-tracking)
-  - [Resources](#resources)
+    - [Overview](#overview)
+    - [Basic Usage](#basic-usage)
+        - [Direct Prompts](#direct-prompts)
+        - [Stdin Input](#stdin-input)
+        - [Combining with File Input](#combining-with-file-input)
+    - [Output Formats](#output-formats)
+        - [Text Output (Default)](#text-output-default)
+        - [JSON Output](#json-output)
+            - [Response Schema](#response-schema)
+            - [Example Usage](#example-usage)
+        - [Streaming JSON Output](#streaming-json-output)
+            - [When to Use Streaming JSON](#when-to-use-streaming-json)
+            - [Event Types](#event-types)
+            - [Basic Usage](#basic-usage)
+            - [Example Output](#example-output)
+            - [Processing Stream Events](#processing-stream-events)
+            - [Real-World Examples](#real-world-examples)
+        - [File Redirection](#file-redirection)
+    - [Configuration Options](#configuration-options)
+    - [Examples](#examples)
+        - [Code review](#code-review)
+        - [Generate commit messages](#generate-commit-messages)
+        - [API documentation](#api-documentation)
+        - [Batch code analysis](#batch-code-analysis)
+        - [Code review](#code-review-1)
+        - [Log analysis](#log-analysis)
+        - [Release notes generation](#release-notes-generation)
+        - [Model and tool usage tracking](#model-and-tool-usage-tracking)
+    - [Resources](#resources)
 
 ## Overview
 
@@ -98,45 +98,45 @@ The JSON output follows this high-level structure:
 
 ```json
 {
-  "response": "string", // The main AI-generated content answering your prompt
-  "stats": {
-    // Usage metrics and performance data
-    "models": {
-      // Per-model API and token usage statistics
-      "[model-name]": {
-        "api": {
-          /* request counts, errors, latency */
+    "response": "string", // The main AI-generated content answering your prompt
+    "stats": {
+        // Usage metrics and performance data
+        "models": {
+            // Per-model API and token usage statistics
+            "[model-name]": {
+                "api": {
+                    /* request counts, errors, latency */
+                },
+                "tokens": {
+                    /* prompt, response, cached, total counts */
+                }
+            }
         },
-        "tokens": {
-          /* prompt, response, cached, total counts */
+        "tools": {
+            // Tool execution statistics
+            "totalCalls": "number",
+            "totalSuccess": "number",
+            "totalFail": "number",
+            "totalDurationMs": "number",
+            "totalDecisions": {
+                /* accept, reject, modify, auto_accept counts */
+            },
+            "byName": {
+                /* per-tool detailed stats */
+            }
+        },
+        "files": {
+            // File modification statistics
+            "totalLinesAdded": "number",
+            "totalLinesRemoved": "number"
         }
-      }
     },
-    "tools": {
-      // Tool execution statistics
-      "totalCalls": "number",
-      "totalSuccess": "number",
-      "totalFail": "number",
-      "totalDurationMs": "number",
-      "totalDecisions": {
-        /* accept, reject, modify, auto_accept counts */
-      },
-      "byName": {
-        /* per-tool detailed stats */
-      }
-    },
-    "files": {
-      // File modification statistics
-      "totalLinesAdded": "number",
-      "totalLinesRemoved": "number"
+    "error": {
+        // Present only when an error occurred
+        "type": "string", // Error type (e.g., "ApiError", "AuthError")
+        "message": "string", // Human-readable error description
+        "code": "number" // Optional error code
     }
-  },
-  "error": {
-    // Present only when an error occurred
-    "type": "string", // Error type (e.g., "ApiError", "AuthError")
-    "message": "string", // Human-readable error description
-    "code": "number" // Optional error code
-  }
 }
 ```
 
@@ -150,71 +150,71 @@ Response:
 
 ```json
 {
-  "response": "The capital of France is Paris.",
-  "stats": {
-    "models": {
-      "gemini-2.5-pro": {
-        "api": {
-          "totalRequests": 2,
-          "totalErrors": 0,
-          "totalLatencyMs": 5053
+    "response": "The capital of France is Paris.",
+    "stats": {
+        "models": {
+            "gemini-2.5-pro": {
+                "api": {
+                    "totalRequests": 2,
+                    "totalErrors": 0,
+                    "totalLatencyMs": 5053
+                },
+                "tokens": {
+                    "prompt": 24939,
+                    "candidates": 20,
+                    "total": 25113,
+                    "cached": 21263,
+                    "thoughts": 154,
+                    "tool": 0
+                }
+            },
+            "gemini-2.5-flash": {
+                "api": {
+                    "totalRequests": 1,
+                    "totalErrors": 0,
+                    "totalLatencyMs": 1879
+                },
+                "tokens": {
+                    "prompt": 8965,
+                    "candidates": 10,
+                    "total": 9033,
+                    "cached": 0,
+                    "thoughts": 30,
+                    "tool": 28
+                }
+            }
         },
-        "tokens": {
-          "prompt": 24939,
-          "candidates": 20,
-          "total": 25113,
-          "cached": 21263,
-          "thoughts": 154,
-          "tool": 0
-        }
-      },
-      "gemini-2.5-flash": {
-        "api": {
-          "totalRequests": 1,
-          "totalErrors": 0,
-          "totalLatencyMs": 1879
+        "tools": {
+            "totalCalls": 1,
+            "totalSuccess": 1,
+            "totalFail": 0,
+            "totalDurationMs": 1881,
+            "totalDecisions": {
+                "accept": 0,
+                "reject": 0,
+                "modify": 0,
+                "auto_accept": 1
+            },
+            "byName": {
+                "google_web_search": {
+                    "count": 1,
+                    "success": 1,
+                    "fail": 0,
+                    "durationMs": 1881,
+                    "decisions": {
+                        "accept": 0,
+                        "reject": 0,
+                        "modify": 0,
+                        "auto_accept": 1
+                    }
+                }
+            }
         },
-        "tokens": {
-          "prompt": 8965,
-          "candidates": 10,
-          "total": 9033,
-          "cached": 0,
-          "thoughts": 30,
-          "tool": 28
+        "files": {
+            "totalLinesAdded": 0,
+            "totalLinesRemoved": 0
         }
-      }
-    },
-    "tools": {
-      "totalCalls": 1,
-      "totalSuccess": 1,
-      "totalFail": 0,
-      "totalDurationMs": 1881,
-      "totalDecisions": {
-        "accept": 0,
-        "reject": 0,
-        "modify": 0,
-        "auto_accept": 1
-      },
-      "byName": {
-        "google_web_search": {
-          "count": 1,
-          "success": 1,
-          "fail": 0,
-          "durationMs": 1881,
-          "decisions": {
-            "accept": 0,
-            "reject": 0,
-            "modify": 0,
-            "auto_accept": 1
-          }
-        }
-      }
-    },
-    "files": {
-      "totalLinesAdded": 0,
-      "totalLinesRemoved": 0
     }
-  }
 }
 ```
 

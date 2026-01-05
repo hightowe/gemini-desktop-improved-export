@@ -13,9 +13,9 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import '@/theme.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ThemeProvider>
-      <QuickChatApp />
-    </ThemeProvider>
-  </React.StrictMode>
+    <React.StrictMode>
+        <ThemeProvider>
+            <QuickChatApp />
+        </ThemeProvider>
+    </React.StrictMode>
 );

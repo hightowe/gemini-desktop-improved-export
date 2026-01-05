@@ -36,23 +36,23 @@ export type KeyboardShortcut = string;
  * Add new shortcuts here for easy reuse across tests.
  */
 export const KeyboardShortcuts = {
-  // Window controls
-  CLOSE_WINDOW: 'CmdOrCtrl+W',
-  MINIMIZE: 'CmdOrCtrl+M', // macOS only - minimizes window
-  TOGGLE_FULLSCREEN: 'Ctrl+Cmd+F', // macOS fullscreen toggle
+    // Window controls
+    CLOSE_WINDOW: 'CmdOrCtrl+W',
+    MINIMIZE: 'CmdOrCtrl+M', // macOS only - minimizes window
+    TOGGLE_FULLSCREEN: 'Ctrl+Cmd+F', // macOS fullscreen toggle
 
-  // App shortcuts
-  OPTIONS: 'CmdOrCtrl+,',
-  NEW_WINDOW: 'CmdOrCtrl+Shift+N',
-  RELOAD: 'CmdOrCtrl+R',
-  FORCE_RELOAD: 'CmdOrCtrl+Shift+R',
-  DEV_TOOLS: 'CmdOrCtrl+Shift+I',
+    // App shortcuts
+    OPTIONS: 'CmdOrCtrl+,',
+    NEW_WINDOW: 'CmdOrCtrl+Shift+N',
+    RELOAD: 'CmdOrCtrl+R',
+    FORCE_RELOAD: 'CmdOrCtrl+Shift+R',
+    DEV_TOOLS: 'CmdOrCtrl+Shift+I',
 
-  // Navigation
-  QUIT: 'CmdOrCtrl+Q',
-  
-  // Features
-  QUICK_CHAT: 'CmdOrCtrl+Shift+Space',
+    // Navigation
+    QUIT: 'CmdOrCtrl+Q',
+
+    // Features
+    QUICK_CHAT: 'CmdOrCtrl+Shift+Space',
 } as const;
 
 // ============================================================================
@@ -70,12 +70,12 @@ export const KeyboardShortcuts = {
  * await sendKeyboardShortcut('CmdOrCtrl+Shift+N');
  */
 export async function sendKeyboardShortcut(shortcut: KeyboardShortcut): Promise<void> {
-  const mac = await isMacOS();
-  const keys = parseShortcut(shortcut, mac);
+    const mac = await isMacOS();
+    const keys = parseShortcut(shortcut, mac);
 
-  E2ELogger.info('keyboardActions', `Sending shortcut: ${shortcut} -> [${keys.join(', ')}]`);
+    E2ELogger.info('keyboardActions', `Sending shortcut: ${shortcut} -> [${keys.join(', ')}]`);
 
-  await browser.keys(keys);
+    await browser.keys(keys);
 }
 
 /**
@@ -88,30 +88,30 @@ export async function sendKeyboardShortcut(shortcut: KeyboardShortcut): Promise<
  * @private
  */
 function parseShortcut(shortcut: string, isMac: boolean): string[] {
-  const parts = shortcut.split('+');
+    const parts = shortcut.split('+');
 
-  return parts.map((part) => {
-    const normalized = part.trim();
+    return parts.map((part) => {
+        const normalized = part.trim();
 
-    switch (normalized.toLowerCase()) {
-      case 'cmdorctrl':
-        return isMac ? 'Command' : 'Control';
-      case 'cmd':
-      case 'command':
-        return 'Command';
-      case 'ctrl':
-      case 'control':
-        return 'Control';
-      case 'shift':
-        return 'Shift';
-      case 'alt':
-      case 'option':
-        return isMac ? 'Option' : 'Alt';
-      default:
-        // Single character keys or special keys (F1, Escape, etc.)
-        return normalized;
-    }
-  });
+        switch (normalized.toLowerCase()) {
+            case 'cmdorctrl':
+                return isMac ? 'Command' : 'Control';
+            case 'cmd':
+            case 'command':
+                return 'Command';
+            case 'ctrl':
+            case 'control':
+                return 'Control';
+            case 'shift':
+                return 'Shift';
+            case 'alt':
+            case 'option':
+                return isMac ? 'Option' : 'Alt';
+            default:
+                // Single character keys or special keys (F1, Escape, etc.)
+                return normalized;
+        }
+    });
 }
 
 /**
@@ -122,7 +122,7 @@ function parseShortcut(shortcut: string, isMac: boolean): string[] {
  * @param key - The main key to press
  */
 export async function sendKeyCombo(modifiers: string[], key: string): Promise<void> {
-  const keys = [...modifiers, key];
-  E2ELogger.info('keyboardActions', `Sending key combo: [${keys.join(', ')}]`);
-  await browser.keys(keys);
+    const keys = [...modifiers, key];
+    E2ELogger.info('keyboardActions', `Sending key combo: [${keys.join(', ')}]`);
+    await browser.keys(keys);
 }

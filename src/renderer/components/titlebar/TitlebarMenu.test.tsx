@@ -10,306 +10,306 @@ import { setMockPlatform } from '../../../../tests/unit/renderer/test/setup';
 import '@testing-library/jest-dom'; // Ensure jest-dom matchers are available
 
 describe('TitlebarMenu', () => {
-  const sampleMenus: MenuDefinition[] = [
-    {
-      label: 'File',
-      items: [
-        { label: 'New', shortcut: 'Ctrl+N', action: vi.fn() },
-        { separator: true },
-        { label: 'Exit', action: vi.fn() },
-      ],
-    },
-    {
-      label: 'Edit',
-      items: [
-        { label: 'Undo', shortcut: 'Ctrl+Z' },
-        { label: 'Disabled Item', disabled: true },
-      ],
-    },
-    {
-      label: 'View',
-      items: [
-        { label: 'Checked Item', checked: true, action: vi.fn() },
-        { label: 'Unchecked Item', checked: false, action: vi.fn() },
-      ],
-    },
-  ];
+    const sampleMenus: MenuDefinition[] = [
+        {
+            label: 'File',
+            items: [
+                { label: 'New', shortcut: 'Ctrl+N', action: vi.fn() },
+                { separator: true },
+                { label: 'Exit', action: vi.fn() },
+            ],
+        },
+        {
+            label: 'Edit',
+            items: [
+                { label: 'Undo', shortcut: 'Ctrl+Z' },
+                { label: 'Disabled Item', disabled: true },
+            ],
+        },
+        {
+            label: 'View',
+            items: [
+                { label: 'Checked Item', checked: true, action: vi.fn() },
+                { label: 'Unchecked Item', checked: false, action: vi.fn() },
+            ],
+        },
+    ];
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    setMockPlatform('win32');
-  });
-
-  describe('platform behavior', () => {
-    it('renders menu buttons on Windows', () => {
-      setMockPlatform('win32');
-      render(<TitlebarMenu menus={sampleMenus} />);
-
-      expect(screen.getByText('File')).toBeInTheDocument();
-      expect(screen.getByText('Edit')).toBeInTheDocument();
+    beforeEach(() => {
+        vi.clearAllMocks();
+        setMockPlatform('win32');
     });
 
-    it('renders menu buttons on Linux', () => {
-      setMockPlatform('linux');
-      render(<TitlebarMenu menus={sampleMenus} />);
+    describe('platform behavior', () => {
+        it('renders menu buttons on Windows', () => {
+            setMockPlatform('win32');
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      expect(screen.getByText('File')).toBeInTheDocument();
-      expect(screen.getByText('Edit')).toBeInTheDocument();
+            expect(screen.getByText('File')).toBeInTheDocument();
+            expect(screen.getByText('Edit')).toBeInTheDocument();
+        });
+
+        it('renders menu buttons on Linux', () => {
+            setMockPlatform('linux');
+            render(<TitlebarMenu menus={sampleMenus} />);
+
+            expect(screen.getByText('File')).toBeInTheDocument();
+            expect(screen.getByText('Edit')).toBeInTheDocument();
+        });
+
+        it('returns null on macOS', () => {
+            setMockPlatform('darwin');
+            const { container } = render(<TitlebarMenu menus={sampleMenus} />);
+
+            expect(container.firstChild).toBeNull();
+        });
     });
 
-    it('returns null on macOS', () => {
-      setMockPlatform('darwin');
-      const { container } = render(<TitlebarMenu menus={sampleMenus} />);
+    describe('menu interactions', () => {
+        it('opens dropdown on click', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      expect(container.firstChild).toBeNull();
-    });
-  });
+            const fileButton = screen.getByText('File');
+            fireEvent.click(fileButton);
 
-  describe('menu interactions', () => {
-    it('opens dropdown on click', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+            // Check if dropdown items are visible
+            expect(screen.getByText('New')).toBeVisible();
+            expect(screen.getByText('Exit')).toBeVisible();
+        });
 
-      const fileButton = screen.getByText('File');
-      fireEvent.click(fileButton);
+        it('closes dropdown on second click', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      // Check if dropdown items are visible
-      expect(screen.getByText('New')).toBeVisible();
-      expect(screen.getByText('Exit')).toBeVisible();
-    });
+            const fileButton = screen.getByText('File');
+            fireEvent.click(fileButton);
+            expect(screen.getByText('New')).toBeVisible();
 
-    it('closes dropdown on second click', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+            fireEvent.click(fileButton);
+            expect(screen.queryByText('New')).not.toBeInTheDocument();
+        });
 
-      const fileButton = screen.getByText('File');
-      fireEvent.click(fileButton);
-      expect(screen.getByText('New')).toBeVisible();
+        it('closes dropdown on click outside', () => {
+            vi.useFakeTimers();
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      fireEvent.click(fileButton);
-      expect(screen.queryByText('New')).not.toBeInTheDocument();
-    });
+            const fileButton = screen.getByText('File');
+            fireEvent.click(fileButton);
 
-    it('closes dropdown on click outside', () => {
-      vi.useFakeTimers();
-      render(<TitlebarMenu menus={sampleMenus} />);
+            // Fast-forward so the event listener is attached
+            vi.runAllTimers();
 
-      const fileButton = screen.getByText('File');
-      fireEvent.click(fileButton);
+            expect(screen.getByText('New')).toBeVisible();
 
-      // Fast-forward so the event listener is attached
-      vi.runAllTimers();
+            // Verify backdrop exists
+            const backdrop = document.querySelector('.titlebar-menu-backdrop');
+            expect(backdrop).toBeInTheDocument();
 
-      expect(screen.getByText('New')).toBeVisible();
+            // Click backdrop to close
+            if (backdrop) {
+                fireEvent.click(backdrop);
+            }
+            expect(screen.queryByText('New')).not.toBeInTheDocument();
 
-      // Verify backdrop exists
-      const backdrop = document.querySelector('.titlebar-menu-backdrop');
-      expect(backdrop).toBeInTheDocument();
+            vi.useRealTimers();
+        });
 
-      // Click backdrop to close
-      if (backdrop) {
-        fireEvent.click(backdrop);
-      }
-      expect(screen.queryByText('New')).not.toBeInTheDocument();
+        it('closes dropdown on click outside (document body)', () => {
+            vi.useFakeTimers();
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      vi.useRealTimers();
-    });
+            const fileButton = screen.getByText('File');
+            fireEvent.click(fileButton);
 
-    it('closes dropdown on click outside (document body)', () => {
-      vi.useFakeTimers();
-      render(<TitlebarMenu menus={sampleMenus} />);
+            // Fast-forward so the event listener is attached
+            vi.runAllTimers();
 
-      const fileButton = screen.getByText('File');
-      fireEvent.click(fileButton);
+            expect(screen.getByText('New')).toBeVisible();
 
-      // Fast-forward so the event listener is attached
-      vi.runAllTimers();
+            fireEvent.mouseDown(document.body);
+            expect(screen.queryByText('New')).not.toBeInTheDocument();
 
-      expect(screen.getByText('New')).toBeVisible();
+            vi.useRealTimers();
+        });
 
-      fireEvent.mouseDown(document.body);
-      expect(screen.queryByText('New')).not.toBeInTheDocument();
+        it('closes dropdown when Escape key is pressed', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      vi.useRealTimers();
-    });
+            const fileButton = screen.getByText('File');
+            fireEvent.click(fileButton);
+            expect(screen.getByText('New')).toBeVisible();
 
-    it('closes dropdown when Escape key is pressed', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+            fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+            expect(screen.queryByText('New')).not.toBeInTheDocument();
+        });
 
-      const fileButton = screen.getByText('File');
-      fireEvent.click(fileButton);
-      expect(screen.getByText('New')).toBeVisible();
+        it('does not close dropdown when other keys are pressed', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
-      expect(screen.queryByText('New')).not.toBeInTheDocument();
-    });
+            const fileButton = screen.getByText('File');
+            fireEvent.click(fileButton);
+            expect(screen.getByText('New')).toBeVisible();
 
-    it('does not close dropdown when other keys are pressed', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+            fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
+            expect(screen.getByText('New')).toBeVisible();
+        });
 
-      const fileButton = screen.getByText('File');
-      fireEvent.click(fileButton);
-      expect(screen.getByText('New')).toBeVisible();
+        it('switches menu on hover when active', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
-      expect(screen.getByText('New')).toBeVisible();
-    });
+            const fileButton = screen.getByText('File');
+            const editButton = screen.getByText('Edit');
 
-    it('switches menu on hover when active', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+            // Open File menu
+            fireEvent.click(fileButton);
+            expect(screen.getByText('Exit')).toBeVisible();
+            expect(screen.queryByText('Undo')).not.toBeInTheDocument();
 
-      const fileButton = screen.getByText('File');
-      const editButton = screen.getByText('Edit');
+            // Hover over Edit menu
+            fireEvent.mouseEnter(editButton);
+            expect(screen.queryByText('Exit')).not.toBeInTheDocument();
+            expect(screen.getByText('Undo')).toBeVisible();
+        });
 
-      // Open File menu
-      fireEvent.click(fileButton);
-      expect(screen.getByText('Exit')).toBeVisible();
-      expect(screen.queryByText('Undo')).not.toBeInTheDocument();
+        it('executes action and closes menu on item click', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      // Hover over Edit menu
-      fireEvent.mouseEnter(editButton);
-      expect(screen.queryByText('Exit')).not.toBeInTheDocument();
-      expect(screen.getByText('Undo')).toBeVisible();
-    });
+            const fileButton = screen.getByText('File');
+            fireEvent.click(fileButton);
 
-    it('executes action and closes menu on item click', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+            const firstItem = sampleMenus[0].items[0];
+            // Safe access using type guard
+            if (!('separator' in firstItem)) {
+                const newAction = firstItem.action;
+                const newItem = screen.getByText('New');
 
-      const fileButton = screen.getByText('File');
-      fireEvent.click(fileButton);
+                fireEvent.click(newItem);
 
-      const firstItem = sampleMenus[0].items[0];
-      // Safe access using type guard
-      if (!('separator' in firstItem)) {
-        const newAction = firstItem.action;
-        const newItem = screen.getByText('New');
+                if (newAction) {
+                    expect(newAction).toHaveBeenCalled();
+                }
+                expect(screen.queryByText('New')).not.toBeInTheDocument();
+            }
+        });
 
-        fireEvent.click(newItem);
+        it('does not close or execute action on disabled item click', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-        if (newAction) {
-          expect(newAction).toHaveBeenCalled();
-        }
-        expect(screen.queryByText('New')).not.toBeInTheDocument();
-      }
-    });
+            fireEvent.click(screen.getByText('Edit'));
+            const disabledItem = screen.getByText('Disabled Item').closest('button');
 
-    it('does not close or execute action on disabled item click', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+            expect(disabledItem).toBeDisabled();
 
-      fireEvent.click(screen.getByText('Edit'));
-      const disabledItem = screen.getByText('Disabled Item').closest('button');
+            if (disabledItem) {
+                fireEvent.click(disabledItem);
+            }
 
-      expect(disabledItem).toBeDisabled();
+            // Should still be open
+            expect(screen.getByText('Undo')).toBeVisible();
+        });
 
-      if (disabledItem) {
-        fireEvent.click(disabledItem);
-      }
+        it('does not switch menu on hover when no menu is active', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      // Should still be open
-      expect(screen.getByText('Undo')).toBeVisible();
-    });
+            const editButton = screen.getByText('Edit');
 
-    it('does not switch menu on hover when no menu is active', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+            // Hover without clicking first - menu should not open
+            fireEvent.mouseEnter(editButton);
+            expect(screen.queryByText('Undo')).not.toBeInTheDocument();
+        });
 
-      const editButton = screen.getByText('Edit');
+        it('closes menu when clicking on item without action', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      // Hover without clicking first - menu should not open
-      fireEvent.mouseEnter(editButton);
-      expect(screen.queryByText('Undo')).not.toBeInTheDocument();
-    });
+            fireEvent.click(screen.getByText('Edit'));
+            const undoItem = screen.getByText('Undo');
 
-    it('closes menu when clicking on item without action', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+            // Click on item without action
+            fireEvent.click(undoItem);
 
-      fireEvent.click(screen.getByText('Edit'));
-      const undoItem = screen.getByText('Undo');
+            // Menu should still close
+            expect(screen.queryByText('Undo')).not.toBeInTheDocument();
+        });
 
-      // Click on item without action
-      fireEvent.click(undoItem);
+        it('keeps dropdown open when clicking inside dropdown', () => {
+            vi.useFakeTimers();
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      // Menu should still close
-      expect(screen.queryByText('Undo')).not.toBeInTheDocument();
-    });
+            const fileButton = screen.getByText('File');
+            fireEvent.click(fileButton);
+            vi.runAllTimers();
 
-    it('keeps dropdown open when clicking inside dropdown', () => {
-      vi.useFakeTimers();
-      render(<TitlebarMenu menus={sampleMenus} />);
+            const dropdown = document.querySelector('.titlebar-menu-dropdown');
+            expect(dropdown).toBeInTheDocument();
 
-      const fileButton = screen.getByText('File');
-      fireEvent.click(fileButton);
-      vi.runAllTimers();
+            // Click inside dropdown but not on an item
+            if (dropdown) {
+                fireEvent.mouseDown(dropdown);
+            }
 
-      const dropdown = document.querySelector('.titlebar-menu-dropdown');
-      expect(dropdown).toBeInTheDocument();
+            // Dropdown should still be open
+            expect(screen.getByText('New')).toBeVisible();
 
-      // Click inside dropdown but not on an item
-      if (dropdown) {
-        fireEvent.mouseDown(dropdown);
-      }
+            vi.useRealTimers();
+        });
 
-      // Dropdown should still be open
-      expect(screen.getByText('New')).toBeVisible();
+        it('keeps dropdown open when clicking inside menu bar', () => {
+            vi.useFakeTimers();
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      vi.useRealTimers();
-    });
+            const fileButton = screen.getByText('File');
+            fireEvent.click(fileButton);
+            vi.runAllTimers();
 
-    it('keeps dropdown open when clicking inside menu bar', () => {
-      vi.useFakeTimers();
-      render(<TitlebarMenu menus={sampleMenus} />);
+            const menuBar = document.querySelector('.titlebar-menu-bar');
+            expect(menuBar).toBeInTheDocument();
 
-      const fileButton = screen.getByText('File');
-      fireEvent.click(fileButton);
-      vi.runAllTimers();
+            // Click inside menu bar (but not on a button)
+            if (menuBar) {
+                fireEvent.mouseDown(menuBar);
+            }
 
-      const menuBar = document.querySelector('.titlebar-menu-bar');
-      expect(menuBar).toBeInTheDocument();
+            // Dropdown should still be open
+            expect(screen.getByText('New')).toBeVisible();
 
-      // Click inside menu bar (but not on a button)
-      if (menuBar) {
-        fireEvent.mouseDown(menuBar);
-      }
-
-      // Dropdown should still be open
-      expect(screen.getByText('New')).toBeVisible();
-
-      vi.useRealTimers();
-    });
-  });
-
-  describe('checked menu items', () => {
-    it('renders checkmark for checked items', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
-
-      fireEvent.click(screen.getByText('View'));
-
-      const checkedItem = screen.getByTestId('menu-item-Checked Item');
-      const checkSpan = checkedItem.querySelector('.menu-item-check');
-
-      expect(checkSpan).toBeInTheDocument();
-      expect(checkSpan).toHaveTextContent('✓');
+            vi.useRealTimers();
+        });
     });
 
-    it('renders empty checkmark span for unchecked items', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
+    describe('checked menu items', () => {
+        it('renders checkmark for checked items', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
 
-      fireEvent.click(screen.getByText('View'));
+            fireEvent.click(screen.getByText('View'));
 
-      const uncheckedItem = screen.getByTestId('menu-item-Unchecked Item');
-      const checkSpan = uncheckedItem.querySelector('.menu-item-check');
+            const checkedItem = screen.getByTestId('menu-item-Checked Item');
+            const checkSpan = checkedItem.querySelector('.menu-item-check');
 
-      expect(checkSpan).toBeInTheDocument();
-      expect(checkSpan).toHaveTextContent('');
+            expect(checkSpan).toBeInTheDocument();
+            expect(checkSpan).toHaveTextContent('✓');
+        });
+
+        it('renders empty checkmark span for unchecked items', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
+
+            fireEvent.click(screen.getByText('View'));
+
+            const uncheckedItem = screen.getByTestId('menu-item-Unchecked Item');
+            const checkSpan = uncheckedItem.querySelector('.menu-item-check');
+
+            expect(checkSpan).toBeInTheDocument();
+            expect(checkSpan).toHaveTextContent('');
+        });
+
+        it('renders empty checkmark span for items without checked property', () => {
+            render(<TitlebarMenu menus={sampleMenus} />);
+
+            fireEvent.click(screen.getByText('File'));
+
+            const newItem = screen.getByTestId('menu-item-New');
+            const checkSpan = newItem.querySelector('.menu-item-check');
+
+            expect(checkSpan).toBeInTheDocument();
+            expect(checkSpan).toHaveTextContent('');
+        });
     });
-
-    it('renders empty checkmark span for items without checked property', () => {
-      render(<TitlebarMenu menus={sampleMenus} />);
-
-      fireEvent.click(screen.getByText('File'));
-
-      const newItem = screen.getByTestId('menu-item-New');
-      const checkSpan = newItem.querySelector('.menu-item-check');
-
-      expect(checkSpan).toBeInTheDocument();
-      expect(checkSpan).toHaveTextContent('');
-    });
-  });
 });

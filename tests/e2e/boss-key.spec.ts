@@ -18,129 +18,129 @@ import { isHotkeyRegistered, REGISTERED_HOTKEYS } from './helpers/hotkeyHelpers'
 import { waitForAppReady, ensureSingleWindow } from './helpers/workflows';
 import { isLinuxCI } from './helpers/platform';
 import {
-  isWindowMinimized,
-  isWindowVisible,
-  minimizeWindow,
-  restoreWindow,
-  showWindow,
+    isWindowMinimized,
+    isWindowVisible,
+    minimizeWindow,
+    restoreWindow,
+    showWindow,
 } from './helpers/windowStateActions';
 
 describe('Boss Key (Hide All Windows)', () => {
-  const mainWindow = new MainWindowPage();
+    const mainWindow = new MainWindowPage();
 
-  beforeEach(async () => {
-    await waitForAppReady();
-  });
-
-  afterEach(async () => {
-    await ensureSingleWindow();
-  });
-
-  describe('Hotkey Registration', () => {
-    it('should have boss key hotkey registered by default', async function () {
-      // Skip on Linux CI - global hotkeys are disabled due to Wayland limitations
-      if (await isLinuxCI()) {
-        E2ELogger.info('boss-key', 'Skipping - Linux CI does not support global hotkeys');
-        this.skip();
-      }
-
-      const accelerator = REGISTERED_HOTKEYS.MINIMIZE_WINDOW.accelerator;
-      const isRegistered = await isHotkeyRegistered(accelerator);
-
-      expect(isRegistered).toBe(true);
-      E2ELogger.info('boss-key', `Boss key (${accelerator}) is registered`);
+    beforeEach(async () => {
+        await waitForAppReady();
     });
 
-    it('should display correct platform-specific hotkey format', async () => {
-      const platform = process.platform;
-      const expectedDisplay =
-        platform === 'darwin'
-          ? REGISTERED_HOTKEYS.MINIMIZE_WINDOW.displayFormat.macos
-          : REGISTERED_HOTKEYS.MINIMIZE_WINDOW.displayFormat.windows;
-
-      E2ELogger.info('boss-key', `Expected display format on ${platform}: ${expectedDisplay}`);
-
-      // The hotkey should be Ctrl+Alt+H on Windows/Linux, Cmd+Alt+H on macOS
-      if (platform === 'darwin') {
-        expect(expectedDisplay).toContain('Cmd');
-      } else {
-        expect(expectedDisplay).toContain('Ctrl');
-      }
-    });
-  });
-
-  describe('Boss Key Action', () => {
-    it('should minimize main window when boss key is triggered', async function () {
-      // Skip on Linux CI - window minimize detection doesn't work under Xvfb
-      if (await isLinuxCI()) {
-        E2ELogger.info('boss-key', 'Skipping - Linux CI uses headless Xvfb without window manager');
-        this.skip();
-      }
-
-      // 1. Verify main window is visible initially
-      const initialVisibility = await isWindowVisible();
-      expect(initialVisibility).toBe(true);
-      E2ELogger.info('boss-key', 'Main window is visible initially');
-
-      // 2. Minimize the window (simulating boss key action)
-      await minimizeWindow();
-
-      // 3. Verify window is minimized
-      const minimized = await isWindowMinimized();
-      const visible = await isWindowVisible();
-
-      // Window should be minimized (or hidden on some systems)
-      expect(minimized || !visible).toBe(true);
-      E2ELogger.info('boss-key', `After boss key: minimized=${minimized}, visible=${visible}`);
-
-      // 4. Restore window for cleanup
-      await restoreWindow();
-      await showWindow();
-
-      // 5. Verify window is restored
-      const afterRestore = await isWindowVisible();
-      expect(afterRestore).toBe(true);
-      E2ELogger.info('boss-key', 'Window restored successfully');
+    afterEach(async () => {
+        await ensureSingleWindow();
     });
 
-    it('should remain hidden until explicitly restored', async function () {
-      // Skip on Linux CI - window minimize detection doesn't work under Xvfb
-      if (await isLinuxCI()) {
-        E2ELogger.info('boss-key', 'Skipping - Linux CI uses headless Xvfb without window manager');
-        this.skip();
-      }
+    describe('Hotkey Registration', () => {
+        it('should have boss key hotkey registered by default', async function () {
+            // Skip on Linux CI - global hotkeys are disabled due to Wayland limitations
+            if (await isLinuxCI()) {
+                E2ELogger.info('boss-key', 'Skipping - Linux CI does not support global hotkeys');
+                this.skip();
+            }
 
-      // 1. Minimize the window
-      await minimizeWindow();
+            const accelerator = REGISTERED_HOTKEYS.MINIMIZE_WINDOW.accelerator;
+            const isRegistered = await isHotkeyRegistered(accelerator);
 
-      // 2. Wait a moment to ensure it stays hidden
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+            expect(isRegistered).toBe(true);
+            E2ELogger.info('boss-key', `Boss key (${accelerator}) is registered`);
+        });
 
-      // 3. Check it's still minimized
-      const stillMinimized = await isWindowMinimized();
-      expect(stillMinimized).toBe(true);
-      E2ELogger.info('boss-key', 'Window remained minimized as expected');
+        it('should display correct platform-specific hotkey format', async () => {
+            const platform = process.platform;
+            const expectedDisplay =
+                platform === 'darwin'
+                    ? REGISTERED_HOTKEYS.MINIMIZE_WINDOW.displayFormat.macos
+                    : REGISTERED_HOTKEYS.MINIMIZE_WINDOW.displayFormat.windows;
 
-      // 4. Cleanup - restore
-      await restoreWindow();
-      await showWindow();
+            E2ELogger.info('boss-key', `Expected display format on ${platform}: ${expectedDisplay}`);
+
+            // The hotkey should be Ctrl+Alt+H on Windows/Linux, Cmd+Alt+H on macOS
+            if (platform === 'darwin') {
+                expect(expectedDisplay).toContain('Cmd');
+            } else {
+                expect(expectedDisplay).toContain('Ctrl');
+            }
+        });
     });
-  });
 
-  describe('Boss Key with Multiple Windows', () => {
-    it('should handle boss key when options window is also open', async () => {
-      // This test is informational - boss key currently only affects main window
-      // Future enhancement could hide all windows
+    describe('Boss Key Action', () => {
+        it('should minimize main window when boss key is triggered', async function () {
+            // Skip on Linux CI - window minimize detection doesn't work under Xvfb
+            if (await isLinuxCI()) {
+                E2ELogger.info('boss-key', 'Skipping - Linux CI uses headless Xvfb without window manager');
+                this.skip();
+            }
 
-      E2ELogger.info('boss-key', 'Boss key affects main window; options window behavior may vary');
+            // 1. Verify main window is visible initially
+            const initialVisibility = await isWindowVisible();
+            expect(initialVisibility).toBe(true);
+            E2ELogger.info('boss-key', 'Main window is visible initially');
 
-      // Verify the main window is loaded and can be minimized
-      const isLoaded = await mainWindow.isLoaded();
-      expect(isLoaded).toBe(true);
+            // 2. Minimize the window (simulating boss key action)
+            await minimizeWindow();
 
-      // Verify window is currently visible (minimizable state)
-      const isVisible = await isWindowVisible();
-      expect(isVisible).toBe(true);
+            // 3. Verify window is minimized
+            const minimized = await isWindowMinimized();
+            const visible = await isWindowVisible();
+
+            // Window should be minimized (or hidden on some systems)
+            expect(minimized || !visible).toBe(true);
+            E2ELogger.info('boss-key', `After boss key: minimized=${minimized}, visible=${visible}`);
+
+            // 4. Restore window for cleanup
+            await restoreWindow();
+            await showWindow();
+
+            // 5. Verify window is restored
+            const afterRestore = await isWindowVisible();
+            expect(afterRestore).toBe(true);
+            E2ELogger.info('boss-key', 'Window restored successfully');
+        });
+
+        it('should remain hidden until explicitly restored', async function () {
+            // Skip on Linux CI - window minimize detection doesn't work under Xvfb
+            if (await isLinuxCI()) {
+                E2ELogger.info('boss-key', 'Skipping - Linux CI uses headless Xvfb without window manager');
+                this.skip();
+            }
+
+            // 1. Minimize the window
+            await minimizeWindow();
+
+            // 2. Wait a moment to ensure it stays hidden
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+            // 3. Check it's still minimized
+            const stillMinimized = await isWindowMinimized();
+            expect(stillMinimized).toBe(true);
+            E2ELogger.info('boss-key', 'Window remained minimized as expected');
+
+            // 4. Cleanup - restore
+            await restoreWindow();
+            await showWindow();
+        });
     });
-  });
+
+    describe('Boss Key with Multiple Windows', () => {
+        it('should handle boss key when options window is also open', async () => {
+            // This test is informational - boss key currently only affects main window
+            // Future enhancement could hide all windows
+
+            E2ELogger.info('boss-key', 'Boss key affects main window; options window behavior may vary');
+
+            // Verify the main window is loaded and can be minimized
+            const isLoaded = await mainWindow.isLoaded();
+            expect(isLoaded).toBe(true);
+
+            // Verify window is currently visible (minimizable state)
+            const isVisible = await isWindowVisible();
+            expect(isVisible).toBe(true);
+        });
+    });
 });

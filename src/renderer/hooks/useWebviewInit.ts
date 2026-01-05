@@ -11,14 +11,14 @@
  * Result of the webview initialization hook.
  */
 interface UseWebviewInitResult {
-  /** Whether the webview is ready to use */
-  isReady: boolean;
-  /** Error message if initialization failed, null otherwise */
-  error: string | null;
-  /** Whether initialization is in progress */
-  isLoading: boolean;
-  /** Function to reset and retry initialization */
-  retry: () => void;
+    /** Whether the webview is ready to use */
+    isReady: boolean;
+    /** Error message if initialization failed, null otherwise */
+    error: string | null;
+    /** Whether initialization is in progress */
+    isLoading: boolean;
+    /** Function to reset and retry initialization */
+    retry: () => void;
 }
 
 /**
@@ -30,10 +30,10 @@ interface UseWebviewInitResult {
  * @returns Object containing ready state
  */
 export function useWebviewInit(): UseWebviewInitResult {
-  return {
-    isReady: true,
-    error: null,
-    isLoading: false,
-    retry: (): void => {},
-  };
+    return {
+        isReady: true,
+        error: null,
+        isLoading: false,
+        retry: (): void => {},
+    };
 }

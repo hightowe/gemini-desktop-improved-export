@@ -13,255 +13,255 @@
 name: Release (Reusable)
 
 on:
-  workflow_call:
+    workflow_call:
 
 env:
-  NODE_VERSION: '20'
-  CI: true
-  ELECTRON_ENABLE_LOGGING: true
+    NODE_VERSION: '20'
+    CI: true
+    ELECTRON_ENABLE_LOGGING: true
 
 jobs:
-  # ==========================================================================
-  # macOS x64 Build
-  # ==========================================================================
-  macos-x64:
-    name: macOS (x64)
-    runs-on: macos-latest
-    permissions:
-      contents: write # Required for release upload
-    env:
-      npm_config_arch: x64
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
-
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
-
-      - name: Build (without publish)
-        run: npm run dist:mac-x64
-
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          fail_on_unmatched_files: true
-          files: |
-            release/*.dmg
-            release/*.zip
-            release/*.zip.blockmap
+    # ==========================================================================
+    # macOS x64 Build
+    # ==========================================================================
+    macos-x64:
+        name: macOS (x64)
+        runs-on: macos-latest
+        permissions:
+            contents: write # Required for release upload
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            npm_config_arch: x64
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts-macos-x64
-          path: release/
-          retention-days: 7
-          if-no-files-found: error
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-  # ==========================================================================
-  # macOS arm64 Build
-  # ==========================================================================
-  macos-arm64:
-    name: macOS (arm64)
-    runs-on: macos-latest
-    permissions:
-      contents: write # Required for release upload
-    env:
-      npm_config_arch: arm64
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
 
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
+            - name: Build (without publish)
+              run: npm run dist:mac-x64
 
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
+            - name: Upload to GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  draft: true
+                  fail_on_unmatched_files: true
+                  files: |
+                      release/*.dmg
+                      release/*.zip
+                      release/*.zip.blockmap
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build (without publish)
-        run: npm run dist:mac-arm64
+            - name: Upload Build Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: release-artifacts-macos-x64
+                  path: release/
+                  retention-days: 7
+                  if-no-files-found: error
 
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          fail_on_unmatched_files: true
-          files: |
-            release/*.dmg
-            release/*.zip
-            release/*.zip.blockmap
+    # ==========================================================================
+    # macOS arm64 Build
+    # ==========================================================================
+    macos-arm64:
+        name: macOS (arm64)
+        runs-on: macos-latest
+        permissions:
+            contents: write # Required for release upload
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            npm_config_arch: arm64
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts-macos-arm64
-          path: release/
-          retention-days: 7
-          if-no-files-found: error
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-  # ==========================================================================
-  # Windows Build
-  # ==========================================================================
-  windows:
-    name: Windows (x64)
-    runs-on: windows-latest
-    permissions:
-      contents: write # Required for release upload
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
 
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
+            - name: Build (without publish)
+              run: npm run dist:mac-arm64
 
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
+            - name: Upload to GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  draft: true
+                  fail_on_unmatched_files: true
+                  files: |
+                      release/*.dmg
+                      release/*.zip
+                      release/*.zip.blockmap
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build (without publish)
-        run: npm run dist:win
-        shell: bash
-        env:
-          # Azure Trusted Signing configuration
-          AZURE_SIGN_ENDPOINT: ${{ secrets.AZURE_SIGN_ENDPOINT }}
-          AZURE_PUBLISHER_NAME: ${{ secrets.AZURE_PUBLISHER_NAME }}
-          AZURE_CODE_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
-          AZURE_CERTIFICATE_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+            - name: Upload Build Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: release-artifacts-macos-arm64
+                  path: release/
+                  retention-days: 7
+                  if-no-files-found: error
 
-      - name: Run Release E2E Tests
-        run: npm run test:e2e:release
-        shell: bash
+    # ==========================================================================
+    # Windows Build
+    # ==========================================================================
+    windows:
+        name: Windows (x64)
+        runs-on: windows-latest
+        permissions:
+            contents: write # Required for release upload
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          fail_on_unmatched_files: true
-          files: |
-            release/*.exe
-            release/*.exe.blockmap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts-windows
-          path: release/
-          retention-days: 7
-          if-no-files-found: error
+            - name: Install Dependencies
+              run: npm ci
 
-  # ==========================================================================
-  # Linux Build
-  # ==========================================================================
-  linux:
-    name: Linux (x64)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write # Required for release upload
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Build (without publish)
+              run: npm run dist:win
+              shell: bash
+              env:
+                  # Azure Trusted Signing configuration
+                  AZURE_SIGN_ENDPOINT: ${{ secrets.AZURE_SIGN_ENDPOINT }}
+                  AZURE_PUBLISHER_NAME: ${{ secrets.AZURE_PUBLISHER_NAME }}
+                  AZURE_CODE_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
+                  AZURE_CERTIFICATE_PROFILE_NAME: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+                  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+                  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+                  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v7
-        with:
-          name: frontend-dist
-          path: dist/
+            - name: Run Release E2E Tests
+              run: npm run test:e2e:release
+              shell: bash
 
-      - name: Download Electron Build
-        uses: actions/download-artifact@v7
-        with:
-          name: electron-dist
-          path: dist-electron/
+            - name: Upload to GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  draft: true
+                  fail_on_unmatched_files: true
+                  files: |
+                      release/*.exe
+                      release/*.exe.blockmap
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build (without publish)
-        run: npm run dist:linux
+            - name: Upload Build Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: release-artifacts-windows
+                  path: release/
+                  retention-days: 7
+                  if-no-files-found: error
 
-      - name: Run Release E2E Tests
-        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" npm run test:e2e:release
+    # ==========================================================================
+    # Linux Build
+    # ==========================================================================
+    linux:
+        name: Linux (x64)
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write # Required for release upload
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          fail_on_unmatched_files: true
-          files: |
-            release/*.AppImage
-            release/*.deb
-            release/*.rpm
-            release/*.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts-linux
-          path: release/
-          retention-days: 7
-          if-no-files-found: error
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Download Frontend Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: frontend-dist
+                  path: dist/
+
+            - name: Download Electron Build
+              uses: actions/download-artifact@v7
+              with:
+                  name: electron-dist
+                  path: dist-electron/
+
+            - name: Build (without publish)
+              run: npm run dist:linux
+
+            - name: Run Release E2E Tests
+              run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" npm run test:e2e:release
+
+            - name: Upload to GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  draft: true
+                  fail_on_unmatched_files: true
+                  files: |
+                      release/*.AppImage
+                      release/*.deb
+                      release/*.rpm
+                      release/*.tar.gz
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Upload Build Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: release-artifacts-linux
+                  path: release/
+                  retention-days: 7
+                  if-no-files-found: error

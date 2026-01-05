@@ -33,26 +33,26 @@ export type OptionsTab = 'settings' | 'about';
  * Defines a reusable section container for different settings categories.
  */
 interface OptionsSectionProps {
-  /** Section title displayed as a header */
-  title: string;
-  /** Unique identifier for testing/accessibility */
-  testId?: string;
-  /** Content to render inside the section */
-  children: React.ReactNode;
+    /** Section title displayed as a header */
+    title: string;
+    /** Unique identifier for testing/accessibility */
+    testId?: string;
+    /** Content to render inside the section */
+    children: React.ReactNode;
 }
 
 /**
  * Props for the TabButton component.
  */
 interface TabButtonProps {
-  /** Tab identifier */
-  id: OptionsTab;
-  /** Display label */
-  label: string;
-  /** Currently active tab */
-  activeTab: OptionsTab;
-  /** Callback when tab is clicked */
-  onClick: (tab: OptionsTab) => void;
+    /** Tab identifier */
+    id: OptionsTab;
+    /** Display label */
+    label: string;
+    /** Currently active tab */
+    activeTab: OptionsTab;
+    /** Callback when tab is clicked */
+    onClick: (tab: OptionsTab) => void;
 }
 
 // ============================================================================
@@ -63,19 +63,19 @@ interface TabButtonProps {
  * Individual tab button for navigation.
  */
 function TabButton({ id, label, activeTab, onClick }: TabButtonProps) {
-  const isActive = activeTab === id;
+    const isActive = activeTab === id;
 
-  return (
-    <button
-      className={`options-tab-button ${isActive ? 'active' : ''}`}
-      onClick={() => onClick(id)}
-      aria-selected={isActive}
-      role="tab"
-      data-testid={`options-tab-${id}`}
-    >
-      {label}
-    </button>
-  );
+    return (
+        <button
+            className={`options-tab-button ${isActive ? 'active' : ''}`}
+            onClick={() => onClick(id)}
+            aria-selected={isActive}
+            role="tab"
+            data-testid={`options-tab-${id}`}
+        >
+            {label}
+        </button>
+    );
 }
 
 // ============================================================================
@@ -90,12 +90,12 @@ function TabButton({ id, label, activeTab, onClick }: TabButtonProps) {
  * @returns Rendered options section
  */
 function OptionsSection({ title, testId, children }: OptionsSectionProps) {
-  return (
-    <section className="options-section" data-testid={testId}>
-      <h2>{title}</h2>
-      <div className="options-section__content">{children}</div>
-    </section>
-  );
+    return (
+        <section className="options-section" data-testid={testId}>
+            <h2>{title}</h2>
+            <div className="options-section__content">{children}</div>
+        </section>
+    );
 }
 
 // ============================================================================
@@ -107,9 +107,9 @@ function OptionsSection({ title, testId, children }: OptionsSectionProps) {
  * Supports: #about, #settings (default)
  */
 function getInitialTab(): OptionsTab {
-  const hash = window.location.hash.replace('#', '');
-  if (hash === 'about') return 'about';
-  return 'settings';
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'about') return 'about';
+    return 'settings';
 }
 
 /**
@@ -128,72 +128,67 @@ function getInitialTab(): OptionsTab {
  * window.electronAPI?.openOptions('about');
  */
 export function OptionsWindow() {
-  const [activeTab, setActiveTab] = useState<OptionsTab>(getInitialTab);
+    const [activeTab, setActiveTab] = useState<OptionsTab>(getInitialTab);
 
-  // Update tab if hash changes (e.g., opened with specific tab)
-  useEffect(() => {
-    const handleHashChange = () => {
-      setActiveTab(getInitialTab());
-    };
+    // Update tab if hash changes (e.g., opened with specific tab)
+    useEffect(() => {
+        const handleHashChange = () => {
+            setActiveTab(getInitialTab());
+        };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
 
-  const handleTabChange = useCallback((tab: OptionsTab) => {
-    setActiveTab(tab);
-    // Update URL hash for state persistence
-    window.location.hash = tab;
-  }, []);
+    const handleTabChange = useCallback((tab: OptionsTab) => {
+        setActiveTab(tab);
+        // Update URL hash for state persistence
+        window.location.hash = tab;
+    }, []);
 
-  // Determine titlebar text based on active tab
-  const titlebarText = activeTab === 'about' ? 'About' : 'Options';
+    // Determine titlebar text based on active tab
+    const titlebarText = activeTab === 'about' ? 'About' : 'Options';
 
-  return (
-    <ErrorBoundary testId="options">
-      <div className="options-window" data-testid="options-window">
-        <OptionsWindowTitlebar title={titlebarText} />
+    return (
+        <ErrorBoundary testId="options">
+            <div className="options-window" data-testid="options-window">
+                <OptionsWindowTitlebar title={titlebarText} />
 
-        {/* Tab Navigation */}
-        <nav className="options-tabs" role="tablist" data-testid="options-tabs">
-          <TabButton
-            id="settings"
-            label="Settings"
-            activeTab={activeTab}
-            onClick={handleTabChange}
-          />
-          <TabButton id="about" label="About" activeTab={activeTab} onClick={handleTabChange} />
-        </nav>
+                {/* Tab Navigation */}
+                <nav className="options-tabs" role="tablist" data-testid="options-tabs">
+                    <TabButton id="settings" label="Settings" activeTab={activeTab} onClick={handleTabChange} />
+                    <TabButton id="about" label="About" activeTab={activeTab} onClick={handleTabChange} />
+                </nav>
 
-        {/* Tab Content */}
-        <main className="options-content" data-testid="options-content">
-          {activeTab === 'settings' && (
-            <>
-              {/* Appearance Settings */}
-              <OptionsSection title="Appearance" testId="options-appearance">
-                <ThemeSelector />
-              </OptionsSection>
+                {/* Tab Content */}
+                <main className="options-content" data-testid="options-content">
+                    {activeTab === 'settings' && (
+                        <>
+                            {/* Appearance Settings */}
+                            <OptionsSection title="Appearance" testId="options-appearance">
+                                <ThemeSelector />
+                            </OptionsSection>
 
-              {/* Hotkey Settings */}
-              <OptionsSection title="Hotkey Shortcuts" testId="options-hotkeys">
-                <IndividualHotkeyToggles />
-              </OptionsSection>
+                            {/* Hotkey Settings */}
+                            <OptionsSection title="Hotkey Shortcuts" testId="options-hotkeys">
+                                <IndividualHotkeyToggles />
+                            </OptionsSection>
 
-              {/* Updates Settings */}
-              <OptionsSection title="Updates" testId="options-updates">
-                <AutoUpdateToggle />
-              </OptionsSection>
+                            {/* Updates Settings */}
+                            <OptionsSection title="Updates" testId="options-updates">
+                                <AutoUpdateToggle />
+                            </OptionsSection>
 
-              {/* Text Prediction Settings */}
-              <OptionsSection title="Text Prediction" testId="options-text-prediction">
-                <TextPredictionSettings />
-              </OptionsSection>
-            </>
-          )}
+                            {/* Text Prediction Settings */}
+                            <OptionsSection title="Text Prediction" testId="options-text-prediction">
+                                <TextPredictionSettings />
+                            </OptionsSection>
+                        </>
+                    )}
 
-          {activeTab === 'about' && <AboutSection />}
-        </main>
-      </div>
-    </ErrorBoundary>
-  );
+                    {activeTab === 'about' && <AboutSection />}
+                </main>
+            </div>
+        </ErrorBoundary>
+    );
 }

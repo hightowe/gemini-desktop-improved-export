@@ -11,25 +11,25 @@ When creating or updating `tasks.md` files, each task should be self-contained s
 ````markdown
 - [ ] X.X Task Title
 
-  **Files:**
-  - [NEW] `path/to/new/file.ts` - Brief description
-  - [MODIFY] `path/to/existing/file.ts` - What changes
-  - [DELETE] `path/to/remove.ts` - Why removing
+    **Files:**
+    - [NEW] `path/to/new/file.ts` - Brief description
+    - [MODIFY] `path/to/existing/file.ts` - What changes
+    - [DELETE] `path/to/remove.ts` - Why removing
 
-  **Context:**
-  - Review `path/to/reference.ts` for patterns to follow
-  - See `design.md` Section X for architecture decisions
+    **Context:**
+    - Review `path/to/reference.ts` for patterns to follow
+    - See `design.md` Section X for architecture decisions
 
-  **Acceptance Criteria:**
-  - Specific, testable outcomes
-  - What must be true when done
+    **Acceptance Criteria:**
+    - Specific, testable outcomes
+    - What must be true when done
 
-  **Verification:**
+    **Verification:**
 
-  ```bash
-  npm run test -- TestName
-  npm run build
-  ```
+    ```bash
+    npm run test -- TestName
+    npm run build
+    ```
 ````
 
 ````

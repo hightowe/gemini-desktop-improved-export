@@ -13,23 +13,23 @@
 name: Manual Release
 
 on:
-  workflow_dispatch:
+    workflow_dispatch:
 
 permissions:
-  contents: write # Required for creating releases
+    contents: write # Required for creating releases
 
 # Prevent concurrent releases
 concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
+    group: release-${{ github.ref }}
+    cancel-in-progress: false
 
 jobs:
-  # Build application
-  build:
-    uses: ./.github/workflows/_build.yml
+    # Build application
+    build:
+        uses: ./.github/workflows/_build.yml
 
-  # Build and publish release (skip tests)
-  release:
-    needs: build
-    uses: ./.github/workflows/_release.yml
-    secrets: inherit
+    # Build and publish release (skip tests)
+    release:
+        needs: build
+        uses: ./.github/workflows/_release.yml
+        secrets: inherit

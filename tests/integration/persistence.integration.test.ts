@@ -3,54 +3,54 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Application Lifecycle & Persistence', () => {
-  let userDataPath: string;
+    let userDataPath: string;
 
-  before(async () => {
-    await browser.waitUntil(async () => (await browser.getWindowHandles()).length > 0);
+    before(async () => {
+        await browser.waitUntil(async () => (await browser.getWindowHandles()).length > 0);
 
-    // Get the userData path from the main process
-    userDataPath = await browser.electron.execute((electron) => {
-      return electron.app.getPath('userData');
-    });
-  });
-
-  it('should persist auto-update settings to disk', async () => {
-    // 1. Change setting via Renderer IPC
-    await browser.execute(async () => {
-      const api = (window as any).electronAPI;
-      await api.setAutoUpdateEnabled(false);
+        // Get the userData path from the main process
+        userDataPath = await browser.electron.execute((electron) => {
+            return electron.app.getPath('userData');
+        });
     });
 
-    // 2. Wait a moment for file write
-    await browser.pause(1000);
+    it('should persist auto-update settings to disk', async () => {
+        // 1. Change setting via Renderer IPC
+        await browser.execute(async () => {
+            const api = (window as any).electronAPI;
+            await api.setAutoUpdateEnabled(false);
+        });
 
-    // 3. Verify file on disk
-    // The store is initialized with configName: 'user-preferences' in ipcManager.ts
-    const settingsPath = path.join(userDataPath, 'user-preferences.json');
+        // 2. Wait a moment for file write
+        await browser.pause(1000);
 
-    expect(fs.existsSync(settingsPath)).toBe(true);
+        // 3. Verify file on disk
+        // The store is initialized with configName: 'user-preferences' in ipcManager.ts
+        const settingsPath = path.join(userDataPath, 'user-preferences.json');
 
-    const content = fs.readFileSync(settingsPath, 'utf-8');
-    const settings = JSON.parse(content);
+        expect(fs.existsSync(settingsPath)).toBe(true);
 
-    expect(settings).toHaveProperty('autoUpdateEnabled', false);
-  });
+        const content = fs.readFileSync(settingsPath, 'utf-8');
+        const settings = JSON.parse(content);
 
-  it('should persist hotkey settings to disk', async () => {
-    // 1. Change setting via Renderer IPC
-    await browser.execute(async () => {
-      const api = (window as any).electronAPI;
-      await api.setIndividualHotkey('bossKey', false);
+        expect(settings).toHaveProperty('autoUpdateEnabled', false);
     });
 
-    await browser.pause(1000);
+    it('should persist hotkey settings to disk', async () => {
+        // 1. Change setting via Renderer IPC
+        await browser.execute(async () => {
+            const api = (window as any).electronAPI;
+            await api.setIndividualHotkey('bossKey', false);
+        });
 
-    // 2. Verify file on disk (same file)
-    const settingsPath = path.join(userDataPath, 'user-preferences.json');
-    const content = fs.readFileSync(settingsPath, 'utf-8');
-    const settings = JSON.parse(content);
+        await browser.pause(1000);
 
-    // Key in store is 'hotkeyBossKey' based on ipcManager map
-    expect(settings).toHaveProperty('hotkeyBossKey', false);
-  });
+        // 2. Verify file on disk (same file)
+        const settingsPath = path.join(userDataPath, 'user-preferences.json');
+        const content = fs.readFileSync(settingsPath, 'utf-8');
+        const settings = JSON.parse(content);
+
+        // Key in store is 'hotkeyBossKey' based on ipcManager map
+        expect(settings).toHaveProperty('hotkeyBossKey', false);
+    });
 });

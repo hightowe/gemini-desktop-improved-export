@@ -6,9 +6,9 @@ First off, thank you for considering contributing to Gemini Desktop! 🎉
 
 - [Code of Conduct](#code-of-conduct)
 - [How Can I Contribute?](#how-can-i-contribute)
-  - [Reporting Bugs](#reporting-bugs)
-  - [Suggesting Features](#suggesting-features)
-  - [Pull Requests](#pull-requests)
+    - [Reporting Bugs](#reporting-bugs)
+    - [Suggesting Features](#suggesting-features)
+    - [Pull Requests](#pull-requests)
 - [Development Setup](#development-setup)
 - [Style Guidelines](#style-guidelines)
 - [Testing](#testing)

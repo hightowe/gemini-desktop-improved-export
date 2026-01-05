@@ -11,84 +11,84 @@ import { waitForAppReady, ensureSingleWindow } from './helpers/workflows';
  * - External links open in system browser
  */
 describe('Link Handling', () => {
-  beforeEach(async () => {
-    await waitForAppReady();
-  });
-
-  afterEach(async () => {
-    await ensureSingleWindow();
-  });
-
-  it('should open non-Google external links in system browser (not new Electron window)', async () => {
-    // Inject a mock external link (non-Google)
-    await browser.execute(() => {
-      const link = document.createElement('a');
-      link.href = 'https://example.com';
-      link.target = '_blank';
-      link.textContent = 'External Link';
-      link.id = 'mock-external-link';
-      link.style.cssText =
-        'position:fixed;top:150px;left:100px;z-index:9999;background:red;padding:20px;color:white;';
-      document.body.appendChild(link);
+    beforeEach(async () => {
+        await waitForAppReady();
     });
 
-    const link = await browser.$('#mock-external-link');
-    await expect(link).toBeDisplayed();
-
-    // Get initial window handles
-    const initialHandles = await browser.getWindowHandles();
-
-    // Click the external link
-    await link.click();
-
-    // Wait briefly
-    await browser.pause(500);
-
-    // External links should NOT open a new Electron window
-    const newHandles = await browser.getWindowHandles();
-    expect(newHandles.length).toBe(initialHandles.length);
-
-    // The current page URL should not have changed to example.com
-    const currentUrl = await browser.getUrl();
-    expect(currentUrl).not.toContain('example.com');
-
-    // Cleanup: Remove mock link
-    await browser.execute(() => {
-      const link = document.getElementById('mock-external-link');
-      if (link) link.remove();
-    });
-  });
-
-  it('should handle Gemini domain links internally (in Electron window)', async () => {
-    // Inject a mock Gemini subdomain link
-    await browser.execute(() => {
-      const link = document.createElement('a');
-      link.href = 'https://gemini.google.com/share/abc123';
-      link.target = '_blank';
-      link.textContent = 'Share Gemini Chat';
-      link.id = 'mock-gemini-link';
-      link.style.cssText =
-        'position:fixed;top:200px;left:100px;z-index:9999;background:green;padding:20px;color:white;';
-      document.body.appendChild(link);
+    afterEach(async () => {
+        await ensureSingleWindow();
     });
 
-    const link = await browser.$('#mock-gemini-link');
-    await expect(link).toBeDisplayed();
+    it('should open non-Google external links in system browser (not new Electron window)', async () => {
+        // Inject a mock external link (non-Google)
+        await browser.execute(() => {
+            const link = document.createElement('a');
+            link.href = 'https://example.com';
+            link.target = '_blank';
+            link.textContent = 'External Link';
+            link.id = 'mock-external-link';
+            link.style.cssText =
+                'position:fixed;top:150px;left:100px;z-index:9999;background:red;padding:20px;color:white;';
+            document.body.appendChild(link);
+        });
 
-    const initialHandles = await browser.getWindowHandles();
+        const link = await browser.$('#mock-external-link');
+        await expect(link).toBeDisplayed();
 
-    await link.click();
-    await browser.pause(1000);
+        // Get initial window handles
+        const initialHandles = await browser.getWindowHandles();
 
-    const newHandles = await browser.getWindowHandles();
+        // Click the external link
+        await link.click();
 
-    // Gemini links should open in new Electron window
-    expect(newHandles.length).toBeGreaterThan(initialHandles.length);
+        // Wait briefly
+        await browser.pause(500);
 
-    // Cleanup: Remove mock link
-    await browser.execute(() => {
-      const link = document.getElementById('mock-gemini-link');
-      if (link) link.remove();
+        // External links should NOT open a new Electron window
+        const newHandles = await browser.getWindowHandles();
+        expect(newHandles.length).toBe(initialHandles.length);
+
+        // The current page URL should not have changed to example.com
+        const currentUrl = await browser.getUrl();
+        expect(currentUrl).not.toContain('example.com');
+
+        // Cleanup: Remove mock link
+        await browser.execute(() => {
+            const link = document.getElementById('mock-external-link');
+            if (link) link.remove();
+        });
     });
-  });
+
+    it('should handle Gemini domain links internally (in Electron window)', async () => {
+        // Inject a mock Gemini subdomain link
+        await browser.execute(() => {
+            const link = document.createElement('a');
+            link.href = 'https://gemini.google.com/share/abc123';
+            link.target = '_blank';
+            link.textContent = 'Share Gemini Chat';
+            link.id = 'mock-gemini-link';
+            link.style.cssText =
+                'position:fixed;top:200px;left:100px;z-index:9999;background:green;padding:20px;color:white;';
+            document.body.appendChild(link);
+        });
+
+        const link = await browser.$('#mock-gemini-link');
+        await expect(link).toBeDisplayed();
+
+        const initialHandles = await browser.getWindowHandles();
+
+        await link.click();
+        await browser.pause(1000);
+
+        const newHandles = await browser.getWindowHandles();
+
+        // Gemini links should open in new Electron window
+        expect(newHandles.length).toBeGreaterThan(initialHandles.length);
+
+        // Cleanup: Remove mock link
+        await browser.execute(() => {
+            const link = document.getElementById('mock-gemini-link');
+            if (link) link.remove();
+        });
+    });
 });

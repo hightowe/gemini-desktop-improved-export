@@ -16,7 +16,7 @@ import { isWindows } from './constants';
  * @returns Absolute path to preload.cjs
  */
 export function getPreloadPath(): string {
-  return path.join(__dirname, '../../preload/preload.cjs');
+    return path.join(__dirname, '../../preload/preload.cjs');
 }
 
 /**
@@ -26,7 +26,7 @@ export function getPreloadPath(): string {
  * @returns Absolute path to the dist HTML file
  */
 export function getDistHtmlPath(filename: string): string {
-  return path.join(__dirname, '../../../dist', filename);
+    return path.join(__dirname, '../../../dist', filename);
 }
 
 /**
@@ -37,14 +37,13 @@ export function getDistHtmlPath(filename: string): string {
  * @returns Absolute path to app icon
  */
 export function getIconPath(): string {
-  const iconFilename = isWindows ? 'icon.ico' : 'icon.png';
+    const iconFilename = isWindows ? 'icon.ico' : 'icon.png';
 
-  // In packaged app, icons are in resources/ directory (via electron-builder extraFiles)
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, iconFilename);
-  }
+    // In packaged app, icons are in resources/ directory (via electron-builder extraFiles)
+    if (app.isPackaged) {
+        return path.join(process.resourcesPath, iconFilename);
+    }
 
-  // In development, icons are in build/ directory
-  return path.join(__dirname, '../../../build', iconFilename);
+    // In development, icons are in build/ directory
+    return path.join(__dirname, '../../../build', iconFilename);
 }
-

@@ -241,11 +241,11 @@ The application uses a layered toast system to provide non-intrusive feedback:
 
 ```tsx
 <ThemeProvider>
-  <ToastProvider>
-    <UpdateToastProvider>
-      <App />
-    </UpdateToastProvider>
-  </ToastProvider>
+    <ToastProvider>
+        <UpdateToastProvider>
+            <App />
+        </UpdateToastProvider>
+    </ToastProvider>
 </ThemeProvider>
 ```
 

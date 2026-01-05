@@ -4,40 +4,40 @@ import { resolve } from 'path';
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [react()],
+    plugins: [react()],
 
-  // Path aliases matching tsconfig.json
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, './src/renderer'),
-      '@components': resolve(__dirname, './src/renderer/components'),
-      '@hooks': resolve(__dirname, './src/renderer/hooks'),
-      '@context': resolve(__dirname, './src/renderer/context'),
-      '@utils': resolve(__dirname, './src/renderer/utils'),
+    // Path aliases matching tsconfig.json
+    resolve: {
+        alias: {
+            '@': resolve(__dirname, './src/renderer'),
+            '@components': resolve(__dirname, './src/renderer/components'),
+            '@hooks': resolve(__dirname, './src/renderer/hooks'),
+            '@context': resolve(__dirname, './src/renderer/context'),
+            '@utils': resolve(__dirname, './src/renderer/utils'),
+        },
     },
-  },
 
-  // Use relative paths for Electron file:// protocol compatibility
-  base: './',
+    // Use relative paths for Electron file:// protocol compatibility
+    base: './',
 
-  // Multi-page app configuration for options and quick chat windows
-  build: {
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        options: resolve(__dirname, 'src/renderer/windows/options/options.html'),
-        quickchat: resolve(__dirname, 'src/renderer/windows/quickchat/quickchat.html'),
-      },
+    // Multi-page app configuration for options and quick chat windows
+    build: {
+        rollupOptions: {
+            input: {
+                main: resolve(__dirname, 'index.html'),
+                options: resolve(__dirname, 'src/renderer/windows/options/options.html'),
+                quickchat: resolve(__dirname, 'src/renderer/windows/quickchat/quickchat.html'),
+            },
+        },
     },
-  },
 
-  // Vite options for Electron development
-  clearScreen: false,
-  server: {
-    port: 1420,
-    strictPort: true,
-    watch: {
-      ignored: ['**/src/main/**', '**/dist/**'],
+    // Vite options for Electron development
+    clearScreen: false,
+    server: {
+        port: 1420,
+        strictPort: true,
+        watch: {
+            ignored: ['**/src/main/**', '**/dist/**'],
+        },
     },
-  },
 }));

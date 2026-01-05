@@ -17,29 +17,29 @@ import { DEFAULT_ACCELERATORS } from '../../../src/shared/types/hotkeys';
  * Hotkey definition for cross-platform testing.
  */
 export interface HotkeyDefinition {
-  /** The Electron accelerator string (e.g., 'CommandOrControl+Alt+H') */
-  accelerator: string;
-  /** Human-readable description */
-  description: string;
-  /** Platform-specific display format (derived from accelerator) */
-  displayFormat: {
-    windows: string;
-    macos: string;
-    linux: string;
-  };
+    /** The Electron accelerator string (e.g., 'CommandOrControl+Alt+H') */
+    accelerator: string;
+    /** Human-readable description */
+    description: string;
+    /** Platform-specific display format (derived from accelerator) */
+    displayFormat: {
+        windows: string;
+        macos: string;
+        linux: string;
+    };
 }
 
 /**
  * Helper to convert an Electron accelerator to platform-specific display format.
  */
 function acceleratorToDisplayFormat(accelerator: string): HotkeyDefinition['displayFormat'] {
-  const windowsLinux = accelerator.replace('CommandOrControl', 'Ctrl').replace('Option', 'Alt');
-  const macos = accelerator.replace('CommandOrControl', 'Cmd').replace('Option', 'Alt');
-  return {
-    windows: windowsLinux,
-    macos: macos,
-    linux: windowsLinux,
-  };
+    const windowsLinux = accelerator.replace('CommandOrControl', 'Ctrl').replace('Option', 'Alt');
+    const macos = accelerator.replace('CommandOrControl', 'Cmd').replace('Option', 'Alt');
+    return {
+        windows: windowsLinux,
+        macos: macos,
+        linux: windowsLinux,
+    };
 }
 
 /**
@@ -47,26 +47,26 @@ function acceleratorToDisplayFormat(accelerator: string): HotkeyDefinition['disp
  * Uses DEFAULT_ACCELERATORS from shared types to ensure consistency.
  */
 export const REGISTERED_HOTKEYS: Record<string, HotkeyDefinition> = {
-  MINIMIZE_WINDOW: {
-    accelerator: DEFAULT_ACCELERATORS.bossKey,
-    description: 'Minimize the main window (Boss Key) [Global]',
-    displayFormat: acceleratorToDisplayFormat(DEFAULT_ACCELERATORS.bossKey),
-  },
-  QUICK_CHAT: {
-    accelerator: DEFAULT_ACCELERATORS.quickChat,
-    description: 'Toggle Quick Chat floating window [Global]',
-    displayFormat: acceleratorToDisplayFormat(DEFAULT_ACCELERATORS.quickChat),
-  },
-  ALWAYS_ON_TOP: {
-    accelerator: DEFAULT_ACCELERATORS.alwaysOnTop,
-    description: 'Toggle Always on Top [Application]',
-    displayFormat: acceleratorToDisplayFormat(DEFAULT_ACCELERATORS.alwaysOnTop),
-  },
-  PRINT_TO_PDF: {
-    accelerator: DEFAULT_ACCELERATORS.printToPdf,
-    description: 'Print conversation to PDF [Application]',
-    displayFormat: acceleratorToDisplayFormat(DEFAULT_ACCELERATORS.printToPdf),
-  },
+    MINIMIZE_WINDOW: {
+        accelerator: DEFAULT_ACCELERATORS.bossKey,
+        description: 'Minimize the main window (Boss Key) [Global]',
+        displayFormat: acceleratorToDisplayFormat(DEFAULT_ACCELERATORS.bossKey),
+    },
+    QUICK_CHAT: {
+        accelerator: DEFAULT_ACCELERATORS.quickChat,
+        description: 'Toggle Quick Chat floating window [Global]',
+        displayFormat: acceleratorToDisplayFormat(DEFAULT_ACCELERATORS.quickChat),
+    },
+    ALWAYS_ON_TOP: {
+        accelerator: DEFAULT_ACCELERATORS.alwaysOnTop,
+        description: 'Toggle Always on Top [Application]',
+        displayFormat: acceleratorToDisplayFormat(DEFAULT_ACCELERATORS.alwaysOnTop),
+    },
+    PRINT_TO_PDF: {
+        accelerator: DEFAULT_ACCELERATORS.printToPdf,
+        description: 'Print conversation to PDF [Application]',
+        displayFormat: acceleratorToDisplayFormat(DEFAULT_ACCELERATORS.printToPdf),
+    },
 };
 
 /**
@@ -77,7 +77,7 @@ export const REGISTERED_HOTKEYS: Record<string, HotkeyDefinition> = {
  * @returns The Electron accelerator string (always 'CommandOrControl+...')
  */
 export function getExpectedAccelerator(hotkeyId: keyof typeof REGISTERED_HOTKEYS): string {
-  return REGISTERED_HOTKEYS[hotkeyId].accelerator;
+    return REGISTERED_HOTKEYS[hotkeyId].accelerator;
 }
 
 /**
@@ -87,11 +87,8 @@ export function getExpectedAccelerator(hotkeyId: keyof typeof REGISTERED_HOTKEYS
  * @param hotkeyId - The hotkey identifier from REGISTERED_HOTKEYS
  * @returns Platform-specific display string (e.g., 'Ctrl+Alt+E' or 'Cmd+Alt+E')
  */
-export function getHotkeyDisplayString(
-  platform: E2EPlatform,
-  hotkeyId: keyof typeof REGISTERED_HOTKEYS
-): string {
-  return REGISTERED_HOTKEYS[hotkeyId].displayFormat[platform];
+export function getHotkeyDisplayString(platform: E2EPlatform, hotkeyId: keyof typeof REGISTERED_HOTKEYS): string {
+    return REGISTERED_HOTKEYS[hotkeyId].displayFormat[platform];
 }
 
 /**
@@ -101,10 +98,10 @@ export function getHotkeyDisplayString(
  * @returns Promise<boolean> - True if the shortcut is registered
  */
 export async function isHotkeyRegistered(accelerator: string): Promise<boolean> {
-  return browser.electron.execute(
-    (electron: typeof import('electron'), acc: string) => electron.globalShortcut.isRegistered(acc),
-    accelerator
-  );
+    return browser.electron.execute(
+        (electron: typeof import('electron'), acc: string) => electron.globalShortcut.isRegistered(acc),
+        accelerator
+    );
 }
 
 /**
@@ -114,16 +111,16 @@ export async function isHotkeyRegistered(accelerator: string): Promise<boolean> 
  * @returns Promise<string[]> - Array of registered accelerator strings
  */
 export async function getRegisteredHotkeys(): Promise<string[]> {
-  const registered: string[] = [];
+    const registered: string[] = [];
 
-  for (const [, hotkey] of Object.entries(REGISTERED_HOTKEYS)) {
-    const isRegistered = await isHotkeyRegistered(hotkey.accelerator);
-    if (isRegistered) {
-      registered.push(hotkey.accelerator);
+    for (const [, hotkey] of Object.entries(REGISTERED_HOTKEYS)) {
+        const isRegistered = await isHotkeyRegistered(hotkey.accelerator);
+        if (isRegistered) {
+            registered.push(hotkey.accelerator);
+        }
     }
-  }
 
-  return registered;
+    return registered;
 }
 
 /**
@@ -135,19 +132,19 @@ export async function getRegisteredHotkeys(): Promise<string[]> {
  * @returns Promise<boolean> - True if the hotkey is registered
  */
 export async function verifyHotkeyRegistration(
-  platform: E2EPlatform,
-  hotkeyId: keyof typeof REGISTERED_HOTKEYS
+    platform: E2EPlatform,
+    hotkeyId: keyof typeof REGISTERED_HOTKEYS
 ): Promise<boolean> {
-  const hotkey = REGISTERED_HOTKEYS[hotkeyId];
-  const displayString = getHotkeyDisplayString(platform, hotkeyId);
-  const isRegistered = await isHotkeyRegistered(hotkey.accelerator);
+    const hotkey = REGISTERED_HOTKEYS[hotkeyId];
+    const displayString = getHotkeyDisplayString(platform, hotkeyId);
+    const isRegistered = await isHotkeyRegistered(hotkey.accelerator);
 
-  console.log(`[${platform.toUpperCase()}] Hotkey "${hotkey.description}"`);
-  console.log(`  Accelerator: ${hotkey.accelerator}`);
-  console.log(`  Display: ${displayString}`);
-  console.log(`  Registered: ${isRegistered ? '✓ Yes' : '✗ No'}`);
+    console.log(`[${platform.toUpperCase()}] Hotkey "${hotkey.description}"`);
+    console.log(`  Accelerator: ${hotkey.accelerator}`);
+    console.log(`  Display: ${displayString}`);
+    console.log(`  Registered: ${isRegistered ? '✓ Yes' : '✗ No'}`);
 
-  return isRegistered;
+    return isRegistered;
 }
 
 // =============================================================================
@@ -160,14 +157,14 @@ export async function verifyHotkeyRegistration(
  * Each hotkey can extend this with feature-specific properties.
  */
 export interface HotkeyActionState {
-  /** Whether the associated window is visible */
-  windowVisible?: boolean;
-  /** Whether the associated window is focused */
-  windowFocused?: boolean;
-  /** Last submitted text (for input-based hotkeys like Quick Chat) */
-  lastSubmittedText?: string;
-  /** Allow feature-specific extensions */
-  [key: string]: unknown;
+    /** Whether the associated window is visible */
+    windowVisible?: boolean;
+    /** Whether the associated window is focused */
+    windowFocused?: boolean;
+    /** Last submitted text (for input-based hotkeys like Quick Chat) */
+    lastSubmittedText?: string;
+    /** Allow feature-specific extensions */
+    [key: string]: unknown;
 }
 
 /**
@@ -175,17 +172,17 @@ export interface HotkeyActionState {
  * Implement this interface for each hotkey that needs action testing.
  */
 export interface HotkeyActionHandler {
-  /** The hotkey ID this handler is for */
-  hotkeyId: keyof typeof REGISTERED_HOTKEYS;
+    /** The hotkey ID this handler is for */
+    hotkeyId: keyof typeof REGISTERED_HOTKEYS;
 
-  /** Execute the action programmatically (bypassing OS-level hotkey) */
-  execute: () => Promise<void>;
+    /** Execute the action programmatically (bypassing OS-level hotkey) */
+    execute: () => Promise<void>;
 
-  /** Verify the action was executed successfully */
-  verify: () => Promise<boolean>;
+    /** Verify the action was executed successfully */
+    verify: () => Promise<boolean>;
 
-  /** Get current state related to this hotkey's feature */
-  getState: () => Promise<HotkeyActionState>;
+    /** Get current state related to this hotkey's feature */
+    getState: () => Promise<HotkeyActionState>;
 }
 
 /**
@@ -200,7 +197,7 @@ const hotkeyActionHandlers: Map<string, HotkeyActionHandler> = new Map();
  * @param handler - The action handler to register
  */
 export function registerHotkeyActionHandler(handler: HotkeyActionHandler): void {
-  hotkeyActionHandlers.set(handler.hotkeyId, handler);
+    hotkeyActionHandlers.set(handler.hotkeyId, handler);
 }
 
 /**
@@ -210,7 +207,7 @@ export function registerHotkeyActionHandler(handler: HotkeyActionHandler): void 
  * @returns The handler or undefined if not registered
  */
 export function getHotkeyActionHandler(hotkeyId: string): HotkeyActionHandler | undefined {
-  return hotkeyActionHandlers.get(hotkeyId);
+    return hotkeyActionHandlers.get(hotkeyId);
 }
 
 /**
@@ -220,11 +217,11 @@ export function getHotkeyActionHandler(hotkeyId: string): HotkeyActionHandler | 
  * @throws Error if no handler is registered for the hotkey
  */
 export async function executeHotkeyAction(hotkeyId: string): Promise<void> {
-  const handler = hotkeyActionHandlers.get(hotkeyId);
-  if (!handler) {
-    throw new Error(`No action handler registered for hotkey: ${hotkeyId}`);
-  }
-  await handler.execute();
+    const handler = hotkeyActionHandlers.get(hotkeyId);
+    if (!handler) {
+        throw new Error(`No action handler registered for hotkey: ${hotkeyId}`);
+    }
+    await handler.execute();
 }
 
 /**
@@ -235,11 +232,11 @@ export async function executeHotkeyAction(hotkeyId: string): Promise<void> {
  * @throws Error if no handler is registered for the hotkey
  */
 export async function verifyHotkeyAction(hotkeyId: string): Promise<boolean> {
-  const handler = hotkeyActionHandlers.get(hotkeyId);
-  if (!handler) {
-    throw new Error(`No action handler registered for hotkey: ${hotkeyId}`);
-  }
-  return handler.verify();
+    const handler = hotkeyActionHandlers.get(hotkeyId);
+    if (!handler) {
+        throw new Error(`No action handler registered for hotkey: ${hotkeyId}`);
+    }
+    return handler.verify();
 }
 
 /**
@@ -250,9 +247,9 @@ export async function verifyHotkeyAction(hotkeyId: string): Promise<boolean> {
  * @throws Error if no handler is registered for the hotkey
  */
 export async function getHotkeyActionState(hotkeyId: string): Promise<HotkeyActionState> {
-  const handler = hotkeyActionHandlers.get(hotkeyId);
-  if (!handler) {
-    throw new Error(`No action handler registered for hotkey: ${hotkeyId}`);
-  }
-  return handler.getState();
+    const handler = hotkeyActionHandlers.get(hotkeyId);
+    if (!handler) {
+        throw new Error(`No action handler registered for hotkey: ${hotkeyId}`);
+    }
+    return handler.getState();
 }

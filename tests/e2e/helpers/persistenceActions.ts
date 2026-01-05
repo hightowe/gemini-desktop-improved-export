@@ -24,13 +24,13 @@ import { E2E_TIMING } from './e2eConstants';
  * @returns true if the session has a storage path (is persistent)
  */
 export async function isSessionPersistent(): Promise<boolean> {
-  const isPersistent = await browser.electron.execute((electron) => {
-    const sess = electron.session.defaultSession;
-    // No partition name means it's the default persistent session
-    return sess.getStoragePath() !== '';
-  });
-  E2ELogger.info('persistence', `Session persistent: ${isPersistent}`);
-  return isPersistent;
+    const isPersistent = await browser.electron.execute((electron) => {
+        const sess = electron.session.defaultSession;
+        // No partition name means it's the default persistent session
+        return sess.getStoragePath() !== '';
+    });
+    E2ELogger.info('persistence', `Session persistent: ${isPersistent}`);
+    return isPersistent;
 }
 
 /**
@@ -38,7 +38,7 @@ export async function isSessionPersistent(): Promise<boolean> {
  * @returns The userData directory path
  */
 export async function getUserDataPath(): Promise<string> {
-  return browser.electron.execute((electron) => electron.app.getPath('userData'));
+    return browser.electron.execute((electron) => electron.app.getPath('userData'));
 }
 
 // =============================================================================
@@ -53,9 +53,9 @@ export async function getUserDataPath(): Promise<string> {
  * @returns true if either cookies file location exists
  */
 export function cookiesFileExists(userDataPath: string): boolean {
-  const cookiesPath = path.join(userDataPath, 'Cookies');
-  const networkCookiesPath = path.join(userDataPath, 'Network', 'Cookies');
-  return fs.existsSync(cookiesPath) || fs.existsSync(networkCookiesPath);
+    const cookiesPath = path.join(userDataPath, 'Cookies');
+    const networkCookiesPath = path.join(userDataPath, 'Network', 'Cookies');
+    return fs.existsSync(cookiesPath) || fs.existsSync(networkCookiesPath);
 }
 
 /**
@@ -63,22 +63,19 @@ export function cookiesFileExists(userDataPath: string): boolean {
  * @param userDataPath - The userData directory path
  * @param timeout - Max wait time in ms (default: 5000)
  */
-export async function waitForCookiesFile(
-  userDataPath: string,
-  timeout = 5000
-): Promise<boolean> {
-  const startTime = Date.now();
+export async function waitForCookiesFile(userDataPath: string, timeout = 5000): Promise<boolean> {
+    const startTime = Date.now();
 
-  while (Date.now() - startTime < timeout) {
-    if (cookiesFileExists(userDataPath)) {
-      E2ELogger.info('persistence', 'Cookies file found');
-      return true;
+    while (Date.now() - startTime < timeout) {
+        if (cookiesFileExists(userDataPath)) {
+            E2ELogger.info('persistence', 'Cookies file found');
+            return true;
+        }
+        await browser.pause(500);
     }
-    await browser.pause(500);
-  }
 
-  E2ELogger.info('persistence', 'Cookies file not found within timeout');
-  return false;
+    E2ELogger.info('persistence', 'Cookies file not found within timeout');
+    return false;
 }
 
 // =============================================================================
@@ -86,10 +83,10 @@ export async function waitForCookiesFile(
 // =============================================================================
 
 interface CookieOptions {
-  url: string;
-  name: string;
-  value: string;
-  expirationDate?: number;
+    url: string;
+    name: string;
+    value: string;
+    expirationDate?: number;
 }
 
 /**
@@ -97,22 +94,22 @@ interface CookieOptions {
  * @param options - Cookie options (url, name, value, optional expiration)
  */
 export async function setCookieViaSession(options: CookieOptions): Promise<void> {
-  const { url, name, value, expirationDate } = options;
+    const { url, name, value, expirationDate } = options;
 
-  await browser.electron.execute(
-    (electron, opts) => {
-      const sess = electron.session.defaultSession;
-      return sess.cookies.set({
-        url: opts.url,
-        name: opts.name,
-        value: opts.value,
-        expirationDate: opts.expirationDate || Math.floor(Date.now() / 1000) + 3600,
-      });
-    },
-    { url, name, value, expirationDate }
-  );
+    await browser.electron.execute(
+        (electron, opts) => {
+            const sess = electron.session.defaultSession;
+            return sess.cookies.set({
+                url: opts.url,
+                name: opts.name,
+                value: opts.value,
+                expirationDate: opts.expirationDate || Math.floor(Date.now() / 1000) + 3600,
+            });
+        },
+        { url, name, value, expirationDate }
+    );
 
-  E2ELogger.info('persistence', `Set cookie: ${name}`);
+    E2ELogger.info('persistence', `Set cookie: ${name}`);
 }
 
 /**
@@ -120,15 +117,13 @@ export async function setCookieViaSession(options: CookieOptions): Promise<void>
  * @param name - Cookie name to filter by
  * @returns Array of matching cookies
  */
-export async function getCookiesFromSession(
-  name: string
-): Promise<Array<{ name: string; value: string }>> {
-  const cookies = await browser.electron.execute((electron, cookieName) => {
-    const sess = electron.session.defaultSession;
-    return sess.cookies.get({ name: cookieName });
-  }, name);
+export async function getCookiesFromSession(name: string): Promise<Array<{ name: string; value: string }>> {
+    const cookies = await browser.electron.execute((electron, cookieName) => {
+        const sess = electron.session.defaultSession;
+        return sess.cookies.get({ name: cookieName });
+    }, name);
 
-  return cookies;
+    return cookies;
 }
 
 // =============================================================================
@@ -140,9 +135,9 @@ export async function getCookiesFromSession(
  * @param waitMs - Time to wait after reload (default: 2000)
  */
 export async function reloadPage(waitMs = E2E_TIMING.PAGE_LOAD): Promise<void> {
-  await browser.execute(() => window.location.reload());
-  await browser.pause(waitMs);
-  E2ELogger.info('persistence', 'Page reloaded');
+    await browser.execute(() => window.location.reload());
+    await browser.pause(waitMs);
+    E2ELogger.info('persistence', 'Page reloaded');
 }
 
 // =============================================================================
@@ -151,26 +146,26 @@ export async function reloadPage(waitMs = E2E_TIMING.PAGE_LOAD): Promise<void> {
 
 /** Settings file configuration constants */
 const SETTINGS_FILES = {
-  /** User preferences (theme, hotkeys, alwaysOnTop) */
-  USER_PREFERENCES: 'user-preferences.json',
-  /** Update settings (auto-update) */
-  UPDATE_SETTINGS: 'update-settings.json',
+    /** User preferences (theme, hotkeys, alwaysOnTop) */
+    USER_PREFERENCES: 'user-preferences.json',
+    /** Update settings (auto-update) */
+    UPDATE_SETTINGS: 'update-settings.json',
 } as const;
 
 /**
  * Interface for user preferences stored in user-preferences.json
  */
 export interface UserPreferencesData {
-  theme?: 'light' | 'dark' | 'system';
-  alwaysOnTop?: boolean;
-  hotkeyAlwaysOnTop?: boolean;
-  hotkeyBossKey?: boolean;
-  hotkeyQuickChat?: boolean;
-  acceleratorAlwaysOnTop?: string;
-  acceleratorBossKey?: string;
-  acceleratorQuickChat?: string;
-  autoUpdateEnabled?: boolean;
-  [key: string]: unknown;
+    theme?: 'light' | 'dark' | 'system';
+    alwaysOnTop?: boolean;
+    hotkeyAlwaysOnTop?: boolean;
+    hotkeyBossKey?: boolean;
+    hotkeyQuickChat?: boolean;
+    acceleratorAlwaysOnTop?: string;
+    acceleratorBossKey?: string;
+    acceleratorQuickChat?: string;
+    autoUpdateEnabled?: boolean;
+    [key: string]: unknown;
 }
 
 /**
@@ -181,25 +176,25 @@ export interface UserPreferencesData {
  * @returns The parsed settings object, or null if file doesn't exist or is invalid
  */
 export async function readSettingsFile<T = UserPreferencesData>(
-  filename: string = SETTINGS_FILES.USER_PREFERENCES
+    filename: string = SETTINGS_FILES.USER_PREFERENCES
 ): Promise<T | null> {
-  try {
-    const userDataPath = await getUserDataPath();
-    const settingsPath = path.join(userDataPath, filename);
+    try {
+        const userDataPath = await getUserDataPath();
+        const settingsPath = path.join(userDataPath, filename);
 
-    if (!fs.existsSync(settingsPath)) {
-      E2ELogger.info('persistence', `Settings file not found: ${filename}`);
-      return null;
+        if (!fs.existsSync(settingsPath)) {
+            E2ELogger.info('persistence', `Settings file not found: ${filename}`);
+            return null;
+        }
+
+        const content = fs.readFileSync(settingsPath, 'utf-8');
+        const settings = JSON.parse(content) as T;
+        E2ELogger.info('persistence', `Read settings from: ${filename}`);
+        return settings;
+    } catch (error) {
+        E2ELogger.info('persistence', `Failed to read settings file: ${error}`);
+        return null;
     }
-
-    const content = fs.readFileSync(settingsPath, 'utf-8');
-    const settings = JSON.parse(content) as T;
-    E2ELogger.info('persistence', `Read settings from: ${filename}`);
-    return settings;
-  } catch (error) {
-    E2ELogger.info('persistence', `Failed to read settings file: ${error}`);
-    return null;
-  }
 }
 
 /**
@@ -209,7 +204,7 @@ export async function readSettingsFile<T = UserPreferencesData>(
  * @returns The user preferences object, or null if not found
  */
 export async function readUserPreferences(): Promise<UserPreferencesData | null> {
-  return readSettingsFile<UserPreferencesData>(SETTINGS_FILES.USER_PREFERENCES);
+    return readSettingsFile<UserPreferencesData>(SETTINGS_FILES.USER_PREFERENCES);
 }
 
 /**
@@ -218,8 +213,8 @@ export async function readUserPreferences(): Promise<UserPreferencesData | null>
  * @returns The theme preference, or undefined if not set
  */
 export async function getThemePreference(): Promise<'light' | 'dark' | 'system' | undefined> {
-  const prefs = await readUserPreferences();
-  return prefs?.theme;
+    const prefs = await readUserPreferences();
+    return prefs?.theme;
 }
 
 /**
@@ -228,8 +223,8 @@ export async function getThemePreference(): Promise<'light' | 'dark' | 'system' 
  * @returns true/false if set, undefined if not found
  */
 export async function getAlwaysOnTopSetting(): Promise<boolean | undefined> {
-  const prefs = await readUserPreferences();
-  return prefs?.alwaysOnTop;
+    const prefs = await readUserPreferences();
+    return prefs?.alwaysOnTop;
 }
 
 /**
@@ -239,18 +234,18 @@ export async function getAlwaysOnTopSetting(): Promise<boolean | undefined> {
  * @returns true/false if set, undefined if not found
  */
 export async function getHotkeyEnabledSetting(
-  hotkeyId: 'alwaysOnTop' | 'bossKey' | 'quickChat'
+    hotkeyId: 'alwaysOnTop' | 'bossKey' | 'quickChat'
 ): Promise<boolean | undefined> {
-  const prefs = await readUserPreferences();
-  if (!prefs) return undefined;
+    const prefs = await readUserPreferences();
+    if (!prefs) return undefined;
 
-  const keyMap: Record<string, keyof UserPreferencesData> = {
-    alwaysOnTop: 'hotkeyAlwaysOnTop',
-    bossKey: 'hotkeyBossKey',
-    quickChat: 'hotkeyQuickChat',
-  };
+    const keyMap: Record<string, keyof UserPreferencesData> = {
+        alwaysOnTop: 'hotkeyAlwaysOnTop',
+        bossKey: 'hotkeyBossKey',
+        quickChat: 'hotkeyQuickChat',
+    };
 
-  return prefs[keyMap[hotkeyId]] as boolean | undefined;
+    return prefs[keyMap[hotkeyId]] as boolean | undefined;
 }
 
 /**
@@ -259,9 +254,9 @@ export async function getHotkeyEnabledSetting(
  * @returns true if the user preferences file exists
  */
 export async function userPreferencesFileExists(): Promise<boolean> {
-  const userDataPath = await getUserDataPath();
-  const settingsPath = path.join(userDataPath, SETTINGS_FILES.USER_PREFERENCES);
-  return fs.existsSync(settingsPath);
+    const userDataPath = await getUserDataPath();
+    const settingsPath = path.join(userDataPath, SETTINGS_FILES.USER_PREFERENCES);
+    return fs.existsSync(settingsPath);
 }
 
 /**
@@ -270,8 +265,8 @@ export async function userPreferencesFileExists(): Promise<boolean> {
  * @returns The full path to user-preferences.json
  */
 export async function getUserPreferencesPath(): Promise<string> {
-  const userDataPath = await getUserDataPath();
-  return path.join(userDataPath, SETTINGS_FILES.USER_PREFERENCES);
+    const userDataPath = await getUserDataPath();
+    return path.join(userDataPath, SETTINGS_FILES.USER_PREFERENCES);
 }
 
 /**
@@ -282,17 +277,16 @@ export async function getUserPreferencesPath(): Promise<string> {
  * @returns true if file found within timeout
  */
 export async function waitForUserPreferencesFile(timeout = 5000): Promise<boolean> {
-  const startTime = Date.now();
+    const startTime = Date.now();
 
-  while (Date.now() - startTime < timeout) {
-    if (await userPreferencesFileExists()) {
-      E2ELogger.info('persistence', 'User preferences file found');
-      return true;
+    while (Date.now() - startTime < timeout) {
+        if (await userPreferencesFileExists()) {
+            E2ELogger.info('persistence', 'User preferences file found');
+            return true;
+        }
+        await browser.pause(500);
     }
-    await browser.pause(500);
-  }
 
-  E2ELogger.info('persistence', 'User preferences file not found within timeout');
-  return false;
+    E2ELogger.info('persistence', 'User preferences file not found within timeout');
+    return false;
 }
-

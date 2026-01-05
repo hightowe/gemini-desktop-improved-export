@@ -15,256 +15,256 @@ import { browser, expect } from '@wdio/globals';
 import { E2ELogger } from '../helpers/logger';
 
 describe('Release Build: Packaged Resources', () => {
-  it('should start the application successfully', async () => {
-    const isReady = await browser.electron.execute((electron) => {
-      return electron.app.isReady();
-    });
-    expect(isReady).toBe(true);
+    it('should start the application successfully', async () => {
+        const isReady = await browser.electron.execute((electron) => {
+            return electron.app.isReady();
+        });
+        expect(isReady).toBe(true);
 
-    E2ELogger.info('packaged-resources', 'Application started successfully from package');
-  });
-
-  it('should have the correct app name from package', async () => {
-    const appName = await browser.electron.execute((electron) => {
-      return electron.app.getName();
+        E2ELogger.info('packaged-resources', 'Application started successfully from package');
     });
 
-    if (process.platform === 'linux') {
-      expect(appName).toMatch(/^(Gemini Desktop|gemini-desktop)$/);
-    } else {
-      expect(appName).toBe('Gemini Desktop');
-    }
-    E2ELogger.info('packaged-resources', `App name: ${appName}`);
-  });
+    it('should have the correct app name from package', async () => {
+        const appName = await browser.electron.execute((electron) => {
+            return electron.app.getName();
+        });
 
-  it('should have a valid app path', async () => {
-    const appPath = await browser.electron.execute((electron) => {
-      return electron.app.getAppPath();
+        if (process.platform === 'linux') {
+            expect(appName).toMatch(/^(Gemini Desktop|gemini-desktop)$/);
+        } else {
+            expect(appName).toBe('Gemini Desktop');
+        }
+        E2ELogger.info('packaged-resources', `App name: ${appName}`);
     });
 
-    expect(appPath).toBeTruthy();
-    expect(typeof appPath).toBe('string');
+    it('should have a valid app path', async () => {
+        const appPath = await browser.electron.execute((electron) => {
+            return electron.app.getAppPath();
+        });
 
-    E2ELogger.info('packaged-resources', `App path: ${appPath}`);
-  });
+        expect(appPath).toBeTruthy();
+        expect(typeof appPath).toBe('string');
 
-  it('should be running as a packaged app', async () => {
-    const isPackaged = await browser.electron.execute((electron) => {
-      return electron.app.isPackaged;
+        E2ELogger.info('packaged-resources', `App path: ${appPath}`);
     });
 
-    expect(isPackaged).toBe(true);
-    E2ELogger.info('packaged-resources', 'App is running in packaged mode');
-  });
+    it('should be running as a packaged app', async () => {
+        const isPackaged = await browser.electron.execute((electron) => {
+            return electron.app.isPackaged;
+        });
 
-  it('should have valid resources directory', async () => {
-    // NOTE: This test requires 'require' which may not be available in
-    // the wdio-electron-service execute context for packaged apps.
-    // The resourcesPath can still be verified as a valid path.
-    const resourcesInfo = await browser.electron.execute(() => {
-      try {
-        const resourcesPath = process.resourcesPath;
-        const fs = require('fs');
-        const exists = fs.existsSync(resourcesPath);
-        const isDir = exists && fs.statSync(resourcesPath).isDirectory();
-
-        return {
-          success: true,
-          path: resourcesPath,
-          exists,
-          isDirectory: isDir,
-        };
-      } catch (err: any) {
-        // require() is not available in this context
-        return {
-          success: false,
-          path: process.resourcesPath,
-          error: err.message,
-        };
-      }
+        expect(isPackaged).toBe(true);
+        E2ELogger.info('packaged-resources', 'App is running in packaged mode');
     });
 
-    if (!resourcesInfo.success) {
-      E2ELogger.info(
-        'packaged-resources',
-        `File system check not available: ${resourcesInfo.error}. Verifying resourcesPath exists as string.`
-      );
-      // Fallback: At least verify resourcesPath is a valid-looking path
-      expect(resourcesInfo.path).toBeTruthy();
-      expect(typeof resourcesInfo.path).toBe('string');
-      E2ELogger.info('packaged-resources', `Resources path (unverified): ${resourcesInfo.path}`);
-      return;
-    }
+    it('should have valid resources directory', async () => {
+        // NOTE: This test requires 'require' which may not be available in
+        // the wdio-electron-service execute context for packaged apps.
+        // The resourcesPath can still be verified as a valid path.
+        const resourcesInfo = await browser.electron.execute(() => {
+            try {
+                const resourcesPath = process.resourcesPath;
+                const fs = require('fs');
+                const exists = fs.existsSync(resourcesPath);
+                const isDir = exists && fs.statSync(resourcesPath).isDirectory();
 
-    expect(resourcesInfo.exists).toBe(true);
-    expect(resourcesInfo.isDirectory).toBe(true);
-    E2ELogger.info('packaged-resources', `Resources path: ${resourcesInfo.path}`);
-  });
+                return {
+                    success: true,
+                    path: resourcesPath,
+                    exists,
+                    isDirectory: isDir,
+                };
+            } catch (err: any) {
+                // require() is not available in this context
+                return {
+                    success: false,
+                    path: process.resourcesPath,
+                    error: err.message,
+                };
+            }
+        });
 
-  it('should have icon files in resources directory', async () => {
-    // NOTE: This test requires 'require' which may not be available in
-    // the wdio-electron-service execute context for packaged apps.
-    const iconInfo = await browser.electron.execute(() => {
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const resourcesPath = process.resourcesPath;
+        if (!resourcesInfo.success) {
+            E2ELogger.info(
+                'packaged-resources',
+                `File system check not available: ${resourcesInfo.error}. Verifying resourcesPath exists as string.`
+            );
+            // Fallback: At least verify resourcesPath is a valid-looking path
+            expect(resourcesInfo.path).toBeTruthy();
+            expect(typeof resourcesInfo.path).toBe('string');
+            E2ELogger.info('packaged-resources', `Resources path (unverified): ${resourcesInfo.path}`);
+            return;
+        }
 
-        const hasIco = fs.existsSync(path.join(resourcesPath, 'icon.ico'));
-        const hasPng = fs.existsSync(path.join(resourcesPath, 'icon.png'));
-
-        // List all files in resources for debugging
-        const files = fs.readdirSync(resourcesPath);
-
-        return {
-          success: true,
-          hasIco,
-          hasPng,
-          files,
-          platform: process.platform,
-        };
-      } catch (err: any) {
-        return {
-          success: false,
-          platform: process.platform,
-          error: err.message,
-        };
-      }
+        expect(resourcesInfo.exists).toBe(true);
+        expect(resourcesInfo.isDirectory).toBe(true);
+        E2ELogger.info('packaged-resources', `Resources path: ${resourcesInfo.path}`);
     });
 
-    if (!iconInfo.success) {
-      E2ELogger.info(
-        'packaged-resources',
-        `Icon file check not available: ${iconInfo.error}. Skipping file verification.`
-      );
-      // Test passes - we can't verify files but the app is running which implies resources exist
-      return;
-    }
+    it('should have icon files in resources directory', async () => {
+        // NOTE: This test requires 'require' which may not be available in
+        // the wdio-electron-service execute context for packaged apps.
+        const iconInfo = await browser.electron.execute(() => {
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const resourcesPath = process.resourcesPath;
 
-    E2ELogger.info('packaged-resources', `Resources contents: ${iconInfo.files.join(', ')}`);
+                const hasIco = fs.existsSync(path.join(resourcesPath, 'icon.ico'));
+                const hasPng = fs.existsSync(path.join(resourcesPath, 'icon.png'));
 
-    // Platform-specific checks
-    if (iconInfo.platform === 'win32') {
-      expect(iconInfo.hasIco).toBe(true);
-    } else {
-      expect(iconInfo.hasPng).toBe(true);
-    }
-  });
+                // List all files in resources for debugging
+                const files = fs.readdirSync(resourcesPath);
 
-  it('should have preload script accessible', async () => {
-    // NOTE: This test requires 'require' which may not be available in
-    // the wdio-electron-service execute context for packaged apps.
-    const preloadInfo = await browser.electron.execute((electron) => {
-      try {
-        const fs = require('fs');
-        const path = require('path');
+                return {
+                    success: true,
+                    hasIco,
+                    hasPng,
+                    files,
+                    platform: process.platform,
+                };
+            } catch (err: any) {
+                return {
+                    success: false,
+                    platform: process.platform,
+                    error: err.message,
+                };
+            }
+        });
 
-        // Preload is inside the asar at dist-electron/preload/preload.cjs
-        const appPath = electron.app.getAppPath();
-        const preloadPath = path.join(appPath, 'dist-electron/preload/preload.cjs');
+        if (!iconInfo.success) {
+            E2ELogger.info(
+                'packaged-resources',
+                `Icon file check not available: ${iconInfo.error}. Skipping file verification.`
+            );
+            // Test passes - we can't verify files but the app is running which implies resources exist
+            return;
+        }
 
-        // Check if it exists (handles asar transparently)
-        const exists = fs.existsSync(preloadPath);
+        E2ELogger.info('packaged-resources', `Resources contents: ${iconInfo.files.join(', ')}`);
 
-        return {
-          success: true,
-          path: preloadPath,
-          exists,
-          appPath,
-        };
-      } catch (err: any) {
-        return {
-          success: false,
-          appPath: electron.app.getAppPath(),
-          error: err.message,
-        };
-      }
+        // Platform-specific checks
+        if (iconInfo.platform === 'win32') {
+            expect(iconInfo.hasIco).toBe(true);
+        } else {
+            expect(iconInfo.hasPng).toBe(true);
+        }
     });
 
-    if (!preloadInfo.success) {
-      E2ELogger.info(
-        'packaged-resources',
-        `Preload script check not available: ${preloadInfo.error}. App path: ${preloadInfo.appPath}`
-      );
-      // Test passes - we can't verify file existence but the app is running which implies preload loaded
-      return;
-    }
+    it('should have preload script accessible', async () => {
+        // NOTE: This test requires 'require' which may not be available in
+        // the wdio-electron-service execute context for packaged apps.
+        const preloadInfo = await browser.electron.execute((electron) => {
+            try {
+                const fs = require('fs');
+                const path = require('path');
 
-    E2ELogger.info('packaged-resources', `Preload path: ${preloadInfo.path}`);
-    expect(preloadInfo.exists).toBe(true);
-  });
+                // Preload is inside the asar at dist-electron/preload/preload.cjs
+                const appPath = electron.app.getAppPath();
+                const preloadPath = path.join(appPath, 'dist-electron/preload/preload.cjs');
 
-  it('should have main process entry point', async () => {
-    // NOTE: This test requires 'require' which may not be available in
-    // the wdio-electron-service execute context for packaged apps.
-    const mainInfo = await browser.electron.execute((electron) => {
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const appPath = electron.app.getAppPath();
-        const mainPath = path.join(appPath, 'dist-electron/main/main.cjs');
+                // Check if it exists (handles asar transparently)
+                const exists = fs.existsSync(preloadPath);
 
-        return {
-          success: true,
-          path: mainPath,
-          exists: fs.existsSync(mainPath),
-        };
-      } catch (err: any) {
-        return {
-          success: false,
-          appPath: electron.app.getAppPath(),
-          error: err.message,
-        };
-      }
+                return {
+                    success: true,
+                    path: preloadPath,
+                    exists,
+                    appPath,
+                };
+            } catch (err: any) {
+                return {
+                    success: false,
+                    appPath: electron.app.getAppPath(),
+                    error: err.message,
+                };
+            }
+        });
+
+        if (!preloadInfo.success) {
+            E2ELogger.info(
+                'packaged-resources',
+                `Preload script check not available: ${preloadInfo.error}. App path: ${preloadInfo.appPath}`
+            );
+            // Test passes - we can't verify file existence but the app is running which implies preload loaded
+            return;
+        }
+
+        E2ELogger.info('packaged-resources', `Preload path: ${preloadInfo.path}`);
+        expect(preloadInfo.exists).toBe(true);
     });
 
-    if (!mainInfo.success) {
-      E2ELogger.info(
-        'packaged-resources',
-        `Main entry point check not available: ${mainInfo.error}. App path: ${mainInfo.appPath}`
-      );
-      // Test passes - the app is running so the main entry point obviously loaded
-      return;
-    }
+    it('should have main process entry point', async () => {
+        // NOTE: This test requires 'require' which may not be available in
+        // the wdio-electron-service execute context for packaged apps.
+        const mainInfo = await browser.electron.execute((electron) => {
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const appPath = electron.app.getAppPath();
+                const mainPath = path.join(appPath, 'dist-electron/main/main.cjs');
 
-    expect(mainInfo.exists).toBe(true);
-    E2ELogger.info('packaged-resources', `Main entry point verified: ${mainInfo.path}`);
-  });
+                return {
+                    success: true,
+                    path: mainPath,
+                    exists: fs.existsSync(mainPath),
+                };
+            } catch (err: any) {
+                return {
+                    success: false,
+                    appPath: electron.app.getAppPath(),
+                    error: err.message,
+                };
+            }
+        });
 
-  it('should have dist folder with index.html', async () => {
-    // NOTE: This test requires 'require' which may not be available in
-    // the wdio-electron-service execute context for packaged apps.
-    const distInfo = await browser.electron.execute((electron) => {
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const appPath = electron.app.getAppPath();
-        const indexPath = path.join(appPath, 'dist/index.html');
+        if (!mainInfo.success) {
+            E2ELogger.info(
+                'packaged-resources',
+                `Main entry point check not available: ${mainInfo.error}. App path: ${mainInfo.appPath}`
+            );
+            // Test passes - the app is running so the main entry point obviously loaded
+            return;
+        }
 
-        return {
-          success: true,
-          path: indexPath,
-          exists: fs.existsSync(indexPath),
-        };
-      } catch (err: any) {
-        return {
-          success: false,
-          appPath: electron.app.getAppPath(),
-          error: err.message,
-        };
-      }
+        expect(mainInfo.exists).toBe(true);
+        E2ELogger.info('packaged-resources', `Main entry point verified: ${mainInfo.path}`);
     });
 
-    if (!distInfo.success) {
-      E2ELogger.info(
-        'packaged-resources',
-        `index.html check not available: ${distInfo.error}. App path: ${distInfo.appPath}`
-      );
-      // Test passes - the app rendered so index.html obviously loaded
-      return;
-    }
+    it('should have dist folder with index.html', async () => {
+        // NOTE: This test requires 'require' which may not be available in
+        // the wdio-electron-service execute context for packaged apps.
+        const distInfo = await browser.electron.execute((electron) => {
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const appPath = electron.app.getAppPath();
+                const indexPath = path.join(appPath, 'dist/index.html');
 
-    expect(distInfo.exists).toBe(true);
-    E2ELogger.info('packaged-resources', `Index.html verified: ${distInfo.path}`);
-  });
+                return {
+                    success: true,
+                    path: indexPath,
+                    exists: fs.existsSync(indexPath),
+                };
+            } catch (err: any) {
+                return {
+                    success: false,
+                    appPath: electron.app.getAppPath(),
+                    error: err.message,
+                };
+            }
+        });
+
+        if (!distInfo.success) {
+            E2ELogger.info(
+                'packaged-resources',
+                `index.html check not available: ${distInfo.error}. App path: ${distInfo.appPath}`
+            );
+            // Test passes - the app rendered so index.html obviously loaded
+            return;
+        }
+
+        expect(distInfo.exists).toBe(true);
+        E2ELogger.info('packaged-resources', `Index.html verified: ${distInfo.path}`);
+    });
 });

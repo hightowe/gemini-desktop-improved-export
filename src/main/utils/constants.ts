@@ -30,12 +30,12 @@ export const OAUTH_DOMAINS = ['accounts.google.com', 'accounts.youtube.com'] as 
  * Enforces security best practices across the application.
  */
 export const BASE_WEB_PREFERENCES: BrowserWindowConstructorOptions['webPreferences'] = {
-  contextIsolation: true,
-  nodeIntegration: false,
-  // Allow disabling sandbox via command line (for testing)
-  sandbox: !process.argv.includes('--no-sandbox'),
-  // Allow disabling webSecurity via command line (for testing)
-  webSecurity: !process.argv.includes('--disable-web-security'),
+    contextIsolation: true,
+    nodeIntegration: false,
+    // Allow disabling sandbox via command line (for testing)
+    sandbox: !process.argv.includes('--no-sandbox'),
+    // Allow disabling webSecurity via command line (for testing)
+    webSecurity: !process.argv.includes('--disable-web-security'),
 } as const;
 
 /**
@@ -105,17 +105,17 @@ export const AI_STUDIO_URL = `https://${AI_STUDIO_DOMAIN}` as const;
 // See geminiSelectors.ts for version tracking and selector documentation.
 
 export {
-  GEMINI_DOMAIN,
-  GEMINI_EDITOR_SELECTORS,
-  GEMINI_SUBMIT_BUTTON_SELECTORS,
-  GEMINI_EDITOR_BLANK_CLASS,
-  GEMINI_SUBMIT_DELAY_MS,
-  GEMINI_MICROPHONE_BUTTON_SELECTORS,
-  GEMINI_ERROR_TOAST_SELECTORS,
-  GEMINI_MICROPHONE_ERROR_TEXT,
-  GeminiSelectors,
-  findGeminiElement,
-  isGeminiDomain,
+    GEMINI_DOMAIN,
+    GEMINI_EDITOR_SELECTORS,
+    GEMINI_SUBMIT_BUTTON_SELECTORS,
+    GEMINI_EDITOR_BLANK_CLASS,
+    GEMINI_SUBMIT_DELAY_MS,
+    GEMINI_MICROPHONE_BUTTON_SELECTORS,
+    GEMINI_ERROR_TOAST_SELECTORS,
+    GEMINI_MICROPHONE_ERROR_TEXT,
+    GeminiSelectors,
+    findGeminiElement,
+    isGeminiDomain,
 } from './geminiSelectors';
 
 // IPC Channel Names
@@ -134,13 +134,13 @@ export { IPC_CHANNELS } from '../../shared/constants/ipc-channels';
  * Configuration for the authentication window.
  */
 export const AUTH_WINDOW_CONFIG: BrowserWindowConstructorOptions = {
-  width: 500,
-  height: 700,
-  title: 'Sign in to Google',
-  autoHideMenuBar: true,
-  webPreferences: {
-    ...BASE_WEB_PREFERENCES,
-  },
+    width: 500,
+    height: 700,
+    title: 'Sign in to Google',
+    autoHideMenuBar: true,
+    webPreferences: {
+        ...BASE_WEB_PREFERENCES,
+    },
 };
 
 // =========================================================================
@@ -154,7 +154,7 @@ export const AUTH_WINDOW_CONFIG: BrowserWindowConstructorOptions = {
  * @returns True if the URL should open in Electron
  */
 export function isInternalDomain(hostname: string): boolean {
-  return INTERNAL_DOMAINS.some((domain) => hostname === domain || hostname.endsWith('.' + domain));
+    return INTERNAL_DOMAINS.some((domain) => hostname === domain || hostname.endsWith('.' + domain));
 }
 
 /**
@@ -165,7 +165,7 @@ export function isInternalDomain(hostname: string): boolean {
  * @returns True if the URL is an OAuth domain
  */
 export function isOAuthDomain(hostname: string): boolean {
-  return OAUTH_DOMAINS.some((domain) => hostname === domain || hostname.endsWith('.' + domain));
+    return OAUTH_DOMAINS.some((domain) => hostname === domain || hostname.endsWith('.' + domain));
 }
 
 // =============================================================================
@@ -177,7 +177,6 @@ export function isOAuthDomain(hostname: string): boolean {
  * Enforces security best practices across the application.
  */
 
-
 /**
  * Get titleBarStyle based on platform.
  * macOS uses 'hidden' for custom titlebar, others use default frame.
@@ -185,43 +184,43 @@ export function isOAuthDomain(hostname: string): boolean {
  * @returns 'hidden' on macOS, undefined on other platforms
  */
 export function getTitleBarStyle(): 'hidden' | undefined {
-  /* v8 ignore next */
-  return process.platform === 'darwin' ? 'hidden' : undefined;
+    /* v8 ignore next */
+    return process.platform === 'darwin' ? 'hidden' : undefined;
 }
 
 /**
  * Base configuration shared by all application windows.
  */
 export const BASE_WINDOW_CONFIG: Partial<BrowserWindowConstructorOptions> = {
-  backgroundColor: '#1a1a1a',
-  show: false, // Prevent flash, show on ready-to-show event
-  webPreferences: BASE_WEB_PREFERENCES,
+    backgroundColor: '#1a1a1a',
+    show: false, // Prevent flash, show on ready-to-show event
+    webPreferences: BASE_WEB_PREFERENCES,
 } as const;
 
 /**
  * Configuration for the main application window.
  */
 export const MAIN_WINDOW_CONFIG: BrowserWindowConstructorOptions = {
-  width: 1200,
-  height: 800,
-  minWidth: 350,
-  minHeight: 600,
-  frame: false,
-  ...BASE_WINDOW_CONFIG,
+    width: 1200,
+    height: 800,
+    minWidth: 350,
+    minHeight: 600,
+    frame: false,
+    ...BASE_WINDOW_CONFIG,
 };
 
 /**
  * Configuration for the options/settings window.
  */
 export const OPTIONS_WINDOW_CONFIG: BrowserWindowConstructorOptions = {
-  width: 600,
-  height: 400,
-  resizable: true,
-  minimizable: true,
-  maximizable: false,
-  frame: false,
-  ...BASE_WINDOW_CONFIG,
-  show: true, // Options window shows immediately
+    width: 600,
+    height: 400,
+    resizable: true,
+    minimizable: true,
+    maximizable: false,
+    frame: false,
+    ...BASE_WINDOW_CONFIG,
+    show: true, // Options window shows immediately
 };
 
 /**
@@ -232,18 +231,18 @@ export const QUICK_CHAT_WIDTH = 600;
 export const QUICK_CHAT_HEIGHT = 80;
 
 export const QUICK_CHAT_WINDOW_CONFIG: BrowserWindowConstructorOptions = {
-  width: QUICK_CHAT_WIDTH,
-  height: QUICK_CHAT_HEIGHT,
-  resizable: false,
-  minimizable: false,
-  maximizable: false,
-  frame: false,
-  transparent: true,
-  alwaysOnTop: true,
-  skipTaskbar: true,
-  ...BASE_WINDOW_CONFIG,
-  backgroundColor: undefined, // Override for transparency
-  show: false, // Show when ready
+    width: QUICK_CHAT_WIDTH,
+    height: QUICK_CHAT_HEIGHT,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    ...BASE_WINDOW_CONFIG,
+    backgroundColor: undefined, // Override for transparency
+    show: false, // Show when ready
 };
 
 // =============================================================================
@@ -270,7 +269,7 @@ export const DEV_SERVER_PORT = 1420;
  * getDevUrl('options.html') // 'http://localhost:1420/options.html'
  */
 export function getDevUrl(page: string = ''): string {
-  return page ? `${DEV_SERVER_URL}/${page}` : DEV_SERVER_URL;
+    return page ? `${DEV_SERVER_URL}/${page}` : DEV_SERVER_URL;
 }
 
 // =============================================================================
@@ -305,14 +304,14 @@ export const READY_TO_SHOW_FALLBACK_MS = 3000;
  * ```
  */
 export interface TrayMenuItem {
-  /** Display label for the menu item */
-  label: string;
-  /** Unique identifier for the menu item (used in handlers) */
-  id: string;
-  /** Optional keyboard accelerator */
-  accelerator?: string;
-  /** Whether this is a separator (label ignored if true) */
-  isSeparator?: boolean;
+    /** Display label for the menu item */
+    label: string;
+    /** Unique identifier for the menu item (used in handlers) */
+    id: string;
+    /** Optional keyboard accelerator */
+    accelerator?: string;
+    /** Whether this is a separator (label ignored if true) */
+    isSeparator?: boolean;
 }
 
 /**
@@ -320,9 +319,9 @@ export interface TrayMenuItem {
  * TrayManager iterates over these to build the context menu.
  */
 export const TRAY_MENU_ITEMS: Record<string, TrayMenuItem> = {
-  SHOW: { label: 'Show Gemini Desktop', id: 'show' },
-  SEPARATOR: { label: '', id: 'separator', isSeparator: true },
-  QUIT: { label: 'Quit', id: 'quit' },
+    SHOW: { label: 'Show Gemini Desktop', id: 'show' },
+    SEPARATOR: { label: '', id: 'separator', isSeparator: true },
+    QUIT: { label: 'Quit', id: 'quit' },
 };
 
 /**

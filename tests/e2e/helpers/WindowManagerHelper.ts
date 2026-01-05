@@ -18,23 +18,23 @@ import { E2ELogger } from './logger';
  * @param mainWindowHandle - The handle of the main window to preserve
  */
 export async function closeAllSecondaryWindows(mainWindowHandle: string): Promise<void> {
-  const handles = await browser.getWindowHandles();
+    const handles = await browser.getWindowHandles();
 
-  for (const handle of handles) {
-    if (handle !== mainWindowHandle) {
-      try {
-        await browser.switchToWindow(handle);
-        E2ELogger.info('WindowManagerHelper', `Closing secondary window: ${handle}`);
-        await browser.closeWindow();
-      } catch {
-        // Window might already be closed
-        E2ELogger.info('WindowManagerHelper', `Window ${handle} already closed or inaccessible`);
-      }
+    for (const handle of handles) {
+        if (handle !== mainWindowHandle) {
+            try {
+                await browser.switchToWindow(handle);
+                E2ELogger.info('WindowManagerHelper', `Closing secondary window: ${handle}`);
+                await browser.closeWindow();
+            } catch {
+                // Window might already be closed
+                E2ELogger.info('WindowManagerHelper', `Window ${handle} already closed or inaccessible`);
+            }
+        }
     }
-  }
 
-  // Switch back to main window
-  await switchToMainWindowSafely(mainWindowHandle);
+    // Switch back to main window
+    await switchToMainWindowSafely(mainWindowHandle);
 }
 
 /**
@@ -43,18 +43,18 @@ export async function closeAllSecondaryWindows(mainWindowHandle: string): Promis
  * @param mainWindowHandle - The expected main window handle
  */
 export async function switchToMainWindowSafely(mainWindowHandle: string): Promise<void> {
-  const remainingHandles = await browser.getWindowHandles();
+    const remainingHandles = await browser.getWindowHandles();
 
-  if (remainingHandles.includes(mainWindowHandle)) {
-    await browser.switchToWindow(mainWindowHandle);
-    E2ELogger.info('WindowManagerHelper', 'Switched back to main window');
-  } else if (remainingHandles.length > 0) {
-    await browser.switchToWindow(remainingHandles[0]);
-    E2ELogger.info(
-      'WindowManagerHelper',
-      `Main window not found, switched to first available: ${remainingHandles[0]}`
-    );
-  }
+    if (remainingHandles.includes(mainWindowHandle)) {
+        await browser.switchToWindow(mainWindowHandle);
+        E2ELogger.info('WindowManagerHelper', 'Switched back to main window');
+    } else if (remainingHandles.length > 0) {
+        await browser.switchToWindow(remainingHandles[0]);
+        E2ELogger.info(
+            'WindowManagerHelper',
+            `Main window not found, switched to first available: ${remainingHandles[0]}`
+        );
+    }
 }
 
 /**
@@ -64,19 +64,16 @@ export async function switchToMainWindowSafely(mainWindowHandle: string): Promis
  * @param windowHandle - The handle of the window to close
  * @param returnToHandle - Optional handle to switch to after closing
  */
-export async function closeWindowByHandle(
-  windowHandle: string,
-  returnToHandle?: string
-): Promise<void> {
-  try {
-    await browser.switchToWindow(windowHandle);
-    E2ELogger.info('WindowManagerHelper', `Closing window: ${windowHandle}`);
-    await browser.closeWindow();
-  } catch {
-    E2ELogger.info('WindowManagerHelper', `Window ${windowHandle} already closed or inaccessible`);
-  }
+export async function closeWindowByHandle(windowHandle: string, returnToHandle?: string): Promise<void> {
+    try {
+        await browser.switchToWindow(windowHandle);
+        E2ELogger.info('WindowManagerHelper', `Closing window: ${windowHandle}`);
+        await browser.closeWindow();
+    } catch {
+        E2ELogger.info('WindowManagerHelper', `Window ${windowHandle} already closed or inaccessible`);
+    }
 
-  if (returnToHandle) {
-    await switchToMainWindowSafely(returnToHandle);
-  }
+    if (returnToHandle) {
+        await switchToMainWindowSafely(returnToHandle);
+    }
 }

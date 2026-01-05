@@ -90,15 +90,15 @@ E2E tests ARE:
 ```typescript
 // In test helper
 export async function injectTextOnly(text: string) {
-  const injectionScript = `
+    const injectionScript = `
     editor.textContent = '';
     const textNode = document.createTextNode(text);
     // ... entire injection logic duplicated ...
   `;
-  await frame.executeJavaScript(injectionScript);
+    await frame.executeJavaScript(injectionScript);
 
-  // Returns optimistic result WITHOUT verifying
-  return { textInjected: true }; // LIES!
+    // Returns optimistic result WITHOUT verifying
+    return { textInjected: true }; // LIES!
 }
 ```
 
@@ -109,13 +109,13 @@ export async function injectTextOnly(text: string) {
 ```typescript
 // In test helper
 export async function submitViaProductionPath(text: string) {
-  // Trigger the ACTUAL IPC message that the production UI sends
-  await browser.electron.execute((electron, submittedText) => {
-    electron.ipcMain.emit('quick-chat:submit', { sender: null }, submittedText);
-  }, text);
+    // Trigger the ACTUAL IPC message that the production UI sends
+    await browser.electron.execute((electron, submittedText) => {
+        electron.ipcMain.emit('quick-chat:submit', { sender: null }, submittedText);
+    }, text);
 
-  // Verify the ACTUAL result
-  return await verifyInjectionInGeminiIframe();
+    // Verify the ACTUAL result
+    return await verifyInjectionInGeminiIframe();
 }
 ```
 
@@ -128,9 +128,9 @@ export async function submitViaProductionPath(text: string) {
 ```typescript
 // After executing injection script
 return {
-  editorFound: true, // Did we actually find it?
-  textInjected: true, // Did text actually appear?
-  submitButtonFound: true, // Does it exist in the DOM?
+    editorFound: true, // Did we actually find it?
+    textInjected: true, // Did text actually appear?
+    submitButtonFound: true, // Does it exist in the DOM?
 };
 ```
 
@@ -160,7 +160,7 @@ expect(result.actualText).toBe(expectedText);
 ```typescript
 // This bypasses the entire IPC/renderer flow
 await browser.electron.execute(() => {
-  global.windowManager.injectTextIntoGemini('test');
+    global.windowManager.injectTextIntoGemini('test');
 });
 ```
 
@@ -188,8 +188,8 @@ await mainWindow.verifyTextInGemini('Hello from test');
 
 ```typescript
 const isVisible = await browser.electron.execute(() => {
-  const win = global.windowManager.getQuickChatWindow();
-  return win && win.isVisible();
+    const win = global.windowManager.getQuickChatWindow();
+    return win && win.isVisible();
 });
 expect(isVisible).toBe(true);
 // But does the window WORK? Can user type? Can user submit?
@@ -279,31 +279,31 @@ expect(text).toBe('Hello Gemini');
 
 ```typescript
 describe('Quick Chat Full Workflow', () => {
-  it('should inject text into Gemini and submit', async () => {
-    // 1. Open Quick Chat via hotkey
-    await pressComplexShortcut(['primary', 'shift'], 'Space');
-    await browser.pause(500);
+    it('should inject text into Gemini and submit', async () => {
+        // 1. Open Quick Chat via hotkey
+        await pressComplexShortcut(['primary', 'shift'], 'Space');
+        await browser.pause(500);
 
-    // 2. Verify Quick Chat opened
-    const foundQuickChat = await quickChat.switchToQuickChatWindow();
-    expect(foundQuickChat).toBe(true);
+        // 2. Verify Quick Chat opened
+        const foundQuickChat = await quickChat.switchToQuickChatWindow();
+        expect(foundQuickChat).toBe(true);
 
-    // 3. Type and submit
-    await quickChat.typeText('Hello from E2E test');
-    await quickChat.submit();
+        // 3. Type and submit
+        await quickChat.typeText('Hello from E2E test');
+        await quickChat.submit();
 
-    // 4. Verify Quick Chat closed
-    await quickChat.waitForHidden();
+        // 4. Verify Quick Chat closed
+        await quickChat.waitForHidden();
 
-    // 5. Verify text arrived in Gemini
-    await mainWindow.waitForGeminiLoaded();
-    const injectedText = await mainWindow.getGeminiInputText();
-    expect(injectedText).toBe('Hello from E2E test');
+        // 5. Verify text arrived in Gemini
+        await mainWindow.waitForGeminiLoaded();
+        const injectedText = await mainWindow.getGeminiInputText();
+        expect(injectedText).toBe('Hello from E2E test');
 
-    // 6. Verify submit button was clicked (or is about to be)
-    const submitClicked = await mainWindow.wasSubmitClicked();
-    expect(submitClicked).toBe(true);
-  });
+        // 6. Verify submit button was clicked (or is about to be)
+        const submitClicked = await mainWindow.wasSubmitClicked();
+        expect(submitClicked).toBe(true);
+    });
 });
 ```
 
@@ -366,12 +366,12 @@ Before committing an E2E test, verify:
 ```typescript
 // DO: Trigger IPC via ipcMain.emit
 await browser.electron.execute((electron, text) => {
-  electron.ipcMain.emit('quick-chat:submit', { sender: null }, text);
+    electron.ipcMain.emit('quick-chat:submit', { sender: null }, text);
 }, text);
 
 // DON'T: Call internal methods directly
 await browser.electron.execute(() => {
-  global.myInternalMethod(); // Bypasses the real flow!
+    global.myInternalMethod(); // Bypasses the real flow!
 });
 ```
 
@@ -464,8 +464,8 @@ await someAction();
 
 ```typescript
 await browser.waitUntil(async () => (await element.getText()) === 'Expected Text', {
-  timeout: 5000,
-  timeoutMsg: 'Text did not appear in time',
+    timeout: 5000,
+    timeoutMsg: 'Text did not appear in time',
 });
 ```
 
@@ -505,13 +505,13 @@ Tests should:
 
 ```typescript
 it('should create a setting', async () => {
-  await createSetting('foo');
+    await createSetting('foo');
 });
 
 it('should read the setting', async () => {
-  // FAILS if run alone - depends on previous test!
-  const value = await readSetting('foo');
-  expect(value).toBeDefined();
+    // FAILS if run alone - depends on previous test!
+    const value = await readSetting('foo');
+    expect(value).toBeDefined();
 });
 ```
 
@@ -519,9 +519,9 @@ it('should read the setting', async () => {
 
 ```typescript
 it('should create and read a setting', async () => {
-  await createSetting('foo');
-  const value = await readSetting('foo');
-  expect(value).toBeDefined();
+    await createSetting('foo');
+    const value = await readSetting('foo');
+    expect(value).toBeDefined();
 });
 ```
 
@@ -529,18 +529,18 @@ it('should create and read a setting', async () => {
 
 ```typescript
 describe('Options Window', () => {
-  beforeEach(async () => {
-    await optionsPage.open();
-  });
+    beforeEach(async () => {
+        await optionsPage.open();
+    });
 
-  afterEach(async () => {
-    await optionsPage.resetToDefaults();
-    await optionsPage.close();
-  });
+    afterEach(async () => {
+        await optionsPage.resetToDefaults();
+        await optionsPage.close();
+    });
 
-  it('should toggle a setting', async () => {
-    // Test starts with clean state
-  });
+    it('should toggle a setting', async () => {
+        // Test starts with clean state
+    });
 });
 ```
 

@@ -18,263 +18,254 @@ import { E2ELogger } from './helpers/logger';
 import { E2E_TIMING } from './helpers/e2eConstants';
 import { waitForAppReady, ensureSingleWindow } from './helpers/workflows';
 import {
-  isWindowMaximized,
-  isWindowMinimized,
-  isWindowVisible,
-  isWindowDestroyed,
-  getWindowState,
-  maximizeWindow,
-  restoreWindow,
-  closeWindow,
-  showWindow,
+    isWindowMaximized,
+    isWindowMinimized,
+    isWindowVisible,
+    isWindowDestroyed,
+    getWindowState,
+    maximizeWindow,
+    restoreWindow,
+    closeWindow,
+    showWindow,
 } from './helpers/windowStateActions';
 
 describe('Window Controls Functionality', () => {
-  const mainWindow = new MainWindowPage();
+    const mainWindow = new MainWindowPage();
 
-  beforeEach(async () => {
-    await waitForAppReady();
-  });
-
-  afterEach(async () => {
-    // Ensure window is visible and restored for next test
-    // Wrapped in try-catch to handle "Promise was collected" errors that can occur
-    // when the WebSocket connection closes during cleanup after the final test
-    try {
-      await restoreWindow();
-      await showWindow();
-      await ensureSingleWindow();
-    } catch (error) {
-      // Ignore "Promise was collected" errors during cleanup - these occur when
-      // the test framework tears down the WebSocket before cleanup completes
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (!errorMessage.includes('Promise was collected')) {
-        throw error;
-      }
-      E2ELogger.info('window-controls', 'Cleanup interrupted by test teardown (safe to ignore)');
-    }
-  });
-
-  // =========================================================================
-  // Windows/Linux: Custom Button Tests
-  // =========================================================================
-
-  describe('Custom Window Controls (Windows/Linux)', () => {
-    it('should maximize window when maximize button is clicked', async () => {
-      if (!(await usesCustomControls())) {
-        E2ELogger.info('window-controls', 'Skipping - macOS uses native controls');
-        return;
-      }
-
-      // Skip on Linux CI - Xvfb doesn't have a real window manager
-      if (await isLinuxCI()) {
-        E2ELogger.info(
-          'window-controls',
-          'Skipping - Linux CI uses headless Xvfb without window manager'
-        );
-        return;
-      }
-
-      // 1. Verify not maximized initially (or restore if it is)
-      const initialState = await isWindowMaximized();
-      if (initialState) {
-        await restoreWindow();
-      }
-
-      // 2. Click maximize button via Page Object
-      await mainWindow.clickMaximize();
-
-      // 3. Verify window is now maximized
-      const isMaximized = await isWindowMaximized();
-      expect(isMaximized).toBe(true);
-
-      E2ELogger.info('window-controls', 'Maximize button click verified');
+    beforeEach(async () => {
+        await waitForAppReady();
     });
 
-    it('should restore window when maximize button is clicked again', async () => {
-      if (!(await usesCustomControls())) {
-        return;
-      }
-
-      // 1. Ensure window is maximized first
-      const initialState = await isWindowMaximized();
-      if (!initialState) {
-        await maximizeWindow();
-      }
-
-      // 2. Click maximize button again to restore via Page Object
-      await mainWindow.clickMaximize();
-
-      // 3. Verify window is restored (not maximized)
-      const isMaximized = await isWindowMaximized();
-      expect(isMaximized).toBe(false);
-
-      E2ELogger.info('window-controls', 'Restore via maximize button verified');
+    afterEach(async () => {
+        // Ensure window is visible and restored for next test
+        // Wrapped in try-catch to handle "Promise was collected" errors that can occur
+        // when the WebSocket connection closes during cleanup after the final test
+        try {
+            await restoreWindow();
+            await showWindow();
+            await ensureSingleWindow();
+        } catch (error) {
+            // Ignore "Promise was collected" errors during cleanup - these occur when
+            // the test framework tears down the WebSocket before cleanup completes
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (!errorMessage.includes('Promise was collected')) {
+                throw error;
+            }
+            E2ELogger.info('window-controls', 'Cleanup interrupted by test teardown (safe to ignore)');
+        }
     });
 
-    it('should minimize window to taskbar when minimize button is clicked', async () => {
-      if (!(await usesCustomControls())) {
-        return;
-      }
+    // =========================================================================
+    // Windows/Linux: Custom Button Tests
+    // =========================================================================
 
-      // Skip on Linux CI
-      if (await isLinuxCI()) {
-        E2ELogger.info(
-          'window-controls',
-          'Skipping - Linux CI uses headless Xvfb without window manager'
-        );
-        return;
-      }
+    describe('Custom Window Controls (Windows/Linux)', () => {
+        it('should maximize window when maximize button is clicked', async () => {
+            if (!(await usesCustomControls())) {
+                E2ELogger.info('window-controls', 'Skipping - macOS uses native controls');
+                return;
+            }
 
-      // 1. Click minimize button via Page Object
-      await mainWindow.clickMinimize();
+            // Skip on Linux CI - Xvfb doesn't have a real window manager
+            if (await isLinuxCI()) {
+                E2ELogger.info('window-controls', 'Skipping - Linux CI uses headless Xvfb without window manager');
+                return;
+            }
 
-      // 2. Verify window is minimized (Standard behavior)
-      const isMinimized = await isWindowMinimized();
-      expect(isMinimized).toBe(true);
+            // 1. Verify not maximized initially (or restore if it is)
+            const initialState = await isWindowMaximized();
+            if (initialState) {
+                await restoreWindow();
+            }
 
-      // 3. Restore window for subsequent tests
-      await restoreWindow();
+            // 2. Click maximize button via Page Object
+            await mainWindow.clickMaximize();
 
-      E2ELogger.info('window-controls', 'Minimize button click verified');
+            // 3. Verify window is now maximized
+            const isMaximized = await isWindowMaximized();
+            expect(isMaximized).toBe(true);
+
+            E2ELogger.info('window-controls', 'Maximize button click verified');
+        });
+
+        it('should restore window when maximize button is clicked again', async () => {
+            if (!(await usesCustomControls())) {
+                return;
+            }
+
+            // 1. Ensure window is maximized first
+            const initialState = await isWindowMaximized();
+            if (!initialState) {
+                await maximizeWindow();
+            }
+
+            // 2. Click maximize button again to restore via Page Object
+            await mainWindow.clickMaximize();
+
+            // 3. Verify window is restored (not maximized)
+            const isMaximized = await isWindowMaximized();
+            expect(isMaximized).toBe(false);
+
+            E2ELogger.info('window-controls', 'Restore via maximize button verified');
+        });
+
+        it('should minimize window to taskbar when minimize button is clicked', async () => {
+            if (!(await usesCustomControls())) {
+                return;
+            }
+
+            // Skip on Linux CI
+            if (await isLinuxCI()) {
+                E2ELogger.info('window-controls', 'Skipping - Linux CI uses headless Xvfb without window manager');
+                return;
+            }
+
+            // 1. Click minimize button via Page Object
+            await mainWindow.clickMinimize();
+
+            // 2. Verify window is minimized (Standard behavior)
+            const isMinimized = await isWindowMinimized();
+            expect(isMinimized).toBe(true);
+
+            // 3. Restore window for subsequent tests
+            await restoreWindow();
+
+            E2ELogger.info('window-controls', 'Minimize button click verified');
+        });
+
+        it('should hide window to tray when close button is clicked', async () => {
+            if (!(await usesCustomControls())) {
+                return;
+            }
+
+            // 1. Click close button via Page Object
+            await mainWindow.clickClose();
+            await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
+
+            // 2. Verify window behavior:
+            // - Not destroyed (app still running)
+            // - Not visible (hidden to tray)
+            // - Not minimized (just hidden)
+            await expect(isWindowDestroyed()).resolves.toBe(false);
+            await expect(isWindowVisible()).resolves.toBe(false);
+            await expect(isWindowMinimized()).resolves.toBe(false);
+
+            // 3. Restore window via API (simulating tray click)
+            await restoreWindow();
+            await expect(isWindowVisible()).resolves.toBe(true);
+
+            E2ELogger.info('window-controls', 'Close-to-tray verified');
+        });
     });
 
-    it('should hide window to tray when close button is clicked', async () => {
-      if (!(await usesCustomControls())) {
-        return;
-      }
+    // =========================================================================
+    // macOS: Keyboard Shortcut Tests
+    // =========================================================================
 
-      // 1. Click close button via Page Object
-      await mainWindow.clickClose();
-      await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
+    describe('Native Window Controls via Keyboard (macOS)', () => {
+        it('should verify window state API works on macOS', async () => {
+            if (!(await isMacOS())) {
+                E2ELogger.info('window-controls', 'Skipping macOS-specific test');
+                return;
+            }
 
-      // 2. Verify window behavior:
-      // - Not destroyed (app still running)
-      // - Not visible (hidden to tray)
-      // - Not minimized (just hidden)
-      await expect(isWindowDestroyed()).resolves.toBe(false);
-      await expect(isWindowVisible()).resolves.toBe(false);
-      await expect(isWindowMinimized()).resolves.toBe(false);
+            // Just verify we can read window state on macOS
+            const state = await getWindowState();
 
-      // 3. Restore window via API (simulating tray click)
-      await restoreWindow();
-      await expect(isWindowVisible()).resolves.toBe(true);
+            expect(typeof state.isMaximized).toBe('boolean');
+            expect(typeof state.isMinimized).toBe('boolean');
+            expect(typeof state.isFullScreen).toBe('boolean');
 
-      E2ELogger.info('window-controls', 'Close-to-tray verified');
-    });
-  });
+            E2ELogger.info('window-controls', `macOS window state: ${JSON.stringify(state)}`);
+        });
 
-  // =========================================================================
-  // macOS: Keyboard Shortcut Tests
-  // =========================================================================
+        it.skip('should minimize window via keyboard shortcut on macOS', async () => {
+            // SKIPPED: This test cannot work in E2E environments on macOS.
+            //
+            // REASON: Keyboard shortcuts like Cmd+M are handled at the OS level
+            // on macOS. WebDriver's browser.keys() sends synthetic events to web
+            // content, NOT to the operating system's window management system.
+            //
+            // ALTERNATIVE: The shortcut registration and callback logic are tested
+            // in unit tests (hotkeyManager.test.ts), which is sufficient for
+            // verifying this functionality works correctly.
+            //
+            // CONTEXT: This is a known limitation of E2E testing with WebDriver
+            // and applies to all OS-level global keyboard shortcuts.
+        });
 
-  describe('Native Window Controls via Keyboard (macOS)', () => {
-    it('should verify window state API works on macOS', async () => {
-      if (!(await isMacOS())) {
-        E2ELogger.info('window-controls', 'Skipping macOS-specific test');
-        return;
-      }
+        it('should hide window to tray when close is triggered on macOS', async () => {
+            if (!(await isMacOS())) {
+                return;
+            }
 
-      // Just verify we can read window state on macOS
-      const state = await getWindowState();
+            // Use the close API instead of Cmd+W keyboard shortcut
+            // WebDriver sends keyboard events to web content, NOT to the OS,
+            // so Cmd+W won't actually trigger the window close on macOS.
+            await closeWindow();
+            await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
 
-      expect(typeof state.isMaximized).toBe('boolean');
-      expect(typeof state.isMinimized).toBe('boolean');
-      expect(typeof state.isFullScreen).toBe('boolean');
+            // Log state for debugging
+            const stateAfterClose = await getWindowState();
+            E2ELogger.info('window-controls', `macOS state after close: ${JSON.stringify(stateAfterClose)}`);
 
-      E2ELogger.info('window-controls', `macOS window state: ${JSON.stringify(state)}`);
-    });
+            // Verify close-to-tray behavior on macOS:
+            // - Not destroyed (app still running)
+            // - Not visible (hidden/minimized to Dock)
+            await expect(isWindowDestroyed()).resolves.toBe(false);
+            await expect(isWindowVisible()).resolves.toBe(false);
 
-    it.skip('should minimize window via keyboard shortcut on macOS', async () => {
-      // SKIPPED: This test cannot work in E2E environments on macOS.
-      //
-      // REASON: Keyboard shortcuts like Cmd+M are handled at the OS level
-      // on macOS. WebDriver's browser.keys() sends synthetic events to web
-      // content, NOT to the operating system's window management system.
-      //
-      // ALTERNATIVE: The shortcut registration and callback logic are tested
-      // in unit tests (hotkeyManager.test.ts), which is sufficient for
-      // verifying this functionality works correctly.
-      //
-      // CONTEXT: This is a known limitation of E2E testing with WebDriver
-      // and applies to all OS-level global keyboard shortcuts.
-    });
+            // Restore window
+            await restoreWindow();
+            await expect(isWindowVisible()).resolves.toBe(true);
 
-    it('should hide window to tray when close is triggered on macOS', async () => {
-      if (!(await isMacOS())) {
-        return;
-      }
-
-      // Use the close API instead of Cmd+W keyboard shortcut
-      // WebDriver sends keyboard events to web content, NOT to the OS,
-      // so Cmd+W won't actually trigger the window close on macOS.
-      await closeWindow();
-      await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
-
-      // Log state for debugging
-      const stateAfterClose = await getWindowState();
-      E2ELogger.info(
-        'window-controls',
-        `macOS state after close: ${JSON.stringify(stateAfterClose)}`
-      );
-
-      // Verify close-to-tray behavior on macOS:
-      // - Not destroyed (app still running)
-      // - Not visible (hidden/minimized to Dock)
-      await expect(isWindowDestroyed()).resolves.toBe(false);
-      await expect(isWindowVisible()).resolves.toBe(false);
-
-      // Restore window
-      await restoreWindow();
-      await expect(isWindowVisible()).resolves.toBe(true);
-
-      E2ELogger.info('window-controls', 'macOS close-to-tray verified');
-    });
-  });
-
-  // =========================================================================
-  // Cross-Platform: API-Based Tests
-  // =========================================================================
-
-  describe('Window State via API (All Platforms)', () => {
-    it('should correctly report window state', async () => {
-      const state = await getWindowState();
-
-      // State should be an object with expected properties
-      expect(state).toHaveProperty('isMaximized');
-      expect(state).toHaveProperty('isMinimized');
-      expect(state).toHaveProperty('isFullScreen');
-
-      E2ELogger.info('window-controls', `Cross-platform state check: ${JSON.stringify(state)}`);
+            E2ELogger.info('window-controls', 'macOS close-to-tray verified');
+        });
     });
 
-    it('should maximize and restore via API calls', async () => {
-      // Skip on macOS - maximize() doesn't work reliably
-      if (await isMacOS()) {
-        E2ELogger.info(
-          'window-controls',
-          'Skipping maximize test - macOS uses zoom/fullscreen instead of traditional maximize'
-        );
-        return;
-      }
+    // =========================================================================
+    // Cross-Platform: API-Based Tests
+    // =========================================================================
 
-      // Skip on Linux CI - Xvfb doesn't support window manager operations
-      if (await isLinuxCI()) {
-        E2ELogger.info('window-controls', 'Skipping - Linux CI uses headless Xvfb');
-        return;
-      }
+    describe('Window State via API (All Platforms)', () => {
+        it('should correctly report window state', async () => {
+            const state = await getWindowState();
 
-      // 2. Maximize via API
-      await maximizeWindow();
-      const afterMaximize = await isWindowMaximized();
-      expect(afterMaximize).toBe(true);
+            // State should be an object with expected properties
+            expect(state).toHaveProperty('isMaximized');
+            expect(state).toHaveProperty('isMinimized');
+            expect(state).toHaveProperty('isFullScreen');
 
-      // 3. Restore via API
-      await restoreWindow();
-      const afterRestore = await isWindowMaximized();
-      expect(afterRestore).toBe(false);
+            E2ELogger.info('window-controls', `Cross-platform state check: ${JSON.stringify(state)}`);
+        });
 
-      E2ELogger.info('window-controls', 'API-based maximize/restore verified');
+        it('should maximize and restore via API calls', async () => {
+            // Skip on macOS - maximize() doesn't work reliably
+            if (await isMacOS()) {
+                E2ELogger.info(
+                    'window-controls',
+                    'Skipping maximize test - macOS uses zoom/fullscreen instead of traditional maximize'
+                );
+                return;
+            }
+
+            // Skip on Linux CI - Xvfb doesn't support window manager operations
+            if (await isLinuxCI()) {
+                E2ELogger.info('window-controls', 'Skipping - Linux CI uses headless Xvfb');
+                return;
+            }
+
+            // 2. Maximize via API
+            await maximizeWindow();
+            const afterMaximize = await isWindowMaximized();
+            expect(afterMaximize).toBe(true);
+
+            // 3. Restore via API
+            await restoreWindow();
+            const afterRestore = await isWindowMaximized();
+            expect(afterRestore).toBe(false);
+
+            E2ELogger.info('window-controls', 'API-based maximize/restore verified');
+        });
     });
-  });
 });

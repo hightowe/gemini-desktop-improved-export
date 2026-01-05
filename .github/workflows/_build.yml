@@ -13,51 +13,51 @@
 name: Build (DO NOT USE)
 
 on:
-  workflow_call:
+    workflow_call:
 
 env:
-  NODE_VERSION: '20'
-  CI: true
+    NODE_VERSION: '20'
+    CI: true
 
 jobs:
-  build:
-    name: Build Application
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    build:
+        name: Build Application
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Build Frontend
-        run: npm run build
-        env:
-          NODE_ENV: production
+            - name: Build Frontend
+              run: npm run build
+              env:
+                  NODE_ENV: production
 
-      - name: Build Electron Backend
-        run: npm run build:electron
+            - name: Build Electron Backend
+              run: npm run build:electron
 
-      # Upload build outputs for use by test and release workflows
-      - name: Upload Frontend Build
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: dist/
-          retention-days: 1
+            # Upload build outputs for use by test and release workflows
+            - name: Upload Frontend Build
+              uses: actions/upload-artifact@v4
+              with:
+                  name: frontend-dist
+                  path: dist/
+                  retention-days: 1
 
-      - name: Upload Electron Build
-        uses: actions/upload-artifact@v4
-        with:
-          name: electron-dist
-          path: dist-electron/
-          retention-days: 1
+            - name: Upload Electron Build
+              uses: actions/upload-artifact@v4
+              with:
+                  name: electron-dist
+                  path: dist-electron/
+                  retention-days: 1

@@ -13,24 +13,24 @@ import { useState, useEffect, useCallback } from 'react';
  * Print progress state interface
  */
 export interface PrintProgressState {
-  /** Whether the overlay is visible */
-  visible: boolean;
-  /** Current page being captured */
-  currentPage: number;
-  /** Total pages to capture */
-  totalPages: number;
-  /** Progress percentage (0-100) */
-  progress: number;
+    /** Whether the overlay is visible */
+    visible: boolean;
+    /** Current page being captured */
+    currentPage: number;
+    /** Total pages to capture */
+    totalPages: number;
+    /** Progress percentage (0-100) */
+    progress: number;
 }
 
 /**
  * Return type for usePrintProgress hook
  */
 export interface UsePrintProgressReturn {
-  /** Current print progress state */
-  state: PrintProgressState;
-  /** Handler to cancel the print operation */
-  handleCancel: () => void;
+    /** Current print progress state */
+    state: PrintProgressState;
+    /** Handler to cancel the print operation */
+    handleCancel: () => void;
 }
 
 /**
@@ -44,77 +44,77 @@ export interface UsePrintProgressReturn {
  * @returns Print progress state and cancel handler
  */
 export function usePrintProgress(): UsePrintProgressReturn {
-  const [state, setState] = useState<PrintProgressState>({
-    visible: false,
-    currentPage: 0,
-    totalPages: 0,
-    progress: 0,
-  });
-
-  // Handle cancel button click
-  const handleCancel = useCallback(() => {
-    if (window.electronAPI?.cancelPrint) {
-      window.electronAPI.cancelPrint();
-    }
-  }, []);
-
-  useEffect(() => {
-    const electronAPI = window.electronAPI;
-    if (!electronAPI) return;
-
-    // Handle progress start
-    const unsubStart = electronAPI.onPrintProgressStart((data) => {
-      setState({
-        visible: true,
+    const [state, setState] = useState<PrintProgressState>({
+        visible: false,
         currentPage: 0,
-        totalPages: data.totalPages,
+        totalPages: 0,
         progress: 0,
-      });
     });
 
-    // Handle progress update
-    const unsubUpdate = electronAPI.onPrintProgressUpdate((data) => {
-      setState((prev) => ({
-        ...prev,
-        currentPage: data.currentPage,
-        totalPages: data.totalPages,
-        progress: data.progress,
-      }));
-    });
+    // Handle cancel button click
+    const handleCancel = useCallback(() => {
+        if (window.electronAPI?.cancelPrint) {
+            window.electronAPI.cancelPrint();
+        }
+    }, []);
 
-    // Handle progress end
-    const unsubEnd = electronAPI.onPrintProgressEnd(() => {
-      setState((prev) => ({
-        ...prev,
-        visible: false,
-      }));
-    });
+    useEffect(() => {
+        const electronAPI = window.electronAPI;
+        if (!electronAPI) return;
 
-    // Handle overlay hide (before capture)
-    const unsubHide = electronAPI.onPrintOverlayHide(() => {
-      setState((prev) => ({
-        ...prev,
-        visible: false,
-      }));
-    });
+        // Handle progress start
+        const unsubStart = electronAPI.onPrintProgressStart((data) => {
+            setState({
+                visible: true,
+                currentPage: 0,
+                totalPages: data.totalPages,
+                progress: 0,
+            });
+        });
 
-    // Handle overlay show (after capture)
-    const unsubShow = electronAPI.onPrintOverlayShow(() => {
-      setState((prev) => ({
-        ...prev,
-        visible: true,
-      }));
-    });
+        // Handle progress update
+        const unsubUpdate = electronAPI.onPrintProgressUpdate((data) => {
+            setState((prev) => ({
+                ...prev,
+                currentPage: data.currentPage,
+                totalPages: data.totalPages,
+                progress: data.progress,
+            }));
+        });
 
-    // Cleanup on unmount
-    return () => {
-      unsubStart();
-      unsubUpdate();
-      unsubEnd();
-      unsubHide();
-      unsubShow();
-    };
-  }, []);
+        // Handle progress end
+        const unsubEnd = electronAPI.onPrintProgressEnd(() => {
+            setState((prev) => ({
+                ...prev,
+                visible: false,
+            }));
+        });
 
-  return { state, handleCancel };
+        // Handle overlay hide (before capture)
+        const unsubHide = electronAPI.onPrintOverlayHide(() => {
+            setState((prev) => ({
+                ...prev,
+                visible: false,
+            }));
+        });
+
+        // Handle overlay show (after capture)
+        const unsubShow = electronAPI.onPrintOverlayShow(() => {
+            setState((prev) => ({
+                ...prev,
+                visible: true,
+            }));
+        });
+
+        // Cleanup on unmount
+        return () => {
+            unsubStart();
+            unsubUpdate();
+            unsubEnd();
+            unsubHide();
+            unsubShow();
+        };
+    }, []);
+
+    return { state, handleCancel };
 }

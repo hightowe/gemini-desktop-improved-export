@@ -77,13 +77,13 @@ UpdateToastContext (Provider)
 
 ```typescript
 interface ToastOptions {
-  id?: string; // Optional - auto-generated if not provided
-  type: 'success' | 'error' | 'info' | 'warning' | 'progress';
-  title?: string;
-  message: string;
-  duration?: number; // ms, default 5000, null for persistent
-  progress?: number; // 0-100 for progress type
-  actions?: ToastAction[];
+    id?: string; // Optional - auto-generated if not provided
+    type: 'success' | 'error' | 'info' | 'warning' | 'progress';
+    title?: string;
+    message: string;
+    duration?: number; // ms, default 5000, null for persistent
+    progress?: number; // 0-100 for progress type
+    actions?: ToastAction[];
 }
 
 const { showToast, dismissToast } = useToast();
@@ -126,33 +126,33 @@ dismissToast('update-download');
 ```css
 /* Generic base */
 .toast {
-  /* container */
+    /* container */
 }
 .toast__icon {
-  /* icon area */
+    /* icon area */
 }
 .toast__content {
-  /* title + message */
+    /* title + message */
 }
 .toast__actions {
-  /* buttons */
+    /* buttons */
 }
 
 /* Type variants */
 .toast--success {
-  border-left-color: #34a853;
+    border-left-color: #34a853;
 }
 .toast--error {
-  border-left-color: var(--error-color);
+    border-left-color: var(--error-color);
 }
 .toast--info {
-  border-left-color: var(--accent-color);
+    border-left-color: var(--accent-color);
 }
 .toast--warning {
-  border-left-color: #fbbc04;
+    border-left-color: #fbbc04;
 }
 .toast--progress {
-  border-left-color: var(--accent-color);
+    border-left-color: var(--accent-color);
 }
 ```
 
@@ -175,38 +175,38 @@ App.tsx
 export type ToastType = 'success' | 'error' | 'info' | 'warning' | 'progress';
 
 export interface ToastAction {
-  label: string;
-  onClick: () => void;
-  primary?: boolean;
+    label: string;
+    onClick: () => void;
+    primary?: boolean;
 }
 
 export interface ToastProps {
-  id: string;
-  type: ToastType;
-  title?: string;
-  message: string;
-  icon?: string;
-  progress?: number;
-  actions?: ToastAction[];
-  onDismiss: () => void;
+    id: string;
+    type: ToastType;
+    title?: string;
+    message: string;
+    icon?: string;
+    progress?: number;
+    actions?: ToastAction[];
+    onDismiss: () => void;
 }
 
 // src/renderer/context/ToastContext.tsx
 export interface ShowToastOptions {
-  id?: string;
-  type: ToastType;
-  title?: string;
-  message: string;
-  duration?: number | null; // null = persistent
-  progress?: number;
-  actions?: ToastAction[];
+    id?: string;
+    type: ToastType;
+    title?: string;
+    message: string;
+    duration?: number | null; // null = persistent
+    progress?: number;
+    actions?: ToastAction[];
 }
 
 export interface ToastContextValue {
-  showToast: (options: ShowToastOptions) => string; // returns toast ID
-  dismissToast: (id: string) => void;
-  dismissAll: () => void;
-  toasts: ToastItem[];
+    showToast: (options: ShowToastOptions) => string; // returns toast ID
+    dismissToast: (id: string) => void;
+    dismissAll: () => void;
+    toasts: ToastItem[];
 }
 ```
 

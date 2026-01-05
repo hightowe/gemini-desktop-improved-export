@@ -2,639 +2,628 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Menu, shell } from 'electron';
 import MenuManager from '../../../src/main/managers/menuManager';
 import WindowManager from '../../../src/main/managers/windowManager';
+import { createMockWindowManager } from '../../helpers/mocks';
 
 // Mock electron
 vi.mock('electron', () => ({
-  app: {
-    name: 'Gemini Desktop',
-    on: vi.fn(),
-  },
-  Menu: {
-    buildFromTemplate: vi.fn((template) => ({
-      popup: vi.fn(),
-      template,
-      getMenuItemById: vi.fn((id: string) => {
-        const item = template.find((t: any) => t.id === id);
-        if (item) {
-          return { ...item, enabled: true };
-        }
-        return null;
-      }),
-    })),
-    setApplicationMenu: vi.fn(),
-  },
-  shell: {
-    openExternal: vi.fn(),
-  },
+    app: {
+        name: 'Gemini Desktop',
+        on: vi.fn(),
+    },
+    Menu: {
+        buildFromTemplate: vi.fn((template) => ({
+            popup: vi.fn(),
+            template,
+            getMenuItemById: vi.fn((id: string) => {
+                const item = template.find((t: any) => t.id === id);
+                if (item) {
+                    return { ...item, enabled: true };
+                }
+                return null;
+            }),
+        })),
+        setApplicationMenu: vi.fn(),
+    },
+    shell: {
+        openExternal: vi.fn(),
+    },
 }));
 
 describe('MenuManager', () => {
-  let menuManager: MenuManager;
-  let mockWindowManager: any;
-  let mockHotkeyManager: any;
-  let originalPlatform: string;
+    let menuManager: MenuManager;
+    let mockWindowManager: any;
+    let mockHotkeyManager: any;
+    let originalPlatform: string;
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+    beforeEach(() => {
+        vi.clearAllMocks();
 
-    // Mock WindowManager
-    mockWindowManager = {
-      createOptionsWindow: vi.fn(),
-      createAuthWindow: vi.fn().mockResolvedValue(undefined),
-      getMainWindow: vi.fn().mockReturnValue({
-        reload: vi.fn(),
-      }),
-      isAlwaysOnTop: vi.fn().mockReturnValue(false),
-      setAlwaysOnTop: vi.fn(),
-      on: vi.fn(), // For event subscription
-      emit: vi.fn(),
-      restoreFromTray: vi.fn(),
-    };
+        // Mock WindowManager using shared factory
+        mockWindowManager = createMockWindowManager({
+            createAuthWindow: vi.fn().mockResolvedValue(undefined),
+            getMainWindow: vi.fn().mockReturnValue({
+                reload: vi.fn(),
+            }),
+        });
 
-    // Mock HotkeyManager
-    mockHotkeyManager = {
-      getAccelerator: vi.fn((id: string) => {
-        const accelerators: Record<string, string> = {
-          alwaysOnTop: 'CmdOrCtrl+Shift+T',
-          printToPdf: 'CmdOrCtrl+Shift+P',
+        // Mock HotkeyManager
+        mockHotkeyManager = {
+            getAccelerator: vi.fn((id: string) => {
+                const accelerators: Record<string, string> = {
+                    alwaysOnTop: 'CmdOrCtrl+Shift+T',
+                    printToPdf: 'CmdOrCtrl+Shift+P',
+                };
+                return accelerators[id] || '';
+            }),
+            isIndividualEnabled: vi.fn().mockReturnValue(true),
         };
-        return accelerators[id] || '';
-      }),
-      isIndividualEnabled: vi.fn().mockReturnValue(true),
+
+        menuManager = new MenuManager(mockWindowManager as unknown as WindowManager, mockHotkeyManager);
+        originalPlatform = process.platform;
+    });
+
+    afterEach(() => {
+        Object.defineProperty(process, 'platform', {
+            value: originalPlatform,
+            configurable: true,
+            writable: true,
+        });
+    });
+
+    const setPlatform = (platform: string) => {
+        Object.defineProperty(process, 'platform', {
+            value: platform,
+            configurable: true,
+            writable: true,
+        });
     };
 
-    menuManager = new MenuManager(mockWindowManager as unknown as WindowManager, mockHotkeyManager);
-    originalPlatform = process.platform;
-  });
+    const findMenuItem = (template: any[], label: string) => {
+        return template.find((item) => item.label === label);
+    };
 
-  afterEach(() => {
-    Object.defineProperty(process, 'platform', {
-      value: originalPlatform,
-      configurable: true,
-      writable: true,
-    });
-  });
+    const findSubmenuItem = (menu: any, label: string) => {
+        return menu.submenu.find((item: any) => item.label === label);
+    };
 
-  const setPlatform = (platform: string) => {
-    Object.defineProperty(process, 'platform', {
-      value: platform,
-      configurable: true,
-      writable: true,
-    });
-  };
+    describe('buildMenu', () => {
+        it('includes App menu on macOS', () => {
+            setPlatform('darwin');
+            menuManager.buildMenu();
 
-  const findMenuItem = (template: any[], label: string) => {
-    return template.find((item) => item.label === label);
-  };
+            const buildCall = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            expect(buildCall.length).toBe(4); // App, File, View, Help
+            expect(buildCall[0].label).toBe('Gemini Desktop');
+        });
 
-  const findSubmenuItem = (menu: any, label: string) => {
-    return menu.submenu.find((item: any) => item.label === label);
-  };
+        it('does not include App menu on Windows', () => {
+            setPlatform('win32');
+            menuManager.buildMenu();
 
-  describe('buildMenu', () => {
-    it('includes App menu on macOS', () => {
-      setPlatform('darwin');
-      menuManager.buildMenu();
-
-      const buildCall = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      expect(buildCall.length).toBe(4); // App, File, View, Help
-      expect(buildCall[0].label).toBe('Gemini Desktop');
+            const buildCall = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            expect(buildCall.length).toBe(3); // File, View, Help
+            expect(buildCall[0].label).toBe('File');
+        });
     });
 
-    it('does not include App menu on Windows', () => {
-      setPlatform('win32');
-      menuManager.buildMenu();
+    describe('App Menu (macOS)', () => {
+        it('About item calls createOptionsWindow("about")', () => {
+            setPlatform('darwin');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const appMenu = findMenuItem(template, 'Gemini Desktop');
+            const aboutItem = findSubmenuItem(appMenu, 'About Gemini Desktop');
 
-      const buildCall = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      expect(buildCall.length).toBe(3); // File, View, Help
-      expect(buildCall[0].label).toBe('File');
-    });
-  });
+            expect(aboutItem).toBeTruthy();
+            aboutItem.click();
+            expect(mockWindowManager.createOptionsWindow).toHaveBeenCalledWith('about');
+        });
 
-  describe('App Menu (macOS)', () => {
-    it('About item calls createOptionsWindow("about")', () => {
-      setPlatform('darwin');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const appMenu = findMenuItem(template, 'Gemini Desktop');
-      const aboutItem = findSubmenuItem(appMenu, 'About Gemini Desktop');
+        it('Settings item calls createOptionsWindow()', () => {
+            setPlatform('darwin');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const appMenu = findMenuItem(template, 'Gemini Desktop');
+            const settingsItem = findSubmenuItem(appMenu, 'Settings...');
 
-      expect(aboutItem).toBeTruthy();
-      aboutItem.click();
-      expect(mockWindowManager.createOptionsWindow).toHaveBeenCalledWith('about');
-    });
-
-    it('Settings item calls createOptionsWindow()', () => {
-      setPlatform('darwin');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const appMenu = findMenuItem(template, 'Gemini Desktop');
-      const settingsItem = findSubmenuItem(appMenu, 'Settings...');
-
-      expect(settingsItem).toBeTruthy();
-      settingsItem.click();
-      expect(mockWindowManager.createOptionsWindow).toHaveBeenCalledWith();
-    });
-  });
-
-  describe('Dock Menu (macOS)', () => {
-    it('should call app.dock.setMenu on macOS', async () => {
-      const { app } = await import('electron');
-      const mockDock = {
-        setMenu: vi.fn(),
-      };
-      (app as any).dock = mockDock;
-
-      setPlatform('darwin');
-      menuManager.buildMenu();
-
-      expect(mockDock.setMenu).toHaveBeenCalled();
+            expect(settingsItem).toBeTruthy();
+            settingsItem.click();
+            expect(mockWindowManager.createOptionsWindow).toHaveBeenCalledWith();
+        });
     });
 
-    it('should NOT call app.dock.setMenu on Windows', async () => {
-      const { app } = await import('electron');
-      const mockDock = {
-        setMenu: vi.fn(),
-      };
-      (app as any).dock = mockDock;
+    describe('Dock Menu (macOS)', () => {
+        it('should call app.dock.setMenu on macOS', async () => {
+            const { app } = await import('electron');
+            const mockDock = {
+                setMenu: vi.fn(),
+            };
+            (app as any).dock = mockDock;
 
-      setPlatform('win32');
-      menuManager.buildMenu();
+            setPlatform('darwin');
+            menuManager.buildMenu();
 
-      expect(mockDock.setMenu).not.toHaveBeenCalled();
+            expect(mockDock.setMenu).toHaveBeenCalled();
+        });
+
+        it('should NOT call app.dock.setMenu on Windows', async () => {
+            const { app } = await import('electron');
+            const mockDock = {
+                setMenu: vi.fn(),
+            };
+            (app as any).dock = mockDock;
+
+            setPlatform('win32');
+            menuManager.buildMenu();
+
+            expect(mockDock.setMenu).not.toHaveBeenCalled();
+        });
+
+        it('should NOT call app.dock.setMenu on Linux', async () => {
+            const { app } = await import('electron');
+            const mockDock = {
+                setMenu: vi.fn(),
+            };
+            (app as any).dock = mockDock;
+
+            setPlatform('linux');
+            menuManager.buildMenu();
+
+            expect(mockDock.setMenu).not.toHaveBeenCalled();
+        });
+
+        it('should build dock menu with correct structure on macOS', async () => {
+            setPlatform('darwin');
+            const { Menu: MenuModule } = await import('electron');
+
+            // Clear previous calls
+            vi.clearAllMocks();
+
+            menuManager.buildMenu();
+
+            // Find the dock menu template call (will be the last buildFromTemplate call)
+            const allCalls = (MenuModule.buildFromTemplate as any).mock.calls;
+            // The dock menu is built after the app menu, so it's the last call
+            const dockMenuTemplate = allCalls[allCalls.length - 1][0];
+
+            // Verify dock menu structure
+            expect(Array.isArray(dockMenuTemplate)).toBe(true);
+            const labels = dockMenuTemplate.map((item: any) => item.label);
+            expect(labels).toContain('Show Gemini');
+            expect(labels).toContain('Settings');
+        });
+
+        it('should handle missing app.dock gracefully', async () => {
+            setPlatform('darwin');
+            const { app } = await import('electron');
+            (app as any).dock = undefined;
+
+            // Should not throw even if dock is undefined
+            expect(() => menuManager.buildMenu()).not.toThrow();
+        });
     });
 
-    it('should NOT call app.dock.setMenu on Linux', async () => {
-      const { app } = await import('electron');
-      const mockDock = {
-        setMenu: vi.fn(),
-      };
-      (app as any).dock = mockDock;
+    describe('File Menu', () => {
+        it('Sign in item calls createAuthWindow and reloads', async () => {
+            setPlatform('darwin');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const fileMenu = findMenuItem(template, 'File');
+            const signInItem = findSubmenuItem(fileMenu, 'Sign in to Google');
 
-      setPlatform('linux');
-      menuManager.buildMenu();
+            expect(signInItem).toBeTruthy();
+            await signInItem.click();
+            expect(mockWindowManager.createAuthWindow).toHaveBeenCalledWith(
+                expect.stringContaining('accounts.google.com')
+            );
+            expect(mockWindowManager.getMainWindow().reload).toHaveBeenCalled();
+        });
 
-      expect(mockDock.setMenu).not.toHaveBeenCalled();
+        it('Print to PDF item calls emit("print-to-pdf-triggered")', () => {
+            setPlatform('win32');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const fileMenu = findMenuItem(template, 'File');
+            const printItem = findSubmenuItem(fileMenu, 'Print to PDF');
+
+            expect(printItem).toBeTruthy();
+            expect(printItem.id).toBe('menu-file-print-to-pdf');
+            expect(printItem.accelerator).toBe('CmdOrCtrl+Shift+P');
+
+            printItem.click();
+            expect(mockWindowManager.emit).toHaveBeenCalledWith('print-to-pdf-triggered');
+        });
+
+        it('Options/Settings item logic adapts to platform', () => {
+            // macOS: Settings...
+            setPlatform('darwin');
+            menuManager.buildMenu();
+            let template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            let fileMenu = findMenuItem(template, 'File');
+            let item = findSubmenuItem(fileMenu, 'Settings...');
+            expect(item).toBeTruthy();
+            item.click();
+            expect(mockWindowManager.createOptionsWindow).toHaveBeenCalled();
+
+            vi.clearAllMocks();
+
+            // Windows: Options
+            setPlatform('win32');
+            menuManager.buildMenu();
+            template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            fileMenu = findMenuItem(template, 'File');
+            item = findSubmenuItem(fileMenu, 'Options');
+            expect(item).toBeTruthy();
+            item.click();
+            expect(mockWindowManager.createOptionsWindow).toHaveBeenCalled();
+        });
     });
 
-    it('should build dock menu with correct structure on macOS', async () => {
-      setPlatform('darwin');
-      const { Menu: MenuModule } = await import('electron');
+    describe('Help Menu', () => {
+        it('Report Issue opens external link', () => {
+            setPlatform('win32');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const helpMenu = findMenuItem(template, 'Help');
+            const reportItem = findSubmenuItem(helpMenu, 'Report an Issue');
 
-      // Clear previous calls
-      vi.clearAllMocks();
+            expect(reportItem).toBeTruthy();
+            reportItem.click();
+            expect(shell.openExternal).toHaveBeenCalledWith(expect.stringContaining('issues'));
+        });
 
-      menuManager.buildMenu();
+        it('About item calls createOptionsWindow("about")', () => {
+            setPlatform('win32');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const helpMenu = findMenuItem(template, 'Help');
+            const aboutItem = findSubmenuItem(helpMenu, 'About Gemini Desktop');
 
-      // Find the dock menu template call (will be the last buildFromTemplate call)
-      const allCalls = (MenuModule.buildFromTemplate as any).mock.calls;
-      // The dock menu is built after the app menu, so it's the last call
-      const dockMenuTemplate = allCalls[allCalls.length - 1][0];
-
-      // Verify dock menu structure
-      expect(Array.isArray(dockMenuTemplate)).toBe(true);
-      const labels = dockMenuTemplate.map((item: any) => item.label);
-      expect(labels).toContain('Show Gemini');
-      expect(labels).toContain('Settings');
+            expect(aboutItem).toBeTruthy();
+            aboutItem.click();
+            expect(mockWindowManager.createOptionsWindow).toHaveBeenCalledWith('about');
+        });
     });
 
-    it('should handle missing app.dock gracefully', async () => {
-      setPlatform('darwin');
-      const { app } = await import('electron');
-      (app as any).dock = undefined;
+    describe('View Menu', () => {
+        it('includes Always On Top menu item', () => {
+            setPlatform('win32');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const viewMenu = findMenuItem(template, 'View');
+            const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
 
-      // Should not throw even if dock is undefined
-      expect(() => menuManager.buildMenu()).not.toThrow();
-    });
-  });
+            expect(alwaysOnTopItem).toBeTruthy();
+            expect(alwaysOnTopItem.type).toBe('checkbox');
+            expect(alwaysOnTopItem.id).toBe('menu-view-always-on-top');
+            expect(alwaysOnTopItem.accelerator).toBe('CmdOrCtrl+Shift+T');
+        });
 
-  describe('File Menu', () => {
-    it('Sign in item calls createAuthWindow and reloads', async () => {
-      setPlatform('darwin');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const fileMenu = findMenuItem(template, 'File');
-      const signInItem = findSubmenuItem(fileMenu, 'Sign in to Google');
+        it('Always On Top click handler calls setAlwaysOnTop', () => {
+            mockWindowManager.isAlwaysOnTop = vi.fn().mockReturnValue(false);
+            mockWindowManager.setAlwaysOnTop = vi.fn();
 
-      expect(signInItem).toBeTruthy();
-      await signInItem.click();
-      expect(mockWindowManager.createAuthWindow).toHaveBeenCalledWith(
-        expect.stringContaining('accounts.google.com')
-      );
-      expect(mockWindowManager.getMainWindow().reload).toHaveBeenCalled();
-    });
+            setPlatform('win32');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const viewMenu = findMenuItem(template, 'View');
+            const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
 
-    it('Print to PDF item calls emit("print-to-pdf-triggered")', () => {
-      setPlatform('win32');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const fileMenu = findMenuItem(template, 'File');
-      const printItem = findSubmenuItem(fileMenu, 'Print to PDF');
+            // Simulate menu click with checked = true
+            alwaysOnTopItem.click({ checked: true });
+            expect(mockWindowManager.setAlwaysOnTop).toHaveBeenCalledWith(true);
 
-      expect(printItem).toBeTruthy();
-      expect(printItem.id).toBe('menu-file-print-to-pdf');
-      expect(printItem.accelerator).toBe('CmdOrCtrl+Shift+P');
+            // Simulate menu click with checked = false
+            alwaysOnTopItem.click({ checked: false });
+            expect(mockWindowManager.setAlwaysOnTop).toHaveBeenCalledWith(false);
+        });
 
-      printItem.click();
-      expect(mockWindowManager.emit).toHaveBeenCalledWith('print-to-pdf-triggered');
-    });
+        it('Always On Top initial checked state reflects isAlwaysOnTop()', () => {
+            mockWindowManager.isAlwaysOnTop = vi.fn().mockReturnValue(true);
 
-    it('Options/Settings item logic adapts to platform', () => {
-      // macOS: Settings...
-      setPlatform('darwin');
-      menuManager.buildMenu();
-      let template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      let fileMenu = findMenuItem(template, 'File');
-      let item = findSubmenuItem(fileMenu, 'Settings...');
-      expect(item).toBeTruthy();
-      item.click();
-      expect(mockWindowManager.createOptionsWindow).toHaveBeenCalled();
+            setPlatform('win32');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const viewMenu = findMenuItem(template, 'View');
+            const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
 
-      vi.clearAllMocks();
-
-      // Windows: Options
-      setPlatform('win32');
-      menuManager.buildMenu();
-      template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      fileMenu = findMenuItem(template, 'File');
-      item = findSubmenuItem(fileMenu, 'Options');
-      expect(item).toBeTruthy();
-      item.click();
-      expect(mockWindowManager.createOptionsWindow).toHaveBeenCalled();
-    });
-  });
-
-  describe('Help Menu', () => {
-    it('Report Issue opens external link', () => {
-      setPlatform('win32');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const helpMenu = findMenuItem(template, 'Help');
-      const reportItem = findSubmenuItem(helpMenu, 'Report an Issue');
-
-      expect(reportItem).toBeTruthy();
-      reportItem.click();
-      expect(shell.openExternal).toHaveBeenCalledWith(expect.stringContaining('issues'));
+            expect(alwaysOnTopItem.checked).toBe(true);
+        });
     });
 
-    it('About item calls createOptionsWindow("about")', () => {
-      setPlatform('win32');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const helpMenu = findMenuItem(template, 'Help');
-      const aboutItem = findSubmenuItem(helpMenu, 'About Gemini Desktop');
+    describe('Context Menu', () => {
+        let webContentsCreatedCallback: any;
+        let contextMenuCallback: any;
+        let mockContents: any;
 
-      expect(aboutItem).toBeTruthy();
-      aboutItem.click();
-      expect(mockWindowManager.createOptionsWindow).toHaveBeenCalledWith('about');
-    });
-  });
+        beforeEach(() => {
+            mockContents = {
+                on: vi.fn((event: string, callback: any) => {
+                    if (event === 'context-menu') {
+                        contextMenuCallback = callback;
+                    }
+                }),
+            };
+        });
 
-  describe('View Menu', () => {
-    it('includes Always On Top menu item', () => {
-      setPlatform('win32');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const viewMenu = findMenuItem(template, 'View');
-      const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
+        it('registers web-contents-created listener', async () => {
+            const { app } = await import('electron');
 
-      expect(alwaysOnTopItem).toBeTruthy();
-      expect(alwaysOnTopItem.type).toBe('checkbox');
-      expect(alwaysOnTopItem.id).toBe('menu-view-always-on-top');
-      expect(alwaysOnTopItem.accelerator).toBe('CmdOrCtrl+Shift+T');
-    });
+            menuManager.setupContextMenu();
 
-    it('Always On Top click handler calls setAlwaysOnTop', () => {
-      mockWindowManager.isAlwaysOnTop = vi.fn().mockReturnValue(false);
-      mockWindowManager.setAlwaysOnTop = vi.fn();
+            expect(app.on).toHaveBeenCalledWith('web-contents-created', expect.any(Function));
+        });
 
-      setPlatform('win32');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const viewMenu = findMenuItem(template, 'View');
-      const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
+        it('pre-builds context menu with correct items and accelerators', async () => {
+            const { Menu } = await import('electron');
 
-      // Simulate menu click with checked = true
-      alwaysOnTopItem.click({ checked: true });
-      expect(mockWindowManager.setAlwaysOnTop).toHaveBeenCalledWith(true);
+            menuManager.setupContextMenu();
 
-      // Simulate menu click with checked = false
-      alwaysOnTopItem.click({ checked: false });
-      expect(mockWindowManager.setAlwaysOnTop).toHaveBeenCalledWith(false);
-    });
+            // Verify menu was pre-built once during setup
+            expect(Menu.buildFromTemplate).toHaveBeenCalled();
+            const buildCall = (Menu.buildFromTemplate as any).mock.calls[
+                (Menu.buildFromTemplate as any).mock.calls.length - 1
+            ];
+            const template = buildCall[0];
 
-    it('Always On Top initial checked state reflects isAlwaysOnTop()', () => {
-      mockWindowManager.isAlwaysOnTop = vi.fn().mockReturnValue(true);
+            // Verify template includes IDs, roles, and accelerators
+            expect(template).toEqual([
+                { id: 'cut', role: 'cut', accelerator: 'CmdOrCtrl+X' },
+                { id: 'copy', role: 'copy', accelerator: 'CmdOrCtrl+C' },
+                { id: 'paste', role: 'paste', accelerator: 'CmdOrCtrl+V' },
+                { id: 'delete', role: 'delete' },
+                { type: 'separator' },
+                { id: 'selectAll', role: 'selectAll', accelerator: 'CmdOrCtrl+A' },
+            ]);
+        });
 
-      setPlatform('win32');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const viewMenu = findMenuItem(template, 'View');
-      const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
+        it('calls popup on the cached menu when context-menu event fires', async () => {
+            const { app, Menu } = await import('electron');
 
-      expect(alwaysOnTopItem.checked).toBe(true);
-    });
-  });
+            menuManager.setupContextMenu();
 
-  describe('Context Menu', () => {
-    let webContentsCreatedCallback: any;
-    let contextMenuCallback: any;
-    let mockContents: any;
+            // Get the web-contents-created callback
+            webContentsCreatedCallback = (app.on as any).mock.calls.find(
+                (call: any[]) => call[0] === 'web-contents-created'
+            )?.[1];
 
-    beforeEach(() => {
-      mockContents = {
-        on: vi.fn((event: string, callback: any) => {
-          if (event === 'context-menu') {
-            contextMenuCallback = callback;
-          }
-        }),
-      };
-    });
+            webContentsCreatedCallback({}, mockContents);
 
-    it('registers web-contents-created listener', async () => {
-      const { app } = await import('electron');
+            const mockParams = {
+                editFlags: {
+                    canCut: true,
+                    canCopy: true,
+                    canPaste: true,
+                    canDelete: true,
+                    canSelectAll: true,
+                },
+            };
 
-      menuManager.setupContextMenu();
+            contextMenuCallback({}, mockParams);
 
-      expect(app.on).toHaveBeenCalledWith('web-contents-created', expect.any(Function));
+            const menu = (Menu.buildFromTemplate as any).mock.results[
+                (Menu.buildFromTemplate as any).mock.results.length - 1
+            ].value;
+            expect(menu.popup).toHaveBeenCalled();
+        });
     });
 
-    it('pre-builds context menu with correct items and accelerators', async () => {
-      const { Menu } = await import('electron');
+    describe('Debug Menu', () => {
+        beforeEach(() => {
+            mockWindowManager.isDev = true;
+        });
 
-      menuManager.setupContextMenu();
+        it('includes Debug menu when isDev is true', () => {
+            setPlatform('win32');
+            menuManager.buildMenu();
 
-      // Verify menu was pre-built once during setup
-      expect(Menu.buildFromTemplate).toHaveBeenCalled();
-      const buildCall = (Menu.buildFromTemplate as any).mock.calls[
-        (Menu.buildFromTemplate as any).mock.calls.length - 1
-      ];
-      const template = buildCall[0];
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const debugMenu = findMenuItem(template, 'Debug');
+            expect(debugMenu).toBeTruthy();
+        });
 
-      // Verify template includes IDs, roles, and accelerators
-      expect(template).toEqual([
-        { id: 'cut', role: 'cut', accelerator: 'CmdOrCtrl+X' },
-        { id: 'copy', role: 'copy', accelerator: 'CmdOrCtrl+C' },
-        { id: 'paste', role: 'paste', accelerator: 'CmdOrCtrl+V' },
-        { id: 'delete', role: 'delete' },
-        { type: 'separator' },
-        { id: 'selectAll', role: 'selectAll', accelerator: 'CmdOrCtrl+A' },
-      ]);
+        it('Crash Renderer item calls forcefullyCrashRenderer', () => {
+            setPlatform('win32');
+            const mockWebContents = { forcefullyCrashRenderer: vi.fn() };
+            const mockWin = { isDestroyed: () => false, webContents: mockWebContents };
+            mockWindowManager.getMainWindow.mockReturnValue(mockWin);
+
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const debugMenu = findMenuItem(template, 'Debug');
+            const crashItem = findSubmenuItem(debugMenu, 'Crash Renderer');
+
+            crashItem.click();
+            expect(mockWebContents.forcefullyCrashRenderer).toHaveBeenCalled();
+        });
+
+        it('Crash Renderer handles missing window', () => {
+            setPlatform('win32');
+            mockWindowManager.getMainWindow.mockReturnValue(null);
+
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const debugMenu = findMenuItem(template, 'Debug');
+            const crashItem = findSubmenuItem(debugMenu, 'Crash Renderer');
+
+            expect(() => crashItem.click()).not.toThrow();
+        });
+
+        it('Crash Renderer handles destroyed window', () => {
+            setPlatform('win32');
+            const mockWin = {
+                isDestroyed: () => true,
+                webContents: { forcefullyCrashRenderer: vi.fn() },
+            };
+            mockWindowManager.getMainWindow.mockReturnValue(mockWin);
+
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const debugMenu = findMenuItem(template, 'Debug');
+            const crashItem = findSubmenuItem(debugMenu, 'Crash Renderer');
+
+            crashItem.click();
+            expect(mockWin.webContents.forcefullyCrashRenderer).not.toHaveBeenCalled();
+        });
+
+        it('Trigger React Error item sends debug-trigger-error', () => {
+            setPlatform('win32');
+            const mockWebContents = { send: vi.fn() };
+            const mockWin = { isDestroyed: () => false, webContents: mockWebContents };
+            mockWindowManager.getMainWindow.mockReturnValue(mockWin);
+
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const debugMenu = findMenuItem(template, 'Debug');
+            const errorItem = findSubmenuItem(debugMenu, 'Trigger React Error');
+
+            errorItem.click();
+            expect(mockWebContents.send).toHaveBeenCalledWith('debug-trigger-error');
+        });
+
+        it('Trigger React Error handles missing window', () => {
+            setPlatform('win32');
+            mockWindowManager.getMainWindow.mockReturnValue(null);
+
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const debugMenu = findMenuItem(template, 'Debug');
+            const errorItem = findSubmenuItem(debugMenu, 'Trigger React Error');
+
+            expect(() => errorItem.click()).not.toThrow();
+        });
     });
 
-    it('calls popup on the cached menu when context-menu event fires', async () => {
-      const { app, Menu } = await import('electron');
+    describe('Dock Menu Click Handlers', () => {
+        it('Show Gemini calls restoreFromTray', async () => {
+            setPlatform('darwin');
+            const { Menu: MenuModule, app } = await import('electron');
+            (app as any).dock = { setMenu: vi.fn() };
 
-      menuManager.setupContextMenu();
+            vi.clearAllMocks();
+            menuManager.buildMenu();
 
-      // Get the web-contents-created callback
-      webContentsCreatedCallback = (app.on as any).mock.calls.find(
-        (call: any[]) => call[0] === 'web-contents-created'
-      )?.[1];
+            // Find dock menu template (last buildFromTemplate call on macOS)
+            const allCalls = (MenuModule.buildFromTemplate as any).mock.calls;
+            const dockMenuTemplate = allCalls[allCalls.length - 1][0];
+            const showItem = dockMenuTemplate.find((item: any) => item.label === 'Show Gemini');
 
-      webContentsCreatedCallback({}, mockContents);
+            showItem.click();
+            expect(mockWindowManager.restoreFromTray).toHaveBeenCalled();
+        });
 
-      const mockParams = {
-        editFlags: {
-          canCut: true,
-          canCopy: true,
-          canPaste: true,
-          canDelete: true,
-          canSelectAll: true,
-        },
-      };
+        it('Settings calls createOptionsWindow', async () => {
+            setPlatform('darwin');
+            const { Menu: MenuModule, app } = await import('electron');
+            (app as any).dock = { setMenu: vi.fn() };
 
-      contextMenuCallback({}, mockParams);
+            vi.clearAllMocks();
+            menuManager.buildMenu();
 
-      const menu = (Menu.buildFromTemplate as any).mock.results[
-        (Menu.buildFromTemplate as any).mock.results.length - 1
-      ].value;
-      expect(menu.popup).toHaveBeenCalled();
-    });
-  });
+            const allCalls = (MenuModule.buildFromTemplate as any).mock.calls;
+            const dockMenuTemplate = allCalls[allCalls.length - 1][0];
+            const settingsItem = dockMenuTemplate.find((item: any) => item.label === 'Settings');
 
-  describe('Debug Menu', () => {
-    beforeEach(() => {
-      mockWindowManager.isDev = true;
-    });
-
-    it('includes Debug menu when isDev is true', () => {
-      setPlatform('win32');
-      menuManager.buildMenu();
-
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const debugMenu = findMenuItem(template, 'Debug');
-      expect(debugMenu).toBeTruthy();
+            settingsItem.click();
+            expect(mockWindowManager.createOptionsWindow).toHaveBeenCalled();
+        });
     });
 
-    it('Crash Renderer item calls forcefullyCrashRenderer', () => {
-      setPlatform('win32');
-      const mockWebContents = { forcefullyCrashRenderer: vi.fn() };
-      const mockWin = { isDestroyed: () => false, webContents: mockWebContents };
-      mockWindowManager.getMainWindow.mockReturnValue(mockWin);
+    describe('Accelerator Disabled State', () => {
+        it('returns undefined accelerator when hotkey is disabled', () => {
+            mockHotkeyManager.isIndividualEnabled.mockReturnValue(false);
 
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const debugMenu = findMenuItem(template, 'Debug');
-      const crashItem = findSubmenuItem(debugMenu, 'Crash Renderer');
+            setPlatform('win32');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const viewMenu = findMenuItem(template, 'View');
+            const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
 
-      crashItem.click();
-      expect(mockWebContents.forcefullyCrashRenderer).toHaveBeenCalled();
+            expect(alwaysOnTopItem.accelerator).toBeUndefined();
+        });
+
+        it('returns undefined accelerator for Print to PDF when disabled', () => {
+            mockHotkeyManager.isIndividualEnabled.mockReturnValue(false);
+
+            setPlatform('win32');
+            menuManager.buildMenu();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const fileMenu = findMenuItem(template, 'File');
+            const printItem = findSubmenuItem(fileMenu, 'Print to PDF');
+
+            expect(printItem.accelerator).toBeUndefined();
+        });
     });
 
-    it('Crash Renderer handles missing window', () => {
-      setPlatform('win32');
-      mockWindowManager.getMainWindow.mockReturnValue(null);
+    describe('Constructor without hotkeyManager', () => {
+        it('works without hotkeyManager', () => {
+            const managerNoHotkey = new MenuManager(mockWindowManager as unknown as WindowManager);
 
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const debugMenu = findMenuItem(template, 'Debug');
-      const crashItem = findSubmenuItem(debugMenu, 'Crash Renderer');
+            setPlatform('win32');
+            managerNoHotkey.buildMenu();
 
-      expect(() => crashItem.click()).not.toThrow();
+            const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
+            const viewMenu = findMenuItem(template, 'View');
+            const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
+            expect(alwaysOnTopItem.accelerator).toBeUndefined();
+        });
     });
 
-    it('Crash Renderer handles destroyed window', () => {
-      setPlatform('win32');
-      const mockWin = {
-        isDestroyed: () => true,
-        webContents: { forcefullyCrashRenderer: vi.fn() },
-      };
-      mockWindowManager.getMainWindow.mockReturnValue(mockWin);
-
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const debugMenu = findMenuItem(template, 'Debug');
-      const crashItem = findSubmenuItem(debugMenu, 'Crash Renderer');
-
-      crashItem.click();
-      expect(mockWin.webContents.forcefullyCrashRenderer).not.toHaveBeenCalled();
+    describe('rebuildMenuWithAccelerators', () => {
+        it('rebuilds menu when called', () => {
+            vi.clearAllMocks();
+            menuManager.rebuildMenuWithAccelerators();
+            expect(Menu.buildFromTemplate).toHaveBeenCalled();
+        });
     });
 
-    it('Trigger React Error item sends debug-trigger-error', () => {
-      setPlatform('win32');
-      const mockWebContents = { send: vi.fn() };
-      const mockWin = { isDestroyed: () => false, webContents: mockWebContents };
-      mockWindowManager.getMainWindow.mockReturnValue(mockWin);
+    describe('Event Subscription', () => {
+        it('subscribes to accelerator-changed event for application hotkeys', () => {
+            expect(mockWindowManager.on).toHaveBeenCalledWith('accelerator-changed', expect.any(Function));
+        });
 
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const debugMenu = findMenuItem(template, 'Debug');
-      const errorItem = findSubmenuItem(debugMenu, 'Trigger React Error');
+        it('subscribes to hotkey-enabled-changed event for application hotkeys', () => {
+            expect(mockWindowManager.on).toHaveBeenCalledWith('hotkey-enabled-changed', expect.any(Function));
+        });
 
-      errorItem.click();
-      expect(mockWebContents.send).toHaveBeenCalledWith('debug-trigger-error');
+        it('rebuilds menu when application hotkey accelerator changes', () => {
+            const acceleratorHandler = mockWindowManager.on.mock.calls.find(
+                (call: any) => call[0] === 'accelerator-changed'
+            )[1];
+
+            vi.clearAllMocks();
+            acceleratorHandler('alwaysOnTop');
+            expect(Menu.buildFromTemplate).toHaveBeenCalled();
+        });
+
+        it('does not rebuild menu when global hotkey accelerator changes', () => {
+            const acceleratorHandler = mockWindowManager.on.mock.calls.find(
+                (call: any) => call[0] === 'accelerator-changed'
+            )[1];
+
+            vi.clearAllMocks();
+            acceleratorHandler('quickChat');
+            expect(Menu.buildFromTemplate).not.toHaveBeenCalled();
+        });
+
+        it('rebuilds menu when application hotkey enabled state changes', () => {
+            const enableHandler = mockWindowManager.on.mock.calls.find(
+                (call: any) => call[0] === 'hotkey-enabled-changed'
+            )[1];
+
+            vi.clearAllMocks();
+            enableHandler('printToPdf');
+            expect(Menu.buildFromTemplate).toHaveBeenCalled();
+        });
+
+        it('does not rebuild menu when global hotkey enabled state changes', () => {
+            const enableHandler = mockWindowManager.on.mock.calls.find(
+                (call: any) => call[0] === 'hotkey-enabled-changed'
+            )[1];
+
+            vi.clearAllMocks();
+            enableHandler('bossKey');
+            expect(Menu.buildFromTemplate).not.toHaveBeenCalled();
+        });
     });
-
-    it('Trigger React Error handles missing window', () => {
-      setPlatform('win32');
-      mockWindowManager.getMainWindow.mockReturnValue(null);
-
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const debugMenu = findMenuItem(template, 'Debug');
-      const errorItem = findSubmenuItem(debugMenu, 'Trigger React Error');
-
-      expect(() => errorItem.click()).not.toThrow();
-    });
-  });
-
-  describe('Dock Menu Click Handlers', () => {
-    it('Show Gemini calls restoreFromTray', async () => {
-      setPlatform('darwin');
-      const { Menu: MenuModule, app } = await import('electron');
-      (app as any).dock = { setMenu: vi.fn() };
-
-      vi.clearAllMocks();
-      menuManager.buildMenu();
-
-      // Find dock menu template (last buildFromTemplate call on macOS)
-      const allCalls = (MenuModule.buildFromTemplate as any).mock.calls;
-      const dockMenuTemplate = allCalls[allCalls.length - 1][0];
-      const showItem = dockMenuTemplate.find((item: any) => item.label === 'Show Gemini');
-
-      showItem.click();
-      expect(mockWindowManager.restoreFromTray).toHaveBeenCalled();
-    });
-
-    it('Settings calls createOptionsWindow', async () => {
-      setPlatform('darwin');
-      const { Menu: MenuModule, app } = await import('electron');
-      (app as any).dock = { setMenu: vi.fn() };
-
-      vi.clearAllMocks();
-      menuManager.buildMenu();
-
-      const allCalls = (MenuModule.buildFromTemplate as any).mock.calls;
-      const dockMenuTemplate = allCalls[allCalls.length - 1][0];
-      const settingsItem = dockMenuTemplate.find((item: any) => item.label === 'Settings');
-
-      settingsItem.click();
-      expect(mockWindowManager.createOptionsWindow).toHaveBeenCalled();
-    });
-  });
-
-  describe('Accelerator Disabled State', () => {
-    it('returns undefined accelerator when hotkey is disabled', () => {
-      mockHotkeyManager.isIndividualEnabled.mockReturnValue(false);
-
-      setPlatform('win32');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const viewMenu = findMenuItem(template, 'View');
-      const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
-
-      expect(alwaysOnTopItem.accelerator).toBeUndefined();
-    });
-
-    it('returns undefined accelerator for Print to PDF when disabled', () => {
-      mockHotkeyManager.isIndividualEnabled.mockReturnValue(false);
-
-      setPlatform('win32');
-      menuManager.buildMenu();
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const fileMenu = findMenuItem(template, 'File');
-      const printItem = findSubmenuItem(fileMenu, 'Print to PDF');
-
-      expect(printItem.accelerator).toBeUndefined();
-    });
-  });
-
-  describe('Constructor without hotkeyManager', () => {
-    it('works without hotkeyManager', () => {
-      const managerNoHotkey = new MenuManager(mockWindowManager as unknown as WindowManager);
-
-      setPlatform('win32');
-      managerNoHotkey.buildMenu();
-
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const viewMenu = findMenuItem(template, 'View');
-      const alwaysOnTopItem = findSubmenuItem(viewMenu, 'Always On Top');
-      expect(alwaysOnTopItem.accelerator).toBeUndefined();
-    });
-  });
-
-  describe('rebuildMenuWithAccelerators', () => {
-    it('rebuilds menu when called', () => {
-      vi.clearAllMocks();
-      menuManager.rebuildMenuWithAccelerators();
-      expect(Menu.buildFromTemplate).toHaveBeenCalled();
-    });
-  });
-
-  describe('Event Subscription', () => {
-    it('subscribes to accelerator-changed event for application hotkeys', () => {
-      expect(mockWindowManager.on).toHaveBeenCalledWith(
-        'accelerator-changed',
-        expect.any(Function)
-      );
-    });
-
-    it('subscribes to hotkey-enabled-changed event for application hotkeys', () => {
-      expect(mockWindowManager.on).toHaveBeenCalledWith(
-        'hotkey-enabled-changed',
-        expect.any(Function)
-      );
-    });
-
-    it('rebuilds menu when application hotkey accelerator changes', () => {
-      const acceleratorHandler = mockWindowManager.on.mock.calls.find(
-        (call: any) => call[0] === 'accelerator-changed'
-      )[1];
-
-      vi.clearAllMocks();
-      acceleratorHandler('alwaysOnTop');
-      expect(Menu.buildFromTemplate).toHaveBeenCalled();
-    });
-
-    it('does not rebuild menu when global hotkey accelerator changes', () => {
-      const acceleratorHandler = mockWindowManager.on.mock.calls.find(
-        (call: any) => call[0] === 'accelerator-changed'
-      )[1];
-
-      vi.clearAllMocks();
-      acceleratorHandler('quickChat');
-      expect(Menu.buildFromTemplate).not.toHaveBeenCalled();
-    });
-
-    it('rebuilds menu when application hotkey enabled state changes', () => {
-      const enableHandler = mockWindowManager.on.mock.calls.find(
-        (call: any) => call[0] === 'hotkey-enabled-changed'
-      )[1];
-
-      vi.clearAllMocks();
-      enableHandler('printToPdf');
-      expect(Menu.buildFromTemplate).toHaveBeenCalled();
-    });
-
-    it('does not rebuild menu when global hotkey enabled state changes', () => {
-      const enableHandler = mockWindowManager.on.mock.calls.find(
-        (call: any) => call[0] === 'hotkey-enabled-changed'
-      )[1];
-
-      vi.clearAllMocks();
-      enableHandler('bossKey');
-      expect(Menu.buildFromTemplate).not.toHaveBeenCalled();
-    });
-  });
 });

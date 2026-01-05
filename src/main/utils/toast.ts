@@ -44,7 +44,7 @@ import type { ToastPayload } from '../../shared/types/toast';
  * ```
  */
 export function showToast(window: BrowserWindow, options: ToastPayload): void {
-  if (window && !window.isDestroyed()) {
-    window.webContents.send(IPC_CHANNELS.TOAST_SHOW, options);
-  }
+    if (window && !window.isDestroyed()) {
+        window.webContents.send(IPC_CHANNELS.TOAST_SHOW, options);
+    }
 }

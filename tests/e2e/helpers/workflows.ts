@@ -16,11 +16,11 @@ import { Selectors } from './selectors';
 import { clickMenuItemById } from './menuActions';
 import { waitForWindowCount, closeCurrentWindow } from './windowActions';
 import {
-  waitForOptionsWindow,
-  closeOptionsWindow,
-  switchToOptionsWindow,
-  navigateToOptionsTab,
-  openOptionsWindowViaHotkey,
+    waitForOptionsWindow,
+    closeOptionsWindow,
+    switchToOptionsWindow,
+    navigateToOptionsTab,
+    openOptionsWindowViaHotkey,
 } from './optionsWindowActions';
 import { isMacOS } from './platform';
 
@@ -42,19 +42,19 @@ import { isMacOS } from './platform';
  * });
  */
 export async function withOptionsWindowViaMenu<T>(action: () => Promise<T>): Promise<T> {
-  E2ELogger.info('workflows', 'Opening Options window via menu');
+    E2ELogger.info('workflows', 'Opening Options window via menu');
 
-  await clickMenuItemById('menu-file-options');
-  await waitForWindowCount(2);
-  await switchToOptionsWindow();
-  await browser.pause(E2E_TIMING.UI_STATE_PAUSE_MS);
+    await clickMenuItemById('menu-file-options');
+    await waitForWindowCount(2);
+    await switchToOptionsWindow();
+    await browser.pause(E2E_TIMING.UI_STATE_PAUSE_MS);
 
-  try {
-    return await action();
-  } finally {
-    E2ELogger.info('workflows', 'Closing Options window');
-    await closeOptionsWindow();
-  }
+    try {
+        return await action();
+    } finally {
+        E2ELogger.info('workflows', 'Closing Options window');
+        await closeOptionsWindow();
+    }
 }
 
 /**
@@ -71,17 +71,17 @@ export async function withOptionsWindowViaMenu<T>(action: () => Promise<T>): Pro
  * });
  */
 export async function withOptionsWindowViaHotkey<T>(action: () => Promise<T>): Promise<T> {
-  E2ELogger.info('workflows', 'Opening Options window via hotkey');
+    E2ELogger.info('workflows', 'Opening Options window via hotkey');
 
-  await openOptionsWindowViaHotkey();
-  await waitForOptionsWindow();
+    await openOptionsWindowViaHotkey();
+    await waitForOptionsWindow();
 
-  try {
-    return await action();
-  } finally {
-    E2ELogger.info('workflows', 'Closing Options window');
-    await closeOptionsWindow();
-  }
+    try {
+        return await action();
+    } finally {
+        E2ELogger.info('workflows', 'Closing Options window');
+        await closeOptionsWindow();
+    }
 }
 
 /**
@@ -97,15 +97,12 @@ export async function withOptionsWindowViaHotkey<T>(action: () => Promise<T>): P
  *   expect(await version.getText()).toMatch(/\d+\.\d+/);
  * });
  */
-export async function withOptionsTab<T>(
-  tabName: 'settings' | 'about',
-  action: () => Promise<T>
-): Promise<T> {
-  return withOptionsWindowViaMenu(async () => {
-    await navigateToOptionsTab(tabName);
-    await browser.pause(E2E_TIMING.UI_STATE_PAUSE_MS);
-    return await action();
-  });
+export async function withOptionsTab<T>(tabName: 'settings' | 'about', action: () => Promise<T>): Promise<T> {
+    return withOptionsWindowViaMenu(async () => {
+        await navigateToOptionsTab(tabName);
+        await browser.pause(E2E_TIMING.UI_STATE_PAUSE_MS);
+        return await action();
+    });
 }
 
 // =============================================================================
@@ -123,16 +120,16 @@ export async function withOptionsTab<T>(
  * // Theme is now applied
  */
 export async function changeTheme(theme: 'light' | 'dark' | 'system'): Promise<void> {
-  E2ELogger.info('workflows', `Changing theme to: ${theme}`);
+    E2ELogger.info('workflows', `Changing theme to: ${theme}`);
 
-  await withOptionsWindowViaMenu(async () => {
-    const themeCard = await browser.$(Selectors.themeCard(theme));
-    await themeCard.waitForDisplayed({ timeout: 5000 });
-    await themeCard.click();
-    await browser.pause(E2E_TIMING.UI_STATE_PAUSE_MS);
-  });
+    await withOptionsWindowViaMenu(async () => {
+        const themeCard = await browser.$(Selectors.themeCard(theme));
+        await themeCard.waitForDisplayed({ timeout: 5000 });
+        await themeCard.click();
+        await browser.pause(E2E_TIMING.UI_STATE_PAUSE_MS);
+    });
 
-  E2ELogger.info('workflows', `✓ Theme changed to: ${theme}`);
+    E2ELogger.info('workflows', `✓ Theme changed to: ${theme}`);
 }
 
 /**
@@ -146,16 +143,14 @@ export async function changeTheme(theme: 'light' | 'dark' | 'system'): Promise<v
  * // ... do test stuff
  * await changeTheme(original); // Restore
  */
-export async function changeThemeWithRestore(
-  newTheme: 'light' | 'dark' | 'system'
-): Promise<'light' | 'dark'> {
-  const originalTheme = (await browser.execute(() => {
-    return document.documentElement.getAttribute('data-theme');
-  })) as 'light' | 'dark';
+export async function changeThemeWithRestore(newTheme: 'light' | 'dark' | 'system'): Promise<'light' | 'dark'> {
+    const originalTheme = (await browser.execute(() => {
+        return document.documentElement.getAttribute('data-theme');
+    })) as 'light' | 'dark';
 
-  await changeTheme(newTheme);
+    await changeTheme(newTheme);
 
-  return originalTheme;
+    return originalTheme;
 }
 
 // =============================================================================
@@ -172,29 +167,29 @@ export async function changeThemeWithRestore(
  * await recordHotkey('alwaysOnTop', ['Control', 'Alt', 'T']);
  */
 export async function recordHotkey(hotkeyId: string, keys: string[]): Promise<void> {
-  E2ELogger.info('workflows', `Recording hotkey for ${hotkeyId}: ${keys.join('+')}`);
+    E2ELogger.info('workflows', `Recording hotkey for ${hotkeyId}: ${keys.join('+')}`);
 
-  // Find the hotkey row and click the accelerator display
-  const row = await browser.$(`[data-testid="hotkey-toggle-${hotkeyId}"]`);
-  const parentRow = await row.parentElement();
-  const acceleratorDisplay = await parentRow.$('.keycap-container');
+    // Find the hotkey row and click the accelerator display
+    const row = await browser.$(`[data-testid="hotkey-toggle-${hotkeyId}"]`);
+    const parentRow = await row.parentElement();
+    const acceleratorDisplay = await parentRow.$('.keycap-container');
 
-  await acceleratorDisplay.click();
+    await acceleratorDisplay.click();
 
-  // Wait for recording mode to activate
-  await browser.waitUntil(
-    async () => {
-      const prompt = await browser.$('.recording-prompt');
-      return await prompt.isDisplayed();
-    },
-    { timeout: 2000, timeoutMsg: 'Recording mode did not activate' }
-  );
+    // Wait for recording mode to activate
+    await browser.waitUntil(
+        async () => {
+            const prompt = await browser.$('.recording-prompt');
+            return await prompt.isDisplayed();
+        },
+        { timeout: 2000, timeoutMsg: 'Recording mode did not activate' }
+    );
 
-  // Press the new key combination
-  await browser.keys(keys);
-  await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
+    // Press the new key combination
+    await browser.keys(keys);
+    await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
 
-  E2ELogger.info('workflows', `✓ Recorded hotkey: ${keys.join('+')}`);
+    E2ELogger.info('workflows', `✓ Recorded hotkey: ${keys.join('+')}`);
 }
 
 /**
@@ -208,9 +203,9 @@ export async function recordHotkey(hotkeyId: string, keys: string[]): Promise<vo
  * await recordHotkeyViaOptions('bossKey', ['Control', 'Shift', 'H']);
  */
 export async function recordHotkeyViaOptions(hotkeyId: string, keys: string[]): Promise<void> {
-  await withOptionsWindowViaHotkey(async () => {
-    await recordHotkey(hotkeyId, keys);
-  });
+    await withOptionsWindowViaHotkey(async () => {
+        await recordHotkey(hotkeyId, keys);
+    });
 }
 
 /**
@@ -219,23 +214,23 @@ export async function recordHotkeyViaOptions(hotkeyId: string, keys: string[]): 
  * @param hotkeyId - The hotkey identifier
  */
 export async function resetHotkeyToDefault(hotkeyId: string): Promise<void> {
-  E2ELogger.info('workflows', `Resetting hotkey: ${hotkeyId}`);
+    E2ELogger.info('workflows', `Resetting hotkey: ${hotkeyId}`);
 
-  const row = await browser.$(`[data-testid="hotkey-toggle-${hotkeyId}"]`);
-  const parentRow = await row.parentElement();
-  const resetButton = await parentRow.$('.reset-button');
+    const row = await browser.$(`[data-testid="hotkey-toggle-${hotkeyId}"]`);
+    const parentRow = await row.parentElement();
+    const resetButton = await parentRow.$('.reset-button');
 
-  if (await resetButton.isExisting()) {
-    if (await resetButton.isDisplayed()) {
-      await resetButton.click();
-      await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
-      E2ELogger.info('workflows', `✓ Reset hotkey: ${hotkeyId}`);
+    if (await resetButton.isExisting()) {
+        if (await resetButton.isDisplayed()) {
+            await resetButton.click();
+            await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
+            E2ELogger.info('workflows', `✓ Reset hotkey: ${hotkeyId}`);
+        } else {
+            E2ELogger.info('workflows', `Hotkey ${hotkeyId} already at default`);
+        }
     } else {
-      E2ELogger.info('workflows', `Hotkey ${hotkeyId} already at default`);
+        E2ELogger.info('workflows', `Hotkey ${hotkeyId} already at default (no reset button)`);
     }
-  } else {
-    E2ELogger.info('workflows', `Hotkey ${hotkeyId} already at default (no reset button)`);
-  }
 }
 
 // =============================================================================
@@ -251,14 +246,14 @@ export async function resetHotkeyToDefault(hotkeyId: string): Promise<void> {
  * await toggleSwitch('[data-testid="auto-update-toggle"]');
  */
 export async function toggleSwitch(toggleSelector: string): Promise<void> {
-  const toggle = await browser.$(toggleSelector);
-  await toggle.waitForDisplayed({ timeout: 5000 });
+    const toggle = await browser.$(toggleSelector);
+    await toggle.waitForDisplayed({ timeout: 5000 });
 
-  const wasChecked = (await toggle.getAttribute('aria-checked')) === 'true';
-  await toggle.click();
-  await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
+    const wasChecked = (await toggle.getAttribute('aria-checked')) === 'true';
+    await toggle.click();
+    await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
 
-  E2ELogger.info('workflows', `Toggled ${toggleSelector}: ${wasChecked} → ${!wasChecked}`);
+    E2ELogger.info('workflows', `Toggled ${toggleSelector}: ${wasChecked} → ${!wasChecked}`);
 }
 
 /**
@@ -268,18 +263,18 @@ export async function toggleSwitch(toggleSelector: string): Promise<void> {
  * @param enabled - The desired state
  */
 export async function setToggleState(toggleSelector: string, enabled: boolean): Promise<void> {
-  const toggle = await browser.$(toggleSelector);
-  await toggle.waitForDisplayed({ timeout: 5000 });
+    const toggle = await browser.$(toggleSelector);
+    await toggle.waitForDisplayed({ timeout: 5000 });
 
-  const isCurrentlyEnabled = (await toggle.getAttribute('aria-checked')) === 'true';
+    const isCurrentlyEnabled = (await toggle.getAttribute('aria-checked')) === 'true';
 
-  if (isCurrentlyEnabled !== enabled) {
-    await toggle.click();
-    await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
-    E2ELogger.info('workflows', `Set toggle ${toggleSelector} to: ${enabled}`);
-  } else {
-    E2ELogger.info('workflows', `Toggle ${toggleSelector} already in state: ${enabled}`);
-  }
+    if (isCurrentlyEnabled !== enabled) {
+        await toggle.click();
+        await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
+        E2ELogger.info('workflows', `Set toggle ${toggleSelector} to: ${enabled}`);
+    } else {
+        E2ELogger.info('workflows', `Toggle ${toggleSelector} already in state: ${enabled}`);
+    }
 }
 
 // =============================================================================
@@ -291,33 +286,33 @@ export async function setToggleState(toggleSelector: string, enabled: boolean): 
  * Useful for test cleanup.
  */
 export async function ensureSingleWindow(): Promise<void> {
-  const handles = await browser.getWindowHandles();
+    const handles = await browser.getWindowHandles();
 
-  if (handles.length > 1) {
-    E2ELogger.info('workflows', `Closing ${handles.length - 1} extra window(s)`);
+    if (handles.length > 1) {
+        E2ELogger.info('workflows', `Closing ${handles.length - 1} extra window(s)`);
 
-    // Close all windows except the first (main window)
-    for (let i = handles.length - 1; i > 0; i--) {
-      await browser.switchToWindow(handles[i]);
-      await browser.closeWindow();
+        // Close all windows except the first (main window)
+        for (let i = handles.length - 1; i > 0; i--) {
+            await browser.switchToWindow(handles[i]);
+            await browser.closeWindow();
+        }
+
+        // Switch back to main window
+        await browser.switchToWindow(handles[0]);
     }
 
-    // Switch back to main window
-    await browser.switchToWindow(handles[0]);
-  }
-
-  E2ELogger.info('workflows', '✓ Single window state ensured');
+    E2ELogger.info('workflows', '✓ Single window state ensured');
 }
 
 /**
  * Switches to the main window (first window handle).
  */
 export async function switchToMainWindow(): Promise<void> {
-  const handles = await browser.getWindowHandles();
-  if (handles.length > 0) {
-    await browser.switchToWindow(handles[0]);
-    E2ELogger.info('workflows', 'Switched to main window');
-  }
+    const handles = await browser.getWindowHandles();
+    if (handles.length > 0) {
+        await browser.switchToWindow(handles[0]);
+        E2ELogger.info('workflows', 'Switched to main window');
+    }
 }
 
 /**
@@ -326,8 +321,8 @@ export async function switchToMainWindow(): Promise<void> {
  * @returns The number of open windows
  */
 export async function getWindowCount(): Promise<number> {
-  const handles = await browser.getWindowHandles();
-  return handles.length;
+    const handles = await browser.getWindowHandles();
+    return handles.length;
 }
 
 // =============================================================================
@@ -345,25 +340,25 @@ export async function getWindowCount(): Promise<number> {
  * const optionsHandle = await openWindowViaMenu('menu-file-options');
  */
 export async function openWindowViaMenu(menuItemId: string): Promise<string> {
-  const initialHandles = await browser.getWindowHandles();
-  const initialCount = initialHandles.length;
+    const initialHandles = await browser.getWindowHandles();
+    const initialCount = initialHandles.length;
 
-  await clickMenuItemById(menuItemId);
+    await clickMenuItemById(menuItemId);
 
-  // Wait for new window
-  await browser.waitUntil(
-    async () => {
-      const handles = await browser.getWindowHandles();
-      return handles.length > initialCount;
-    },
-    { timeout: 5000, timeoutMsg: `No new window opened after clicking ${menuItemId}` }
-  );
+    // Wait for new window
+    await browser.waitUntil(
+        async () => {
+            const handles = await browser.getWindowHandles();
+            return handles.length > initialCount;
+        },
+        { timeout: 5000, timeoutMsg: `No new window opened after clicking ${menuItemId}` }
+    );
 
-  const newHandles = await browser.getWindowHandles();
-  const newWindowHandle = newHandles.find((h) => !initialHandles.includes(h));
+    const newHandles = await browser.getWindowHandles();
+    const newWindowHandle = newHandles.find((h) => !initialHandles.includes(h));
 
-  E2ELogger.info('workflows', `✓ Opened window via menu: ${menuItemId}`);
-  return newWindowHandle || newHandles[newHandles.length - 1];
+    E2ELogger.info('workflows', `✓ Opened window via menu: ${menuItemId}`);
+    return newWindowHandle || newHandles[newHandles.length - 1];
 }
 
 // =============================================================================
@@ -379,23 +374,20 @@ export async function openWindowViaMenu(menuItemId: string): Promise<string> {
  * @example
  * await pressShortcut('primary', ','); // Cmd+, or Ctrl+,
  */
-export async function pressShortcut(
-  modifierType: 'primary' | 'alt',
-  ...keys: string[]
-): Promise<void> {
-  const isMac = await isMacOS();
+export async function pressShortcut(modifierType: 'primary' | 'alt', ...keys: string[]): Promise<void> {
+    const isMac = await isMacOS();
 
-  let modifier: string;
-  if (modifierType === 'primary') {
-    modifier = isMac ? 'Meta' : 'Control';
-  } else {
-    modifier = 'Alt';
-  }
+    let modifier: string;
+    if (modifierType === 'primary') {
+        modifier = isMac ? 'Meta' : 'Control';
+    } else {
+        modifier = 'Alt';
+    }
 
-  await browser.keys([modifier, ...keys]);
-  await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
+    await browser.keys([modifier, ...keys]);
+    await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
 
-  E2ELogger.info('workflows', `Pressed shortcut: ${modifier}+${keys.join('+')}`);
+    E2ELogger.info('workflows', `Pressed shortcut: ${modifier}+${keys.join('+')}`);
 }
 
 /**
@@ -407,29 +399,26 @@ export async function pressShortcut(
  * @example
  * await pressComplexShortcut(['primary', 'shift'], 'T'); // Cmd+Shift+T or Ctrl+Shift+T
  */
-export async function pressComplexShortcut(
-  modifiers: Array<'primary' | 'shift' | 'alt'>,
-  key: string
-): Promise<void> {
-  const isMac = await isMacOS();
+export async function pressComplexShortcut(modifiers: Array<'primary' | 'shift' | 'alt'>, key: string): Promise<void> {
+    const isMac = await isMacOS();
 
-  const modifierKeys: string[] = modifiers.map((m) => {
-    switch (m) {
-      case 'primary':
-        return isMac ? 'Meta' : 'Control';
-      case 'shift':
-        return 'Shift';
-      case 'alt':
-        return 'Alt';
-      default:
-        return m;
-    }
-  });
+    const modifierKeys: string[] = modifiers.map((m) => {
+        switch (m) {
+            case 'primary':
+                return isMac ? 'Meta' : 'Control';
+            case 'shift':
+                return 'Shift';
+            case 'alt':
+                return 'Alt';
+            default:
+                return m;
+        }
+    });
 
-  await browser.keys([...modifierKeys, key]);
-  await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
+    await browser.keys([...modifierKeys, key]);
+    await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
 
-  E2ELogger.info('workflows', `Pressed shortcut: ${modifierKeys.join('+')}+${key}`);
+    E2ELogger.info('workflows', `Pressed shortcut: ${modifierKeys.join('+')}+${key}`);
 }
 
 // =============================================================================
@@ -442,9 +431,9 @@ export async function pressComplexShortcut(
  * @param timeout - Timeout in ms (default: 15000)
  */
 export async function waitForAppReady(timeout = 15000): Promise<void> {
-  const mainLayout = await browser.$(Selectors.mainLayout);
-  await mainLayout.waitForExist({ timeout });
-  E2ELogger.info('workflows', '✓ App is ready');
+    const mainLayout = await browser.$(Selectors.mainLayout);
+    await mainLayout.waitForExist({ timeout });
+    E2ELogger.info('workflows', '✓ App is ready');
 }
 
 /**
@@ -452,7 +441,7 @@ export async function waitForAppReady(timeout = 15000): Promise<void> {
  * Use after actions that trigger IPC calls.
  */
 export async function waitForIpcSettle(): Promise<void> {
-  await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
+    await browser.pause(E2E_TIMING.IPC_ROUND_TRIP);
 }
 
 /**
@@ -460,5 +449,5 @@ export async function waitForIpcSettle(): Promise<void> {
  * Use after maximize, minimize, restore, etc.
  */
 export async function waitForWindowTransition(): Promise<void> {
-  await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
+    await browser.pause(E2E_TIMING.WINDOW_TRANSITION);
 }

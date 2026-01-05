@@ -66,23 +66,23 @@ import './CapsuleToggle.css';
  * @interface CapsuleToggleProps
  */
 export interface CapsuleToggleProps {
-  /** Current checked state (true = ON, false = OFF) */
-  checked: boolean;
+    /** Current checked state (true = ON, false = OFF) */
+    checked: boolean;
 
-  /** Callback fired when toggle state changes */
-  onChange: (checked: boolean) => void;
+    /** Callback fired when toggle state changes */
+    onChange: (checked: boolean) => void;
 
-  /** Primary label text displayed next to the toggle */
-  label: string;
+    /** Primary label text displayed next to the toggle */
+    label: string;
 
-  /** Optional secondary description text below the label */
-  description?: string;
+    /** Optional secondary description text below the label */
+    description?: string;
 
-  /** Whether the toggle is disabled (non-interactive) */
-  disabled?: boolean;
+    /** Whether the toggle is disabled (non-interactive) */
+    disabled?: boolean;
 
-  /** Test ID for automated testing (e.g., 'hotkey-toggle') */
-  testId?: string;
+    /** Test ID for automated testing (e.g., 'hotkey-toggle') */
+    testId?: string;
 }
 
 // ============================================================================
@@ -96,76 +96,73 @@ export interface CapsuleToggleProps {
  * Accessible via keyboard (Space/Enter to toggle).
  */
 export const CapsuleToggle = memo(function CapsuleToggle({
-  checked,
-  onChange,
-  label,
-  description,
-  disabled = false,
-  testId = 'capsule-toggle',
+    checked,
+    onChange,
+    label,
+    description,
+    disabled = false,
+    testId = 'capsule-toggle',
 }: CapsuleToggleProps) {
-  /**
-   * Handle toggle click.
-   */
-  const handleClick = useCallback(() => {
-    if (!disabled) {
-      onChange(!checked);
-    }
-  }, [checked, onChange, disabled]);
+    /**
+     * Handle toggle click.
+     */
+    const handleClick = useCallback(() => {
+        if (!disabled) {
+            onChange(!checked);
+        }
+    }, [checked, onChange, disabled]);
 
-  /**
-   * Handle keyboard interaction for accessibility.
-   * Activates on Enter or Space key press.
-   */
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (disabled) return;
+    /**
+     * Handle keyboard interaction for accessibility.
+     * Activates on Enter or Space key press.
+     */
+    const handleKeyDown = useCallback(
+        (event: React.KeyboardEvent) => {
+            if (disabled) return;
 
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        onChange(!checked);
-      }
-    },
-    [checked, onChange, disabled]
-  );
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onChange(!checked);
+            }
+        },
+        [checked, onChange, disabled]
+    );
 
-  const toggleId = `${testId}-button`;
-  const labelId = `${testId}-label`;
-  const descriptionId = description ? `${testId}-description` : undefined;
+    const toggleId = `${testId}-button`;
+    const labelId = `${testId}-label`;
+    const descriptionId = description ? `${testId}-description` : undefined;
 
-  return (
-    <div
-      className={`capsule-toggle ${disabled ? 'capsule-toggle--disabled' : ''}`}
-      data-testid={testId}
-    >
-      <div className="capsule-toggle__content">
-        <label id={labelId} className="capsule-toggle__label" htmlFor={toggleId}>
-          {label}
-        </label>
-        {description && (
-          <span id={descriptionId} className="capsule-toggle__description">
-            {description}
-          </span>
-        )}
-      </div>
+    return (
+        <div className={`capsule-toggle ${disabled ? 'capsule-toggle--disabled' : ''}`} data-testid={testId}>
+            <div className="capsule-toggle__content">
+                <label id={labelId} className="capsule-toggle__label" htmlFor={toggleId}>
+                    {label}
+                </label>
+                {description && (
+                    <span id={descriptionId} className="capsule-toggle__description">
+                        {description}
+                    </span>
+                )}
+            </div>
 
-      <button
-        id={toggleId}
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-labelledby={labelId}
-        aria-describedby={descriptionId}
-        aria-disabled={disabled}
-        className={`capsule-toggle__switch ${checked ? 'capsule-toggle__switch--checked' : ''}`}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
-        disabled={disabled}
-        data-testid={`${testId}-switch`}
-      >
-        <span className="capsule-toggle__thumb" aria-hidden="true" />
-      </button>
-    </div>
-  );
+            <button
+                id={toggleId}
+                type="button"
+                role="switch"
+                aria-checked={checked}
+                aria-labelledby={labelId}
+                aria-describedby={descriptionId}
+                aria-disabled={disabled}
+                className={`capsule-toggle__switch ${checked ? 'capsule-toggle__switch--checked' : ''}`}
+                onClick={handleClick}
+                onKeyDown={handleKeyDown}
+                disabled={disabled}
+                data-testid={`${testId}-switch`}
+            >
+                <span className="capsule-toggle__thumb" aria-hidden="true" />
+            </button>
+        </div>
+    );
 });
 
 export default CapsuleToggle;

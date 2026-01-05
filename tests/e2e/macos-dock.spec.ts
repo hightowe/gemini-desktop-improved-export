@@ -20,145 +20,145 @@ import { verifyTrayCreated, getTrayTooltip } from './helpers/trayActions';
 import { waitForAppReady, getWindowCount } from './helpers/workflows';
 
 describe('macOS Dock and Menubar Behavior', () => {
-  const dockPage = new MacOSDockPage();
-  const mainWindow = new MainWindowPage();
+    const dockPage = new MacOSDockPage();
+    const mainWindow = new MainWindowPage();
 
-  beforeEach(async () => {
-    // Skip all tests if not on macOS
-    if (!(await dockPage.isMacOS())) {
-      return;
-    }
+    beforeEach(async () => {
+        // Skip all tests if not on macOS
+        if (!(await dockPage.isMacOS())) {
+            return;
+        }
 
-    // Wait for app to be fully ready
-    await waitForAppReady();
-  });
-
-  describe('Dock Icon Behavior (macOS only)', () => {
-    it('should exist on macOS', async () => {
-      if (!(await dockPage.isMacOS())) {
-        E2ELogger.info('macos-dock', 'Skipping - not on macOS');
-        return;
-      }
-
-      // The Dock icon exists by virtue of the app running
-      // We verify by checking that we're on macOS and the app is running
-      const platform = await dockPage.getPlatform();
-      expect(platform).toBe('darwin');
-
-      const windowCount = await getWindowCount();
-      expect(windowCount).toBeGreaterThan(0);
-
-      E2ELogger.info('macos-dock', 'App running on macOS with Dock icon');
+        // Wait for app to be fully ready
+        await waitForAppReady();
     });
 
-    it('should recreate window when activate event is fired with no windows', async () => {
-      if (!(await dockPage.isMacOS())) {
-        return;
-      }
+    describe('Dock Icon Behavior (macOS only)', () => {
+        it('should exist on macOS', async () => {
+            if (!(await dockPage.isMacOS())) {
+                E2ELogger.info('macos-dock', 'Skipping - not on macOS');
+                return;
+            }
 
-      // Note: We can't actually close all windows without ending the test session
-      // Instead, we verify the handler exists by checking the window count
-      // after simulating activate with existing windows
+            // The Dock icon exists by virtue of the app running
+            // We verify by checking that we're on macOS and the app is running
+            const platform = await dockPage.getPlatform();
+            expect(platform).toBe('darwin');
 
-      const initialCount = await getWindowCount();
-      expect(initialCount).toBeGreaterThan(0);
+            const windowCount = await getWindowCount();
+            expect(windowCount).toBeGreaterThan(0);
 
-      // Simulate activate - should not create extra windows if one exists
-      await dockPage.simulateActivateEvent();
-      await browser.pause(500);
+            E2ELogger.info('macos-dock', 'App running on macOS with Dock icon');
+        });
 
-      const afterActivateCount = await getWindowCount();
+        it('should recreate window when activate event is fired with no windows', async () => {
+            if (!(await dockPage.isMacOS())) {
+                return;
+            }
 
-      // Should still have the same window (not create duplicates)
-      expect(afterActivateCount).toBe(initialCount);
+            // Note: We can't actually close all windows without ending the test session
+            // Instead, we verify the handler exists by checking the window count
+            // after simulating activate with existing windows
 
-      E2ELogger.info('macos-dock', 'Activate event handled correctly');
+            const initialCount = await getWindowCount();
+            expect(initialCount).toBeGreaterThan(0);
+
+            // Simulate activate - should not create extra windows if one exists
+            await dockPage.simulateActivateEvent();
+            await browser.pause(500);
+
+            const afterActivateCount = await getWindowCount();
+
+            // Should still have the same window (not create duplicates)
+            expect(afterActivateCount).toBe(initialCount);
+
+            E2ELogger.info('macos-dock', 'Activate event handled correctly');
+        });
+
+        it('should NOT quit app when all windows closed on macOS', async () => {
+            if (!(await dockPage.isMacOS())) {
+                return;
+            }
+
+            const wouldQuit = await dockPage.wouldQuitOnAllWindowsClosed();
+
+            // On macOS, should NOT quit when windows closed
+            expect(wouldQuit).toBe(false);
+
+            E2ELogger.info('macos-dock', 'App configured to stay running when windows closed');
+        });
+
+        it('should have correct Dock menu items on macOS', async () => {
+            if (!(await dockPage.isMacOS())) {
+                return;
+            }
+
+            // Use the Page Object to get Dock menu state
+            const dockMenuExists = await dockPage.hasDockMenu();
+            expect(dockMenuExists).toBe(true);
+
+            // Verify our implemented items: "Show Gemini", separator, "Settings"
+            const hasShowGemini = await dockPage.hasDockMenuItem('Show Gemini');
+            const hasSettings = await dockPage.hasDockMenuItem('Settings');
+
+            expect(hasShowGemini).toBe(true);
+            expect(hasSettings).toBe(true);
+
+            const labels = await dockPage.getDockMenuLabels();
+            E2ELogger.info('macos-dock', `Dock menu verified with ${labels.length} items`);
+        });
     });
 
-    it('should NOT quit app when all windows closed on macOS', async () => {
-      if (!(await dockPage.isMacOS())) {
-        return;
-      }
+    describe('Menubar Tray Icon (macOS)', () => {
+        it('should have menubar tray icon on macOS', async () => {
+            if (!(await dockPage.isMacOS())) {
+                E2ELogger.info('macos-dock', 'Skipping menubar test - not on macOS');
+                return;
+            }
 
-      const wouldQuit = await dockPage.wouldQuitOnAllWindowsClosed();
+            // Tray icon should exist on macOS
+            const trayExists = await verifyTrayCreated();
+            expect(trayExists).toBe(true);
 
-      // On macOS, should NOT quit when windows closed
-      expect(wouldQuit).toBe(false);
+            E2ELogger.info('macos-dock', 'Menubar tray icon exists on macOS');
+        });
 
-      E2ELogger.info('macos-dock', 'App configured to stay running when windows closed');
+        it('should attempt to retrieve tray tooltip on macOS', async () => {
+            if (!(await dockPage.isMacOS())) {
+                return;
+            }
+
+            const tooltip = await getTrayTooltip();
+
+            // Note: On macOS, Tray.getToolTip() may return null even when tooltip is set
+            // via setToolTip(). This is a known Electron limitation on macOS.
+            // We've already verified the tray exists in the previous test.
+            if (tooltip !== null) {
+                E2ELogger.info('macos-dock', `Menubar tray tooltip retrieved: "${tooltip}"`);
+            } else {
+                E2ELogger.info('macos-dock', 'Tooltip retrieval returned null (macOS limitation)');
+            }
+
+            // Accept either a valid tooltip string or null (macOS limitation)
+            expect(tooltip === null || typeof tooltip === 'string').toBe(true);
+        });
     });
 
-    it('should have correct Dock menu items on macOS', async () => {
-      if (!(await dockPage.isMacOS())) {
-        return;
-      }
+    describe('macOS Window Conventions', () => {
+        it('should use traffic light controls (handled by OS, not custom)', async () => {
+            if (!(await dockPage.isMacOS())) {
+                return;
+            }
 
-      // Use the Page Object to get Dock menu state
-      const dockMenuExists = await dockPage.hasDockMenu();
-      expect(dockMenuExists).toBe(true);
+            // Verify macOS window conventions using the Page Object
+            const conventions = await dockPage.verifyMacOSWindowConventions();
 
-      // Verify our implemented items: "Show Gemini", separator, "Settings"
-      const hasShowGemini = await dockPage.hasDockMenuItem('Show Gemini');
-      const hasSettings = await dockPage.hasDockMenuItem('Settings');
+            E2ELogger.info('macos-dock', `Uses native controls: ${conventions.usesNativeControls}`);
+            E2ELogger.info('macos-dock', `Has custom controls: ${conventions.hasCustomControls}`);
 
-      expect(hasShowGemini).toBe(true);
-      expect(hasSettings).toBe(true);
-
-      const labels = await dockPage.getDockMenuLabels();
-      E2ELogger.info('macos-dock', `Dock menu verified with ${labels.length} items`);
+            // On macOS, we expect native traffic lights, so custom controls should be absent
+            expect(conventions.usesNativeControls).toBe(true);
+            expect(conventions.hasCustomControls).toBe(false);
+        });
     });
-  });
-
-  describe('Menubar Tray Icon (macOS)', () => {
-    it('should have menubar tray icon on macOS', async () => {
-      if (!(await dockPage.isMacOS())) {
-        E2ELogger.info('macos-dock', 'Skipping menubar test - not on macOS');
-        return;
-      }
-
-      // Tray icon should exist on macOS
-      const trayExists = await verifyTrayCreated();
-      expect(trayExists).toBe(true);
-
-      E2ELogger.info('macos-dock', 'Menubar tray icon exists on macOS');
-    });
-
-    it('should attempt to retrieve tray tooltip on macOS', async () => {
-      if (!(await dockPage.isMacOS())) {
-        return;
-      }
-
-      const tooltip = await getTrayTooltip();
-
-      // Note: On macOS, Tray.getToolTip() may return null even when tooltip is set
-      // via setToolTip(). This is a known Electron limitation on macOS.
-      // We've already verified the tray exists in the previous test.
-      if (tooltip !== null) {
-        E2ELogger.info('macos-dock', `Menubar tray tooltip retrieved: "${tooltip}"`);
-      } else {
-        E2ELogger.info('macos-dock', 'Tooltip retrieval returned null (macOS limitation)');
-      }
-
-      // Accept either a valid tooltip string or null (macOS limitation)
-      expect(tooltip === null || typeof tooltip === 'string').toBe(true);
-    });
-  });
-
-  describe('macOS Window Conventions', () => {
-    it('should use traffic light controls (handled by OS, not custom)', async () => {
-      if (!(await dockPage.isMacOS())) {
-        return;
-      }
-
-      // Verify macOS window conventions using the Page Object
-      const conventions = await dockPage.verifyMacOSWindowConventions();
-
-      E2ELogger.info('macos-dock', `Uses native controls: ${conventions.usesNativeControls}`);
-      E2ELogger.info('macos-dock', `Has custom controls: ${conventions.hasCustomControls}`);
-
-      // On macOS, we expect native traffic lights, so custom controls should be absent
-      expect(conventions.usesNativeControls).toBe(true);
-      expect(conventions.hasCustomControls).toBe(false);
-    });
-  });
 });

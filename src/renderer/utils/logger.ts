@@ -9,9 +9,9 @@
 import { getIsDev } from './platform';
 
 export interface Logger {
-  log(message: string, ...args: unknown[]): void;
-  error(message: string, ...args: unknown[]): void;
-  warn(message: string, ...args: unknown[]): void;
+    log(message: string, ...args: unknown[]): void;
+    error(message: string, ...args: unknown[]): void;
+    warn(message: string, ...args: unknown[]): void;
 }
 
 /**
@@ -26,28 +26,25 @@ export interface Logger {
  * logger.log('Component mounted');
  * logger.error('Failed to load data');
  */
-export function createRendererLogger(
-  prefix: string,
-  envOverride?: { DEV?: boolean; MODE?: string }
-): Logger {
-  const isDev = getIsDev(envOverride);
+export function createRendererLogger(prefix: string, envOverride?: { DEV?: boolean; MODE?: string }): Logger {
+    const isDev = getIsDev(envOverride);
 
-  return {
-    log(message: string, ...args: unknown[]): void {
-      if (isDev) {
-        console.log(`${prefix} ${message}`, ...args);
-      }
-    },
+    return {
+        log(message: string, ...args: unknown[]): void {
+            if (isDev) {
+                console.log(`${prefix} ${message}`, ...args);
+            }
+        },
 
-    error(message: string, ...args: unknown[]): void {
-      // Always log errors, even in production
-      console.error(`${prefix} ${message}`, ...args);
-    },
+        error(message: string, ...args: unknown[]): void {
+            // Always log errors, even in production
+            console.error(`${prefix} ${message}`, ...args);
+        },
 
-    warn(message: string, ...args: unknown[]): void {
-      if (isDev) {
-        console.warn(`${prefix} ${message}`, ...args);
-      }
-    },
-  };
+        warn(message: string, ...args: unknown[]): void {
+            if (isDev) {
+                console.warn(`${prefix} ${message}`, ...args);
+            }
+        },
+    };
 }

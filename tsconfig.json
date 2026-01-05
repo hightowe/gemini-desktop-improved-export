@@ -1,47 +1,47 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    /* Path aliases */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/renderer/*"],
-      "@components/*": ["src/renderer/components/*"],
-      "@hooks/*": ["src/renderer/hooks/*"],
-      "@context/*": ["src/renderer/context/*"],
-      "@utils/*": ["src/renderer/utils/*"],
-      "@shared/*": ["src/shared/*"]
+    "compilerOptions": {
+        "target": "ES2020",
+        "useDefineForClassFields": true,
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "module": "ESNext",
+        "skipLibCheck": true,
+        /* Bundler mode */
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        /* Path aliases */
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/renderer/*"],
+            "@components/*": ["src/renderer/components/*"],
+            "@hooks/*": ["src/renderer/hooks/*"],
+            "@context/*": ["src/renderer/context/*"],
+            "@utils/*": ["src/renderer/utils/*"],
+            "@shared/*": ["src/shared/*"]
+        },
+        /* Linting */
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitReturns": true,
+        "forceConsistentCasingInFileNames": true
     },
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": ["src/renderer", "src/shared"],
-  "exclude": [
-    "src/renderer/**/*.test.ts",
-    "src/renderer/**/*.test.tsx",
-    "src/renderer/**/*.spec.ts",
-    "src/renderer/**/*.spec.tsx",
-    "src/renderer/test/**"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ]
+    "include": ["src/renderer", "src/shared"],
+    "exclude": [
+        "src/renderer/**/*.test.ts",
+        "src/renderer/**/*.test.tsx",
+        "src/renderer/**/*.spec.ts",
+        "src/renderer/**/*.spec.tsx",
+        "src/renderer/test/**"
+    ],
+    "references": [
+        {
+            "path": "./tsconfig.node.json"
+        }
+    ]
 }

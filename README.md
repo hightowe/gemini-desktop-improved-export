@@ -33,6 +33,8 @@ Users have been asking for a desktop Gemini client with these features—**we de
 | 💻 Cross-platform (Windows, macOS, Linux)      | ✅ **All three**             |
 | 🔐 Stable login & persistent sessions          | ✅ **OAuth done right**      |
 | 🔒 No data collection                          | ✅ **Zero telemetry**        |
+| 🖨️ Print to PDF                                | ✅ **Export Chats**          |
+| 🔔 Desktop Notifications                       | ✅ **Notify on Reply**       |
 
 ---
 
@@ -41,6 +43,8 @@ Users have been asking for a desktop Gemini client with these features—**we de
 **Like macOS Spotlight, but for AI.** Press **`Ctrl+Shift+Space`** (or **`Cmd+Shift+Space`** on Mac) from anywhere—writing code, browsing, reading docs—and a floating command center appears instantly.
 
 <!-- [INSERT QUICK CHAT SCREENSHOT HERE] -->
+
+![alt text](docs/assets/quick_chat.png)
 
 **What makes it powerful:**
 
@@ -114,12 +118,14 @@ sudo dpkg -i "Gemini Desktop-x.x.x-x64.deb"
 
 ## ⌨️ Keyboard Shortcuts
 
-| Shortcut           | Action                              |
-| ------------------ | ----------------------------------- |
-| `Ctrl+Shift+Space` | Toggle Quick Chat                   |
-| `Ctrl+Alt+E`       | **Stealth Mode** (Minimize to tray) |
-| `Ctrl+,`           | Open Settings                       |
-| `Escape`           | Close Quick Chat                    |
+| Shortcut            | Action                              |
+| ------------------- | ----------------------------------- |
+| `Ctrl+Shift+Space`  | Toggle Quick Chat                   |
+| `Ctrl+Alt+E`        | **Stealth Mode** (Minimize to tray) |
+| `Ctrl+P`            | Print to PDF                        |
+| `Ctrl+=` / `Ctrl+-` | Zoom In / Out                       |
+| `Ctrl+,`            | Open Settings                       |
+| `Escape`            | Close Quick Chat                    |
 
 > 💡 Hotkeys can be modified in Settings if they conflict with other apps.
 
@@ -134,8 +140,13 @@ sudo dpkg -i "Gemini Desktop-x.x.x-x64.deb"
 - 🔄 **System Tray** — Minimize to tray, quick access
 - 🌙 **Theme Sync** — Follows your system light/dark preference
 - ⚡ **Quick Chat** — Spotlight-style prompt from anywhere
+- 🔔 **Smart Notifications** — Get notified when long background responses finish
+- 🖨️ **Print to PDF** — Save your chats or code snippets as PDF
+- 🔍 **Zoom Controls** — Adjust text size for comfortable reading
 
-<!-- [INSERT MAIN WINDOW SCREENSHOT HERE] -->
+---
+
+![alt text](docs/assets/main_window.png)
 
 ---
 

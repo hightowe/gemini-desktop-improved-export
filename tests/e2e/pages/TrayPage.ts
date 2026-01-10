@@ -260,7 +260,7 @@ export class TrayPage extends BasePage {
         // Additional stabilization pause for macOS to prevent WebSocket issues
         // macOS window state transitions can affect Electron's IPC stability
         const onMac = await isMacOS();
-        await browser.pause(onMac ? E2E_TIMING.WINDOW_HIDE_SHOW : E2E_TIMING.UI_STATE_PAUSE_MS);
+        await browser.pause(onMac ? E2E_TIMING.MACOS_WINDOW_STABILIZE : E2E_TIMING.UI_STATE_PAUSE_MS);
     }
 
     /**

@@ -1,7 +1,7 @@
 /**
  * Valid logging levels for E2E tests.
  */
-export type LogLevel = 'info' | 'error' | 'debug';
+export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
 /**
  * Enhanced Logger for E2E tests.
@@ -29,6 +29,15 @@ export class E2ELogger {
         this.log('error', context, message, error);
     }
 
+    /**
+     * Logs a warning message.
+     * @param context The context/component name
+     * @param message The warning message
+     * @param data Optional data
+     */
+    static warn(context: string, message: string, data?: any) {
+        this.log('warn', context, message, data);
+    }
     /**
      * Logs a debug message. Only visible if process.env.E2E_DEBUG is set.
      * @param context The context/component name

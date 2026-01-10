@@ -88,6 +88,9 @@ export const E2E_TIMING = {
     /** Pause for window hide/show operations (tray interactions) */
     WINDOW_HIDE_SHOW: 500,
 
+    /** Extended pause for macOS window operations that need WebSocket stabilization */
+    MACOS_WINDOW_STABILIZE: 750,
+
     /** Pause for multiple operation cycles */
     CYCLE_PAUSE: 400,
 

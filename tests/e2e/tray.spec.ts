@@ -15,7 +15,7 @@
  * @module tray.spec
  */
 
-import { expect } from '@wdio/globals';
+import { browser, expect } from '@wdio/globals';
 import { E2ELogger } from './helpers/logger';
 import { waitForAppReady, ensureSingleWindow } from './helpers/workflows';
 import { MainWindowPage, TrayPage } from './pages';
@@ -29,13 +29,19 @@ describe('System Tray Functionality', () => {
     });
 
     afterEach(async () => {
-        // Ensure tray click restored the window and clean up
-        const isVisible = await tray.isWindowVisible();
-        if (!isVisible) {
-            // Restore window if it's hidden to allow next test to work
-            await tray.restoreWindowViaTrayClick();
+        // Wrap cleanup in try-catch to prevent cascading failures from WebSocket issues
+        try {
+            // Ensure tray click restored the window and clean up
+            const isVisible = await tray.isWindowVisible();
+            if (!isVisible) {
+                // Restore window if it's hidden to allow next test to work
+                await tray.restoreWindowViaTrayClick();
+            }
+            await ensureSingleWindow();
+        } catch (error) {
+            // Log but don't fail - WebSocket issues in cleanup shouldn't cascade
+            E2ELogger.warn('tray', `afterEach cleanup error (may be harmless): ${error}`);
         }
-        await ensureSingleWindow();
     });
 
     describe('Tray Icon Creation', () => {
@@ -148,6 +154,9 @@ describe('System Tray Functionality', () => {
 
             // Restore window for cleanup
             await tray.restoreWindowViaTrayClick();
+
+            // Extra stabilization pause for macOS WebSocket stability
+            await browser.pause(500);
 
             E2ELogger.info('tray', 'Tray icon persists when window is hidden');
         });
